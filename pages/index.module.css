@@ -4,84 +4,54 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
-.title a {
-  color: #0070f3;
-  text-decoration: none;
-}
-
-.title a:hover,
-.title a:focus,
-.title a:active {
-  text-decoration: underline;
-}
-
-.title {
-  margin: 0;
-  line-height: 1.15;
-  font-size: 4rem;
-}
-
-.title,
-.description {
-  text-align: center;
-}
-
-.description {
-  line-height: 1.5;
-  font-size: 1.5rem;
-}
-
-.grid {
+.main {
+  flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-
-  max-width: 800px;
-  margin-top: 3rem;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 3rem;
 }
 
-.card {
-  margin: 1rem;
-  flex-basis: 45%;
-  padding: 1.5rem;
-  text-align: left;
-  color: inherit;
-  text-decoration: none;
-  border: 1px solid #eaeaea;
-  border-radius: 10px;
-  transition: color 0.15s ease, border-color 0.15s ease;
+.timerDisplay {
+  text-align: center;
+  font-size: 4rem;
+  margin: 5rem 0 0 0;
 }
 
-.card:hover,
-.card:focus,
-.card:active {
-  color: #0070f3;
-  border-color: #0070f3;
+.currentBlockDisplay {
+  text-align: center;
+  font-size: 2rem;
 }
 
-.card h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1.5rem;
+.blocks {
+  height: 250px;
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px sold #ccc;
+  border-radius: 5px;
 }
 
-.card p {
-  margin: 0;
-  font-size: 1.25rem;
-  line-height: 1.5;
+.timerButton {
+  background-color: #4CAF50;
+  color: white;
+  padding: 15px 32px;
+  margin: 4px 2px;
+  border-radius: 5px;
 }
 
-.logo {
-  height: 1em;
-  margin-left: 0.5rem;
-}
-
-@media (max-width: 600px) {
-  .grid {
-    width: 100%;
-    flex-direction: column;
-  }
+.lockButton {
+  align-self: flex-end;
+  margin: 0 1.5rem 1.5rem 0;
+  background-color: #eee;
+  border-radius: 50%;
+  font-size: 2rem;
+  height: 5rem;
+  width: 5rem;
 }

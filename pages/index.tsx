@@ -1,9 +1,10 @@
 import Head from "next/head"
 import { useState, useEffect } from "react"
-import { playTone, speak } from "../lib/audio"
+
+import { playTone } from "../lib/audio"
+import useWakeLock from "../lib/useWakeLock"
 
 import styles from "@/pages/index.module.css"
-import useWakeLock from "lib/useWakeLock"
 
 interface Block {
   duration: number
@@ -118,31 +119,60 @@ const Home = () => {
       <Head>
         <title>Timer</title>
         <link rel="icon" href="/favicon.ico" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+        <meta name="apple-mobile-web-app-title" content="Timer" />
+        <meta name="application-name" content="Timer" />
+        <meta name="msapplication-TileColor" content="#000000" />
+        <meta name="theme-color" content="#000000" />
       </Head>
 
-      <main>
-        <h1>{secondsLeft !== null ? formatTime(secondsLeft) : "00:00:00"}</h1>
-        <h2>{currentBlockText}</h2>
+      <main className={styles.main}>
+        <h1 className={styles.timerDisplay}>
+          {secondsLeft !== null ? formatTime(secondsLeft) : "00:00:00"}
+        </h1>
+        <h2 className={styles.currentBlockDisplay}>
+          {currentBlockText || "-"}
+        </h2>
         <label>
           Blocks
           <br />
           <textarea
+            className={styles.blocks}
             placeholder={"10: Rest\n30: Exercise"}
             value={blocksText}
             onChange={handleBlocksChange}
           />
         </label>
+
         {timerId === null ? (
-          <button disabled={blocks.length === 0} onClick={startTimer}>
+          <button
+            className={styles.timerButton}
+            disabled={blocks.length === 0}
+            onClick={startTimer}
+          >
             Start
           </button>
         ) : (
-          <button onClick={stopTimer}>Stop</button>
+          <button className={styles.timerButton} onClick={stopTimer}>
+            Stop
+          </button>
         )}
-        <button disabled={!wakeLockSupported} onClick={toggleWakeLock}>
-          {wakeLockSupported && wakeLockEnabled ? "🔒 Disable" : "🔓 Enable"}{" "}
-          Wake Lock
-          {!wakeLockSupported && "WakeLock not supported"}
+
+        <button
+          className={styles.lockButton}
+          disabled={!wakeLockSupported}
+          onClick={toggleWakeLock}
+          title={
+            wakeLockSupported
+              ? `Screen WakeLock ${wakeLockEnabled ? "enabled" : "disabled"}`
+              : "WakeLock not supported"
+          }
+        >
+          {wakeLockSupported && wakeLockEnabled ? "🔒" : "🔓"}
         </button>
       </main>
     </div>
