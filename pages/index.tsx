@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import { playTone, speak } from "../lib/audio"
 
 import styles from "@/pages/index.module.css"
+import useWakeLock from "lib/useWakeLock"
 
 interface Block {
   duration: number
@@ -15,8 +16,18 @@ const Home = () => {
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
   const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null)
 
+  const {
+    wakeLock,
+    wakeLockSupported,
+    toggleWakeLock,
+    enableWakeLock,
+    disableWakeLock,
+  } = useWakeLock()
+
   const startTimer = (): void => {
     if (blocks.length === 0) return
+
+    enableWakeLock()
 
     let currentBlockIndex = 0
     setCurrentBlockText(blocks[currentBlockIndex].text)
@@ -24,8 +35,6 @@ const Home = () => {
     setSecondsLeft(blocks[0].duration)
 
     const newTimerId: NodeJS.Timeout = setInterval(() => {
-      console.log(".", currentBlockIndex)
-
       setSecondsLeft((secondsLeft: number | null) => {
         const newSecondsLeft =
           secondsLeft !== null && secondsLeft > 0 ? secondsLeft - 1 : 0
@@ -43,6 +52,7 @@ const Home = () => {
             setCurrentBlockText(text)
             return duration
           } else {
+            disableWakeLock()
             clearInterval(newTimerId!)
             setTimerId(null)
             setCurrentBlockText("")
@@ -56,6 +66,7 @@ const Home = () => {
   }
 
   const stopTimer = (): void => {
+    disableWakeLock()
     clearInterval(timerId!)
     setSecondsLeft(0)
     setTimerId(null)
@@ -112,6 +123,10 @@ const Home = () => {
         ) : (
           <button onClick={stopTimer}>Stop</button>
         )}
+        <button disabled={!wakeLockSupported} onClick={toggleWakeLock}>
+          {wakeLockSupported && wakeLock ? "🔒 Disable" : "🔓 Enable"} Wake Lock
+          {!wakeLockSupported && "WakeLock not supported"}
+        </button>
       </main>
     </div>
   )
