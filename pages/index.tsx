@@ -4,28 +4,51 @@ import { playTone, speak } from "../lib/audio"
 
 import styles from "@/pages/index.module.css"
 
-function Timer(): JSX.Element {
-  const [duration, setDuration] = useState<number>(0)
+interface Block {
+  duration: number
+  text: string
+}
+
+const Home = () => {
+  const [blocks, setBlocks] = useState<Block[]>([])
+  const [currentBlockText, setCurrentBlockText] = useState("")
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
   const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null)
 
   const startTimer = (): void => {
-    if (duration <= 0) return
-    setSecondsLeft(duration)
+    if (blocks.length === 0) return
+
+    let currentBlockIndex = 0
+    setCurrentBlockText(blocks[currentBlockIndex].text)
+
+    setSecondsLeft(blocks[0].duration)
 
     const newTimerId: NodeJS.Timeout = setInterval(() => {
-      console.log(".")
+      console.log(".", currentBlockIndex)
+
       setSecondsLeft((secondsLeft: number | null) => {
         const newSecondsLeft =
           secondsLeft !== null && secondsLeft > 0 ? secondsLeft - 1 : 0
+
         if (newSecondsLeft === 3) playTone(440, 0.2)
         if (newSecondsLeft === 2) playTone(440, 0.2)
         if (newSecondsLeft === 1) playTone(440, 0.2)
         if (newSecondsLeft === 0) {
           playTone(880, 0.8)
-          clearInterval(newTimerId!)
-          setTimerId(null)
+
+          const nextBlockIndex = currentBlockIndex + 1
+          if (blocks[nextBlockIndex]) {
+            const { duration, text } = blocks[nextBlockIndex]
+            currentBlockIndex = nextBlockIndex
+            setCurrentBlockText(text)
+            return duration
+          } else {
+            clearInterval(newTimerId!)
+            setTimerId(null)
+            setCurrentBlockText("")
+          }
         }
+
         return newSecondsLeft
       })
     }, 1000)
@@ -47,31 +70,23 @@ function Timer(): JSX.Element {
       .padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`
   }
 
-  const handleDurationChange = (
-    event: React.ChangeEvent<HTMLInputElement>
+  const handleBlocksChange = (
+    event: React.ChangeEvent<HTMLTextAreaElement>
   ): void => {
-    const newDuration: number = parseInt(event.target.value, 10) || 0
-    setDuration(newDuration)
+    const blocks = event.target.value
+      .split("\n")
+      .filter(Boolean)
+      .map(l => {
+        const parts = l.split(/ *: */)
+        return {
+          duration: parseInt(parts[0], 10),
+          text: parts[1],
+        }
+      })
+    const valid = blocks.every(b => b.duration > 0 && b.text)
+    setBlocks(valid ? blocks : [])
   }
 
-  return (
-    <div>
-      <h1>{secondsLeft !== null ? formatTime(secondsLeft) : "00:00:00"}</h1>
-      <label>
-        Duration (seconds):
-        <br />
-        <input type="number" min="0" onChange={handleDurationChange} />
-      </label>
-      {timerId === null ? (
-        <button onClick={startTimer}>Start</button>
-      ) : (
-        <button onClick={stopTimer}>Stop</button>
-      )}
-    </div>
-  )
-}
-
-export default function Home() {
   return (
     <div className={styles.container}>
       <Head>
@@ -80,8 +95,26 @@ export default function Home() {
       </Head>
 
       <main>
-        <Timer />
+        <h1>{secondsLeft !== null ? formatTime(secondsLeft) : "00:00:00"}</h1>
+        <h2>{currentBlockText}</h2>
+        <label>
+          Blocks
+          <br />
+          <textarea
+            placeholder={"10: Rest\n30: Exercise"}
+            onChange={handleBlocksChange}
+          />
+        </label>
+        {timerId === null ? (
+          <button disabled={blocks.length === 0} onClick={startTimer}>
+            Start
+          </button>
+        ) : (
+          <button onClick={stopTimer}>Stop</button>
+        )}
       </main>
     </div>
   )
 }
+
+export default Home
