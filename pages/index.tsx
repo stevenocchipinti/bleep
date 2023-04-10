@@ -11,6 +11,7 @@ interface Block {
 }
 
 const Home = () => {
+  const [blocksText, setBlocksText] = useState("")
   const [blocks, setBlocks] = useState<Block[]>([])
   const [currentBlockText, setCurrentBlockText] = useState("")
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null)
@@ -23,6 +24,16 @@ const Home = () => {
     enableWakeLock,
     disableWakeLock,
   } = useWakeLock()
+
+  useEffect(() => {
+    const blocksText = localStorage.getItem("blocks")
+    if (blocksText) {
+      setBlocksText(blocksText)
+      handleBlocksChange({
+        target: { value: blocksText },
+      } as React.ChangeEvent<HTMLTextAreaElement>)
+    }
+  }, [])
 
   const startTimer = (): void => {
     if (blocks.length === 0) return
@@ -84,6 +95,10 @@ const Home = () => {
   const handleBlocksChange = (
     event: React.ChangeEvent<HTMLTextAreaElement>
   ): void => {
+    const newBlocksText = event.target.value
+    setBlocksText(newBlocksText)
+    localStorage.setItem("blocks", newBlocksText)
+
     const blocks = event.target.value
       .split("\n")
       .filter(Boolean)
@@ -113,6 +128,7 @@ const Home = () => {
           <br />
           <textarea
             placeholder={"10: Rest\n30: Exercise"}
+            value={blocksText}
             onChange={handleBlocksChange}
           />
         </label>
