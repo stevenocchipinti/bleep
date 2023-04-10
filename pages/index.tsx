@@ -17,7 +17,7 @@ const Home = () => {
   const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null)
 
   const {
-    wakeLock,
+    wakeLockEnabled,
     wakeLockSupported,
     toggleWakeLock,
     enableWakeLock,
@@ -124,7 +124,8 @@ const Home = () => {
           <button onClick={stopTimer}>Stop</button>
         )}
         <button disabled={!wakeLockSupported} onClick={toggleWakeLock}>
-          {wakeLockSupported && wakeLock ? "🔒 Disable" : "🔓 Enable"} Wake Lock
+          {wakeLockSupported && wakeLockEnabled ? "🔒 Disable" : "🔓 Enable"}{" "}
+          Wake Lock
           {!wakeLockSupported && "WakeLock not supported"}
         </button>
       </main>
