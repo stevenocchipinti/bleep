@@ -1,4 +1,3 @@
-import "@/styles/global.css"
 import type { AppProps } from "next/app"
 import { globalCss, createTheme, NextUIProvider } from "@nextui-org/react"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
