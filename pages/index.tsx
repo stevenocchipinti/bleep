@@ -1,12 +1,43 @@
 import Head from "next/head"
 import { useState, useEffect } from "react"
 
-import { Button, Textarea } from "@nextui-org/react"
+import { styled, Button, Text } from "@nextui-org/react"
 
 import { playTone } from "../lib/audio"
 import useWakeLock from "../lib/useWakeLock"
 
-import styles from "@/pages/index.module.css"
+const Layout = styled("div", {
+  display: "flex",
+  flexDirection: "column",
+  height: "100%",
+  gap: "$8",
+  padding: "$8",
+  justifyContent: "space-between",
+  backgroundColor: "$background",
+})
+
+const Display = styled("div", {
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  textAlign: "center",
+  flex: 1,
+})
+
+const Actions = styled("div", {
+  display: "flex",
+  gap: "$8",
+  "& > :last-child": {
+    flex: 1,
+  },
+})
+
+const Textarea = styled("textarea", {
+  padding: "$xs",
+  borderRadius: "$md",
+  border: "none",
+  flex: 1,
+})
 
 interface Block {
   duration: number
@@ -117,50 +148,30 @@ const Home = () => {
   }
 
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Timer</title>
-        <link rel="icon" href="/favicon.ico" />
-
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-        <meta name="apple-mobile-web-app-title" content="Timer" />
-        <meta name="application-name" content="Timer" />
-        <meta name="msapplication-TileColor" content="#000000" />
-        <meta name="theme-color" content="#000000" />
-      </Head>
-
-      <main className={styles.main}>
-        <h1 className={styles.timerDisplay}>
+    <Layout>
+      <Display>
+        <Text h1>
           {secondsLeft !== null ? formatTime(secondsLeft) : "00:00:00"}
-        </h1>
-        <h2 className={styles.currentBlockDisplay}>
-          {currentBlockText || "-"}
-        </h2>
-        <textarea
-          placeholder={"10: Rest\n30: Exercise"}
-          value={blocksText}
-          onChange={e => setBlocksText(e.target.value)}
-        />
+        </Text>
+        <Text h2>{currentBlockText || "-"}</Text>
+      </Display>
 
-        {timerId === null ? (
-          <Button
-            color="gradient"
-            size="xl"
-            disabled={blocks.length === 0}
-            onClick={startTimer}
-          >
-            Start
-          </Button>
-        ) : (
-          <Button onClick={stopTimer}>Stop</Button>
-        )}
+      <Textarea
+        rows={5}
+        placeholder={"10: Rest\n30: Exercise"}
+        value={blocksText}
+        onChange={e => setBlocksText(e.target.value)}
+      />
 
+      <Actions>
         <Button
+          color="gradient"
+          size="xl"
+          bordered
+          auto
           disabled={!wakeLockSupported}
           onClick={toggleWakeLock}
+          css={{ fontSize: "$2xl" }}
           title={
             wakeLockSupported
               ? `Screen WakeLock ${wakeLockEnabled ? "enabled" : "disabled"}`
@@ -169,8 +180,18 @@ const Home = () => {
         >
           {wakeLockSupported && wakeLockEnabled ? "🔒" : "🔓"}
         </Button>
-      </main>
-    </div>
+
+        <Button
+          color="gradient"
+          size="xl"
+          auto
+          disabled={blocks.length === 0}
+          onClick={timerId === null ? startTimer : stopTimer}
+        >
+          {timerId === null ? "Start" : "Stop"}
+        </Button>
+      </Actions>
+    </Layout>
   )
 }
 
