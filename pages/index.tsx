@@ -1,6 +1,8 @@
 import Head from "next/head"
 import { useState, useEffect } from "react"
 
+import { Button, Textarea } from "@nextui-org/react"
+
 import { playTone } from "../lib/audio"
 import useWakeLock from "../lib/useWakeLock"
 
@@ -137,33 +139,26 @@ const Home = () => {
         <h2 className={styles.currentBlockDisplay}>
           {currentBlockText || "-"}
         </h2>
-        <label>
-          Blocks
-          <br />
-          <textarea
-            className={styles.blocks}
-            placeholder={"10: Rest\n30: Exercise"}
-            value={blocksText}
-            onChange={handleBlocksChange}
-          />
-        </label>
+        <textarea
+          placeholder={"10: Rest\n30: Exercise"}
+          value={blocksText}
+          onChange={e => setBlocksText(e.target.value)}
+        />
 
         {timerId === null ? (
-          <button
-            className={styles.timerButton}
+          <Button
+            color="gradient"
+            size="xl"
             disabled={blocks.length === 0}
             onClick={startTimer}
           >
             Start
-          </button>
+          </Button>
         ) : (
-          <button className={styles.timerButton} onClick={stopTimer}>
-            Stop
-          </button>
+          <Button onClick={stopTimer}>Stop</Button>
         )}
 
-        <button
-          className={styles.lockButton}
+        <Button
           disabled={!wakeLockSupported}
           onClick={toggleWakeLock}
           title={
@@ -173,7 +168,7 @@ const Home = () => {
           }
         >
           {wakeLockSupported && wakeLockEnabled ? "🔒" : "🔓"}
-        </button>
+        </Button>
       </main>
     </div>
   )
