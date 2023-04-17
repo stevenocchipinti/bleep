@@ -1,46 +1,43 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react";
 
 const useWakeLock = () => {
-  const [wakeLockEnabled, setWakeLockEnabled] = useState<boolean>(false)
+  const [wakeLockEnabled, setWakeLockEnabled] = useState<boolean>(false);
   const [wakeLockSupported, setWakeLockSupported] = useState<boolean | null>(
     null
-  )
+  );
 
-  const wakeLockSentinel = React.useRef<WakeLockSentinel | null>(null)
+  const wakeLockSentinel = React.useRef<WakeLockSentinel | null>(null);
 
   const enableWakeLock = () => {
-    if (!wakeLockSupported) return
+    if (!wakeLockSupported) return;
     navigator.wakeLock
       .request("screen")
-      .then(newWakeLock => {
-        wakeLockSentinel.current = newWakeLock
-        setWakeLockEnabled(true)
+      .then((newWakeLock) => {
+        wakeLockSentinel.current = newWakeLock;
+        setWakeLockEnabled(true);
       })
       .catch(() => {
-        console.error("Wake lock request failed")
-      })
-  }
+        console.error("Wake lock request failed");
+      });
+  };
 
   const disableWakeLock = () => {
-    if (!wakeLockSentinel.current) {
-      console.warn("There is no wakelock to disable")
-      return
-    }
-    wakeLockSentinel.current?.release()
-    setWakeLockEnabled(false)
-  }
+    if (!wakeLockSentinel.current) return;
+    wakeLockSentinel.current?.release();
+    setWakeLockEnabled(false);
+  };
 
   const toggleWakeLock = () => {
     if (wakeLockEnabled) {
-      disableWakeLock()
+      disableWakeLock();
     } else {
-      enableWakeLock()
+      enableWakeLock();
     }
-  }
+  };
 
   useEffect(() => {
-    setWakeLockSupported("wakeLock" in navigator)
-  }, [])
+    setWakeLockSupported("wakeLock" in navigator);
+  }, []);
 
   return {
     wakeLockEnabled,
@@ -48,7 +45,7 @@ const useWakeLock = () => {
     enableWakeLock,
     disableWakeLock,
     toggleWakeLock,
-  }
-}
+  };
+};
 
-export default useWakeLock
+export default useWakeLock;

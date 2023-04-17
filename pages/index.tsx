@@ -1,10 +1,9 @@
-import Head from "next/head"
-import { useState, useEffect } from "react"
+import { useEffect } from "react";
 
-import { styled, Button, Text } from "@nextui-org/react"
+import { styled, Button, Text } from "@nextui-org/react";
 
-import useWakeLock from "../lib/useWakeLock"
-import useTimer from "lib/useTimer"
+import useWakeLock from "../lib/useWakeLock";
+import useTimer from "lib/useTimer";
 
 const Layout = styled("div", {
   display: "flex",
@@ -14,7 +13,7 @@ const Layout = styled("div", {
   padding: "$8",
   justifyContent: "space-between",
   backgroundColor: "$background",
-})
+});
 
 const Display = styled("div", {
   display: "flex",
@@ -22,7 +21,7 @@ const Display = styled("div", {
   justifyContent: "center",
   textAlign: "center",
   flex: 1,
-})
+});
 
 const Actions = styled("div", {
   display: "flex",
@@ -30,15 +29,7 @@ const Actions = styled("div", {
   "& > :last-child": {
     flex: 1,
   },
-})
-
-const Textarea = styled("textarea", {
-  padding: "$sm $md",
-  borderRadius: "$md",
-  border: "none",
-  flex: 1,
-  resize: "none",
-})
+});
 
 const Home = () => {
   const {
@@ -47,10 +38,8 @@ const Home = () => {
     stopTimer,
     currentBlockText,
     timerString,
-    setBlocksFromText,
-    blocksText,
     blocks,
-  } = useTimer()
+  } = useTimer();
 
   const {
     wakeLockEnabled,
@@ -58,12 +47,12 @@ const Home = () => {
     toggleWakeLock,
     enableWakeLock,
     disableWakeLock,
-  } = useWakeLock()
+  } = useWakeLock();
 
   useEffect(() => {
-    timerRunning ? enableWakeLock() : disableWakeLock()
-    return disableWakeLock
-  }, [timerRunning])
+    timerRunning ? enableWakeLock() : disableWakeLock();
+    return disableWakeLock;
+  }, [disableWakeLock, enableWakeLock, timerRunning]);
 
   return (
     <Layout>
@@ -72,11 +61,7 @@ const Home = () => {
         <Text h2>{currentBlockText}</Text>
       </Display>
 
-      <Textarea
-        placeholder={"10: Rest\n30: Exercise"}
-        value={blocksText}
-        onChange={e => setBlocksFromText(e.target.value)}
-      />
+      {/* options */}
 
       <Actions>
         <Button
@@ -107,7 +92,7 @@ const Home = () => {
         </Button>
       </Actions>
     </Layout>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;
