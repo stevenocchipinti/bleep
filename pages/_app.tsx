@@ -17,8 +17,8 @@ const darkTheme = createTheme({
   type: "dark",
   theme: {
     colors: {
-      background: "#111628",
-      backgroundAlpha: "#111628ff",
+      background: "#020513",
+      backgroundAlpha: "#020513ff",
     },
   },
 })
