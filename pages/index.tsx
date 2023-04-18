@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect } from "react"
 
-import { styled, Button, Text } from "@nextui-org/react";
+import { styled, Button, Text } from "@nextui-org/react"
 
-import useWakeLock from "../lib/useWakeLock";
-import useTimer from "lib/useTimer";
+import useWakeLock from "../lib/useWakeLock"
+import useTimer from "lib/useTimer"
 
 const Layout = styled("div", {
   display: "flex",
@@ -13,7 +13,7 @@ const Layout = styled("div", {
   padding: "$8",
   justifyContent: "space-between",
   backgroundColor: "$background",
-});
+})
 
 const Display = styled("div", {
   display: "flex",
@@ -21,7 +21,7 @@ const Display = styled("div", {
   justifyContent: "center",
   textAlign: "center",
   flex: 1,
-});
+})
 
 const Actions = styled("div", {
   display: "flex",
@@ -29,7 +29,7 @@ const Actions = styled("div", {
   "& > :last-child": {
     flex: 1,
   },
-});
+})
 
 const Home = () => {
   const {
@@ -39,7 +39,7 @@ const Home = () => {
     currentBlockText,
     timerString,
     blocks,
-  } = useTimer();
+  } = useTimer()
 
   const {
     wakeLockEnabled,
@@ -47,12 +47,12 @@ const Home = () => {
     toggleWakeLock,
     enableWakeLock,
     disableWakeLock,
-  } = useWakeLock();
+  } = useWakeLock()
 
   useEffect(() => {
-    timerRunning ? enableWakeLock() : disableWakeLock();
-    return disableWakeLock;
-  }, [disableWakeLock, enableWakeLock, timerRunning]);
+    timerRunning ? enableWakeLock() : disableWakeLock()
+    return disableWakeLock
+  }, [disableWakeLock, enableWakeLock, timerRunning])
 
   return (
     <Layout>
@@ -92,7 +92,7 @@ const Home = () => {
         </Button>
       </Actions>
     </Layout>
-  );
-};
+  )
+}
 
-export default Home;
+export default Home

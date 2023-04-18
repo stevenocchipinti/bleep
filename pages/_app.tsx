@@ -8,13 +8,19 @@ const lightTheme = createTheme({
   theme: {
     colors: {
       background: "#eee",
-      backgroundAlpha: "#dddddddd",
+      backgroundAlpha: "#ddddddff",
     },
   },
 })
 
 const darkTheme = createTheme({
   type: "dark",
+  theme: {
+    colors: {
+      background: "#111628",
+      backgroundAlpha: "#111628ff",
+    },
+  },
 })
 
 const globalStyles = globalCss({
