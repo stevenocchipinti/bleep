@@ -1,5 +1,5 @@
 import { Card, Text, styled, Collapse } from "@nextui-org/react"
-import React, { ReactNode, useState } from "react"
+import React, { ReactNode, useEffect, useState } from "react"
 import SwipeableViews from "react-swipeable-views"
 
 const Slide = styled("div", {
@@ -50,8 +50,14 @@ interface CardButtonProps {
   onClick?: React.MouseEventHandler<unknown> | undefined
   selected?: boolean
   children: ReactNode
+  emoji?: string
 }
-const CardButton = ({ children, selected, ...props }: CardButtonProps) => (
+const CardButton = ({
+  children,
+  emoji,
+  selected,
+  ...props
+}: CardButtonProps) => (
   <Card
     isPressable
     isHoverable
@@ -61,7 +67,7 @@ const CardButton = ({ children, selected, ...props }: CardButtonProps) => (
   >
     <Card.Body css={{ p: "$lg" }}>
       <Text h3 size="$2xl" css={{ m: 0 }}>
-        🏋️ &nbsp; {children}
+        {emoji || "💪"} &nbsp; {children}
       </Text>
     </Card.Body>
   </Card>
@@ -71,16 +77,32 @@ const Dev = () => {
   const [slideIndex, setSlideIndex] = useState(0)
   const [workoutIndex, setWorkoutIndex] = useState<number | null>(null)
 
+  // prettier-ignore
+  useEffect(() => {
+    const handler = ({state}: {state: any}) => { setSlideIndex(state.slide) }
+    addEventListener("popstate", handler)
+    return () => { removeEventListener("popstate", handler) }
+  }, [])
+
   const setWorkout = (index: number) => {
     setWorkoutIndex(index)
     setSlideIndex(1)
+
+    // Set up a history stack for the 3 slides
+    history.replaceState({ slide: 0 }, "")
+    history.pushState({ slide: 1 }, "")
+    history.pushState({ slide: 2 }, "")
+    history.go(-1)
   }
 
   return (
     <Layout>
       <SwipableBody
         index={slideIndex}
-        onChangeIndex={i => setSlideIndex(i)}
+        onChangeIndex={(newIndex, oldIndex) => {
+          history.go(newIndex - oldIndex)
+          setSlideIndex(newIndex)
+        }}
         disabled={workoutIndex === null}
         enableMouseEvents
       >
@@ -97,20 +119,23 @@ const Dev = () => {
             <CardButton
               selected={workoutIndex === 0}
               onClick={() => setWorkout(0)}
+              emoji="🦵"
             >
-              Workout #0
+              Knee ability zero
             </CardButton>
             <CardButton
               selected={workoutIndex === 1}
               onClick={() => setWorkout(1)}
+              emoji="🏋️"
             >
-              Workout #1
+              AthleanX anti-slouch
             </CardButton>
             <CardButton
               selected={workoutIndex === 2}
               onClick={() => setWorkout(2)}
+              emoji="🧘"
             >
-              Workout #2
+              Yoga
             </CardButton>
           </Cards>
         </Slide>
