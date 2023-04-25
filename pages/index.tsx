@@ -1,13 +1,33 @@
-import { Card, CardBody, chakra, Flex, Heading } from "@chakra-ui/react"
+import {
+  Card,
+  CardBody,
+  Flex,
+  Heading,
+  Text,
+  IconButton,
+  Spacer,
+  CircularProgress,
+  CircularProgressLabel,
+  Center,
+} from "@chakra-ui/react"
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd"
 import React, { forwardRef, ReactNode, useEffect, useState } from "react"
-import SwipeableViews from "react-swipeable-views"
 
-const Slide = ({ children }: { children: ReactNode }) => (
-  <Flex direction="column" justifyContent="space-between" gap={4}>
-    {children}
-  </Flex>
-)
+import dummyData from "lib/dummyData"
+import {
+  FooterButton,
+  SwipableParent,
+  SwipeableChild,
+} from "components/SwipeableView"
+import {
+  ArrowBackIcon,
+  ArrowForwardIcon,
+  DragHandleIcon,
+  HamburgerIcon,
+  SettingsIcon,
+  UnlockIcon,
+} from "@chakra-ui/icons"
+import SegmentedProgressBar from "@/components/SegmentedProgressBar"
 
 const Headings = ({ children }: { children: ReactNode }) => (
   <Flex direction="column" gap={16} py={24}>
@@ -27,19 +47,6 @@ const H2 = ({ children }: { children: ReactNode }) => (
   </Heading>
 )
 
-const SwipableBody = chakra(SwipeableViews, {
-  baseStyle: {
-    flexGrow: 1,
-    overflow: "hidden",
-    "& > *": {
-      height: "100%",
-    },
-    "& > * > * > *": {
-      height: "100%",
-    },
-  },
-})
-
 type CardButtonProps = {
   onClick?: React.MouseEventHandler<unknown> | undefined
   selected?: boolean
@@ -51,11 +58,18 @@ type CardButtonProps = {
 const CardButton = forwardRef<HTMLDivElement, CardButtonProps>(
   ({ isDragging, selected, emoji, children, ...props }, ref) => (
     <Card variant={selected ? "filled" : undefined} ref={ref} {...props}>
-      <CardBody css={{ p: "$lg" }}>
-        <Heading size="md" as="h3">
+      <CardBody
+        display="flex"
+        alignItems="center"
+        gap="0.25rem"
+        padding={3}
+        paddingLeft="0.25rem"
+      >
+        <DragHandleIcon color="gray.600" />
+        <Text fontSize="lg">
           {emoji && `${emoji} `}
           {children} {selected && "*"}
-        </Heading>
+        </Text>
       </CardBody>
     </Card>
   )
@@ -64,56 +78,7 @@ const CardButton = forwardRef<HTMLDivElement, CardButtonProps>(
 CardButton.displayName = "CardButton"
 
 const Dev = () => {
-  const [workouts, setWorkouts] = useState([
-    {
-      id: "kaz",
-      name: "Knee Ability Zero",
-      emoji: "🦵",
-      blocks: [
-        { name: "Tibialis Raise", reps: 25 },
-        { name: "FHL Calf Raise", reps: 25 },
-        { name: "Tibialis Raise (again)", reps: 25 },
-        { name: "KOT Calf Raise", reps: 25 },
-        { name: "Patrick Step", reps: 25 },
-        { name: "ATG Split Squat", reps: 25 },
-        { name: "Elephant Walk", reps: 30 },
-        { name: "L-Sit", seconds: 60 },
-        { name: "Couch Stretch", seconds: 60 },
-      ],
-    },
-    {
-      id: "athx",
-      name: "AthleanX anti-slouch",
-      emoji: "🏋️",
-      blocks: [
-        { name: "Supermans", seconds: 30 },
-        { name: "Glute march", seconds: 30 },
-        { name: "Supermans", seconds: 30 },
-        { name: "Glute march", seconds: 30 },
-        { name: "Bridge reach over", seconds: 30 },
-
-        { name: "Chair lat stretch reps", seconds: 30 },
-        { name: "Wall DL", seconds: 30 },
-        { name: "Chair lat stretch reps", seconds: 30 },
-        { name: "Wall DL", seconds: 30 },
-        { name: "Bridge reach over", seconds: 30 },
-      ],
-    },
-    {
-      id: "yoga",
-      name: "Yoga",
-      emoji: "🧘",
-      blocks: [
-        { name: "Downward Dog", seconds: 30 },
-        { name: "Upward Dog", seconds: 30 },
-        { name: "Cobra", seconds: 30 },
-        { name: "Downward Dog", seconds: 30 },
-        { name: "Upward Dog", seconds: 30 },
-        { name: "Cobra", seconds: 30 },
-        { name: "Child's Pose", seconds: 30 },
-      ],
-    },
-  ])
+  const [workouts, setWorkouts] = useState(dummyData)
   const [slideIndex, setSlideIndex] = useState(0)
   const [workoutIndex, setWorkoutIndex] = useState<number | null>(null)
 
@@ -149,7 +114,7 @@ const Dev = () => {
 
   return (
     <Flex direction="column" h="100%">
-      <SwipableBody
+      <SwipableParent
         index={slideIndex}
         onChangeIndex={(newIndex, oldIndex) => {
           history.go(newIndex - oldIndex)
@@ -158,7 +123,19 @@ const Dev = () => {
         disabled={workoutIndex === null}
         enableMouseEvents
       >
-        <Slide>
+        <SwipeableChild
+          transparentHeader={
+            <>
+              <Spacer />
+              <IconButton
+                aria-label="Settings"
+                variant="ghost"
+                icon={<SettingsIcon />}
+                fontSize="xl"
+              />
+            </>
+          }
+        >
           <Headings>
             <H1>Bleep!</H1>
             <H2>Choose your workout</H2>
@@ -201,12 +178,48 @@ const Dev = () => {
               )}
             </Droppable>
           </DragDropContext>
-        </Slide>
-        <Slide>
-          <Headings>
-            <H1>#{workoutIndex}</H1>
-            <H2>Configure your workout</H2>
-          </Headings>
+        </SwipeableChild>
+        <SwipeableChild
+          header={
+            <>
+              <IconButton
+                aria-label="Back"
+                variant="ghost"
+                icon={<ArrowBackIcon />}
+                onClick={() => {
+                  history.go(-1)
+                  setSlideIndex(0)
+                }}
+                fontSize="xl"
+              />
+              <Heading fontWeight="thin" textAlign="center" as="h1">
+                {dummyData[workoutIndex || 0].name}
+              </Heading>
+              <IconButton
+                aria-label="Wake lock"
+                variant="outline"
+                icon={<HamburgerIcon />}
+                onClick={console.log}
+              />
+            </>
+          }
+          footer={
+            <FooterButton
+              span={2}
+              onClick={() => {
+                history.go(1)
+                setSlideIndex(2)
+              }}
+              rightIcon={<ArrowForwardIcon />}
+            >
+              Go
+            </FooterButton>
+          }
+        >
+          <Text textAlign="center" fontSize="xl" p={4} pb={8}>
+            {dummyData[workoutIndex || 0].description}
+          </Text>
+
           <DragDropContext onDragEnd={console.log}>
             <Droppable droppableId="block-cards">
               {(provided, snapshot) => (
@@ -245,15 +258,70 @@ const Dev = () => {
               )}
             </Droppable>
           </DragDropContext>
-        </Slide>
-        <Slide>
-          <Headings>
-            <Heading textAlign="center" as="h1" fontSize="9xl">
-              ⏱️
+        </SwipeableChild>
+        <SwipeableChild
+          header={
+            <>
+              <IconButton
+                aria-label="Back"
+                variant="ghost"
+                icon={<ArrowBackIcon />}
+                onClick={() => {
+                  history.go(-1)
+                  setSlideIndex(1)
+                }}
+                fontSize="xl"
+              />
+              <Heading fontWeight="thin" textAlign="center" as="h1">
+                {dummyData[workoutIndex || 0].name}
+              </Heading>
+              <IconButton
+                colorScheme="green"
+                aria-label="Wake lock"
+                variant="outline"
+                icon={<UnlockIcon />}
+                onClick={console.log}
+              />
+            </>
+          }
+          footer={
+            <>
+              <FooterButton onClick={console.log}>Reset</FooterButton>
+              <FooterButton onClick={console.log}>Start</FooterButton>
+            </>
+          }
+        >
+          <Flex
+            direction="column"
+            justifyContent="space-evenly"
+            flex={1}
+            gap={12}
+            p={8}
+          >
+            <SegmentedProgressBar
+              blocks={[
+                { width: 10, percentDone: 1 },
+                { width: 20, percentDone: 0.5 },
+                { width: 30, percentDone: 0 },
+              ]}
+            />
+            <CircularProgress
+              trackColor="gray.700"
+              color="teal.300"
+              capIsRound
+              size="full"
+              value={40}
+            >
+              <CircularProgressLabel fontSize="6xl">
+                00:00
+              </CircularProgressLabel>
+            </CircularProgress>
+            <Heading size="3xl" textAlign="center">
+              Supermans
             </Heading>
-          </Headings>
-        </Slide>
-      </SwipableBody>
+          </Flex>
+        </SwipeableChild>
+      </SwipableParent>
     </Flex>
   )
 }
