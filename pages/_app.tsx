@@ -1,62 +1,44 @@
 import type { AppProps } from "next/app"
 import Head from "next/head"
-import { globalCss, createTheme, NextUIProvider } from "@nextui-org/react"
-import { ThemeProvider as NextThemesProvider } from "next-themes"
+import { ChakraProvider, extendTheme } from "@chakra-ui/react"
 
-const lightTheme = createTheme({
-  type: "light",
-  theme: {
-    colors: {
-      background: "#eee",
-      backgroundAlpha: "#ddddddff",
-    },
+export const theme = extendTheme({
+  config: {
+    initialColorMode: "system",
+    useSystemColorMode: true,
   },
-})
-
-const darkTheme = createTheme({
-  type: "dark",
-  theme: {
-    colors: {
-      background: "#020513",
-      backgroundAlpha: "#020513ff",
+  styles: {
+    global: {
+      "html, body, #__next, #__next > div": {
+        height: "100%",
+      },
     },
-  },
-})
-
-const globalStyles = globalCss({
-  "html, body, #__next, #__next > div": {
-    height: "100%",
+    colors: {
+      brand: {
+        900: "#1a365d",
+        800: "#153e75",
+        700: "#2a69ac",
+      },
+    },
   },
 })
 
 export default function MyApp({ Component, pageProps }: AppProps) {
-  globalStyles()
-
   return (
-    <NextThemesProvider
-      defaultTheme="system"
-      attribute="class"
-      value={{
-        light: lightTheme.className,
-        dark: darkTheme.className,
-      }}
-    >
-      <NextUIProvider>
-        <Head>
-          <title>Timer</title>
-          <link rel="icon" href="/favicon.ico" />
-
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <meta name="mobile-web-app-capable" content="yes" />
-          <meta name="apple-mobile-web-app-capable" content="yes" />
-          <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-          <meta name="apple-mobile-web-app-title" content="Timer" />
-          <meta name="application-name" content="Timer" />
-          <meta name="msapplication-TileColor" content="#000000" />
-          <meta name="theme-color" content="#000000" />
-        </Head>
-        <Component {...pageProps} />
-      </NextUIProvider>
-    </NextThemesProvider>
+    <ChakraProvider theme={theme}>
+      <Head>
+        <title>Timer</title>
+        <link rel="icon" href="/favicon.ico" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+        <meta name="apple-mobile-web-app-title" content="Timer" />
+        <meta name="application-name" content="Timer" />
+        <meta name="msapplication-TileColor" content="#000000" />
+        <meta name="theme-color" content="#000000" />
+      </Head>
+      <Component {...pageProps} />
+    </ChakraProvider>
   )
 }
