@@ -1,5 +1,6 @@
+import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd"
 import { Card, Text, styled, Collapse } from "@nextui-org/react"
-import React, { ReactNode, useEffect, useState } from "react"
+import React, { forwardRef, useEffect, useState } from "react"
 import SwipeableViews from "react-swipeable-views"
 
 const Slide = styled("div", {
@@ -33,6 +34,13 @@ const Cards = styled("div", {
   flexDirection: "column",
   gap: "$8",
   padding: "$8",
+  variants: {
+    isDragging: {
+      true: {
+        backgroundColor: "$pink50",
+      },
+    },
+  },
 })
 
 const SwipableBody = styled(SwipeableViews, {
@@ -46,34 +54,85 @@ const SwipableBody = styled(SwipeableViews, {
   },
 })
 
-interface CardButtonProps {
+// interface CardButtonProps {
+//   onClick?: React.MouseEventHandler<unknown> | undefined
+//   selected?: boolean
+//   children: ReactNode
+//   isDragging: boolean
+//   emoji?: string
+//   style: any
+// }
+// type CardButtonRef = HTMLDivElement
+// const CardButton = forwardRef<CardButtonRef, CardButtonProps>(
+//   (
+//     { children, emoji, selected, isDragging, ...props }: CardButtonProps,
+//     ref
+//   ) => (
+//     <Card
+//       ref={ref}
+//       isPressable
+//       isHoverable
+//       variant={selected ? "bordered" : undefined}
+//       borderWeight="bold"
+//       {...props}
+//     >
+//       <Card.Body css={{ p: "$lg" }}>
+//         <Text h3 size="$2xl" css={{ m: 0 }}>
+//           {emoji || "💪"} &nbsp; {children}
+//         </Text>
+//       </Card.Body>
+//     </Card>
+//   )
+// )
+
+type CardButtonProps = {
   onClick?: React.MouseEventHandler<unknown> | undefined
   selected?: boolean
-  children: ReactNode
+  children: React.ReactNode
+  isDragging: boolean
   emoji?: string
+  style: any
 }
-const CardButton = ({
-  children,
-  emoji,
-  selected,
-  ...props
-}: CardButtonProps) => (
-  <Card
-    isPressable
-    isHoverable
-    variant={selected ? "bordered" : undefined}
-    borderWeight="bold"
-    {...props}
-  >
-    <Card.Body css={{ p: "$lg" }}>
-      <Text h3 size="$2xl" css={{ m: 0 }}>
-        {emoji || "💪"} &nbsp; {children}
-      </Text>
-    </Card.Body>
-  </Card>
+
+const CardButton = forwardRef<HTMLDivElement, CardButtonProps>(
+  ({ isDragging, selected, emoji, children, ...props }, ref) => (
+    <Card
+      ref={ref}
+      // BUG: Can't use `isPressable` here as it breaks dnd :sad:
+      isHoverable
+      variant={selected ? "bordered" : undefined}
+      borderWeight="bold"
+      {...props}
+    >
+      <Card.Body css={{ p: "$lg" }}>
+        <Text h3 size="$2xl" css={{ m: 0 }}>
+          {emoji || "💪"} &nbsp; {children}
+        </Text>
+      </Card.Body>
+    </Card>
+  )
 )
 
+CardButton.displayName = "CardButton"
+
 const Dev = () => {
+  const [workouts, setWorkouts] = useState([
+    {
+      id: "kaz",
+      name: "Knee Ability Zero",
+      emoji: "🦵",
+    },
+    {
+      id: "athx",
+      name: "AthleanX anti-slouch",
+      emoji: "🏋️",
+    },
+    {
+      id: "yoga",
+      name: "Yoga",
+      emoji: "🧘",
+    },
+  ])
   const [slideIndex, setSlideIndex] = useState(0)
   const [workoutIndex, setWorkoutIndex] = useState<number | null>(null)
 
@@ -93,6 +152,18 @@ const Dev = () => {
     history.pushState({ slide: 1 }, "")
     history.pushState({ slide: 2 }, "")
     history.go(-1)
+  }
+
+  const onDragEnd = (result: any) => {
+    if (!result.destination) return
+    const { source, destination } = result
+    if (source.index === destination.index) return
+    setWorkouts(workouts => {
+      const newWorkouts = [...workouts]
+      const [removed] = newWorkouts.splice(source.index, 1)
+      newWorkouts.splice(destination.index, 0, removed)
+      return newWorkouts
+    })
   }
 
   return (
@@ -115,29 +186,42 @@ const Dev = () => {
               Choose your workout
             </Header>
           </Headers>
-          <Cards>
-            <CardButton
-              selected={workoutIndex === 0}
-              onClick={() => setWorkout(0)}
-              emoji="🦵"
-            >
-              Knee ability zero
-            </CardButton>
-            <CardButton
-              selected={workoutIndex === 1}
-              onClick={() => setWorkout(1)}
-              emoji="🏋️"
-            >
-              AthleanX anti-slouch
-            </CardButton>
-            <CardButton
-              selected={workoutIndex === 2}
-              onClick={() => setWorkout(2)}
-              emoji="🧘"
-            >
-              Yoga
-            </CardButton>
-          </Cards>
+
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="workout-cards">
+              {(provided, snapshot) => (
+                <Cards
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  isDragging={snapshot.isDraggingOver}
+                >
+                  {workouts.map((workout, index) => (
+                    <Draggable
+                      key={workout.id}
+                      draggableId={workout.id}
+                      index={index}
+                    >
+                      {(provided, snapshot) => (
+                        <CardButton
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          isDragging={snapshot.isDragging}
+                          style={provided.draggableProps.style}
+                          selected={workoutIndex === index}
+                          onClick={() => setWorkout(index)}
+                          emoji={workout.emoji}
+                        >
+                          {workout.name}
+                        </CardButton>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </Cards>
+              )}
+            </Droppable>
+          </DragDropContext>
         </Slide>
         <Slide>
           <Headers>
