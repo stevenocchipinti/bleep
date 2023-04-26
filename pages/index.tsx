@@ -1,3 +1,5 @@
+import React, { forwardRef, ReactNode, useEffect, useState } from "react"
+import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd"
 import {
   Card,
   CardBody,
@@ -8,26 +10,34 @@ import {
   Spacer,
   CircularProgress,
   CircularProgressLabel,
-  Center,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  MenuDivider,
+  MenuGroup,
 } from "@chakra-ui/react"
-import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd"
-import React, { forwardRef, ReactNode, useEffect, useState } from "react"
+import {
+  ArrowBackIcon,
+  ArrowForwardIcon,
+  CopyIcon,
+  DeleteIcon,
+  DragHandleIcon,
+  HamburgerIcon,
+  LinkIcon,
+  SettingsIcon,
+  UnlockIcon,
+  LockIcon,
+} from "@chakra-ui/icons"
 
-import dummyData from "lib/dummyData"
 import {
   FooterButton,
   SwipableParent,
   SwipeableChild,
 } from "components/SwipeableView"
-import {
-  ArrowBackIcon,
-  ArrowForwardIcon,
-  DragHandleIcon,
-  HamburgerIcon,
-  SettingsIcon,
-  UnlockIcon,
-} from "@chakra-ui/icons"
-import SegmentedProgressBar from "@/components/SegmentedProgressBar"
+import SegmentedProgressBar from "components/SegmentedProgressBar"
+import dummyData from "lib/dummyData"
+import useWakeLock from "lib/useWakeLock"
 
 const Headings = ({ children }: { children: ReactNode }) => (
   <Flex direction="column" gap={16} py={24}>
@@ -81,6 +91,8 @@ const Dev = () => {
   const [workouts, setWorkouts] = useState(dummyData)
   const [slideIndex, setSlideIndex] = useState(0)
   const [workoutIndex, setWorkoutIndex] = useState<number | null>(null)
+
+  const { wakeLockEnabled, wakeLockSupported, toggleWakeLock } = useWakeLock()
 
   // prettier-ignore
   useEffect(() => {
@@ -276,11 +288,12 @@ const Dev = () => {
                 {dummyData[workoutIndex || 0].name}
               </Heading>
               <IconButton
-                colorScheme="green"
+                isDisabled={!wakeLockSupported}
+                colorScheme={wakeLockEnabled ? "red" : "green"}
                 aria-label="Wake lock"
                 variant="outline"
-                icon={<UnlockIcon />}
-                onClick={console.log}
+                icon={wakeLockEnabled ? <LockIcon /> : <UnlockIcon />}
+                onClick={toggleWakeLock}
               />
             </>
           }
