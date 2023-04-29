@@ -4,6 +4,42 @@ import { playTone } from "../lib/audio"
 
 type Status = "running" | "paused" | "stopped"
 
+const createPromise = (
+  duration: number,
+  onTick: (secondsLeft: number) => void
+) => {
+  let interval: NodeJS.Timeout | null = null
+  let rejectPromise = () => {}
+
+  if (duration <= 0) throw new Error("Duration must be greater than 0")
+  let secondsLeft = duration
+
+  const promise = new Promise<void>((resolve, reject) => {
+    rejectPromise = reject
+    interval = setInterval(() => {
+      if (secondsLeft === 0) {
+        resolve()
+        clearInterval(interval!)
+      }
+      onTick(secondsLeft--)
+    }, 1000)
+  })
+
+  const stop = () => {
+    if (interval) {
+      clearInterval(interval)
+      rejectPromise()
+    }
+  }
+
+  return {
+    promise,
+    stop,
+  }
+}
+
+/* if (typeof window === "object") window.createPromise = createPromise */
+
 const useTimer = (duration: number) => {
   const [status, setStatus] = useState<Status>("stopped")
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
