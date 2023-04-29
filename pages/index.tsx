@@ -59,6 +59,7 @@ import {
 import SegmentedProgressBar from "components/SegmentedProgressBar"
 import dummyData from "lib/dummyData"
 import useWakeLock from "lib/useWakeLock"
+import useTimer from "lib/useTimer"
 
 const Headings = ({ children }: { children: ReactNode }) => (
   <Flex direction="column" gap={16} py={24}>
@@ -163,7 +164,7 @@ const CardButton = forwardRef<HTMLDivElement, CardButtonProps>(
 
 CardButton.displayName = "CardButton"
 
-const Dev = () => {
+const Page = () => {
   const [workouts, setWorkouts] = useState(dummyData)
   const [slideIndex, setSlideIndex] = useState(0)
   const [workoutIndex, setWorkoutIndex] = useState<number | null>(null)
@@ -172,6 +173,15 @@ const Dev = () => {
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   const { wakeLockEnabled, wakeLockSupported, toggleWakeLock } = useWakeLock()
+  const {
+    start,
+    reset,
+    pause,
+    secondsLeftOfBlock,
+    secondsLeftOfProgram,
+    text,
+    status,
+  } = useTimer(5)
 
   // prettier-ignore
   useEffect(() => {
@@ -471,8 +481,12 @@ const Dev = () => {
             }
             footer={
               <>
-                <FooterButton onClick={console.log}>Reset</FooterButton>
-                <FooterButton onClick={console.log}>Start</FooterButton>
+                <FooterButton isDisabled={status === "stopped"} onClick={reset}>
+                  Reset
+                </FooterButton>
+                <FooterButton onClick={status === "running" ? pause : start}>
+                  {status === "running" ? "Pause" : "Start"}
+                </FooterButton>
               </>
             }
           >
@@ -483,6 +497,7 @@ const Dev = () => {
               gap={12}
               p={8}
             >
+              <p>Status: {status}</p>
               <SegmentedProgressBar
                 blocks={[
                   { width: 10, percentDone: 1 },
@@ -490,6 +505,7 @@ const Dev = () => {
                   { width: 30, percentDone: 0 },
                 ]}
               />
+              <p>total seconds left: {secondsLeftOfProgram}</p>
               <CircularProgress
                 trackColor="gray.700"
                 color="teal.300"
@@ -498,11 +514,11 @@ const Dev = () => {
                 value={40}
               >
                 <CircularProgressLabel fontSize="6xl">
-                  00:00
+                  {secondsLeftOfBlock}
                 </CircularProgressLabel>
               </CircularProgress>
               <Heading size="3xl" textAlign="center">
-                Supermans
+                {text}
               </Heading>
             </Flex>
           </SwipeableChild>
@@ -512,4 +528,4 @@ const Dev = () => {
   )
 }
 
-export default Dev
+export default Page
