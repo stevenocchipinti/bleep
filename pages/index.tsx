@@ -14,24 +14,9 @@ import {
   MenuList,
   MenuDivider,
   MenuGroup,
-  Button,
-  FormControl,
-  FormLabel,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  useDisclosure,
-  Switch,
-  HStack,
   VStack,
-  Select,
-  Divider,
   chakra,
-  Textarea,
+  useDisclosure,
 } from "@chakra-ui/react"
 import {
   ArrowBackIcon,
@@ -54,8 +39,8 @@ import SegmentedProgressBar from "components/SegmentedProgressBar"
 import dummyData from "lib/dummyData"
 import useWakeLock from "lib/useWakeLock"
 import useTimer from "lib/useTimer"
-import { useVoices } from "lib/audio"
 import CardButton from "components/CardButton"
+import SettingsModal from "components/SettingsModal"
 
 const Headings = ({ children }: { children: ReactNode }) => (
   <Flex direction="column" gap={16} py={24}>
@@ -82,8 +67,6 @@ const Page = () => {
   const [isDragging, setIsDragging] = useState(false)
 
   const { isOpen, onOpen, onClose } = useDisclosure()
-
-  const voices = useVoices()
   const { wakeLockEnabled, wakeLockSupported, toggleWakeLock } = useWakeLock()
   const {
     toggle,
@@ -135,58 +118,7 @@ const Page = () => {
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Settings</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
-            <VStack spacing={8} divider={<Divider />}>
-              <FormControl as={HStack} justifyContent="space-between">
-                <FormLabel htmlFor="sound">Sound</FormLabel>
-                <Switch size="lg" id="sound" defaultChecked />
-              </FormControl>
-
-              <VStack spacing={4} w="full">
-                <FormControl as={HStack} justifyContent="space-between">
-                  <FormLabel htmlFor="voice-recognition">
-                    Voice recognition
-                  </FormLabel>
-                  <Switch size="lg" id="voice-recognition" defaultChecked />
-                </FormControl>
-
-                <FormControl>
-                  <FormLabel hidden>Voice</FormLabel>
-                  <Select placeholder="Select voice">
-                    {voices.map((voice: SpeechSynthesisVoice) => (
-                      <option key={voice.voiceURI} value={voice.voiceURI}>
-                        {voice.name} - {voice.lang} {voice.localService || "*"}
-                      </option>
-                    ))}
-                  </Select>
-                </FormControl>
-              </VStack>
-
-              <Flex direction="column" gap={4} w="full">
-                <FormLabel>Data</FormLabel>
-                <Textarea placeholder="The app data goes here" />
-                <Flex gap={4}>
-                  <Button colorScheme="red" leftIcon={<DeleteIcon />}>
-                    Clear data
-                  </Button>
-                  <Button isDisabled flex={1}>
-                    Import new data
-                  </Button>
-                </Flex>
-              </Flex>
-            </VStack>
-          </ModalBody>
-
-          <ModalFooter>
-            <Button onClick={onClose}>Close</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <SettingsModal isOpen={isOpen} onClose={onClose} />
 
       <Flex direction="column" h="100%">
         <SwipableParent
@@ -291,7 +223,9 @@ const Page = () => {
                     </MenuGroup>
                     <MenuDivider />
                     <MenuGroup>
-                      <MenuItem icon={<SettingsIcon />}>Settings</MenuItem>
+                      <MenuItem onClick={onOpen} icon={<SettingsIcon />}>
+                        Settings
+                      </MenuItem>
                     </MenuGroup>
                   </MenuList>
                 </Menu>
