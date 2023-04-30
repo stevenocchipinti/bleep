@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react"
+
 function playTone(frequency: number, duration: number): void {
   const rampTime = 0.02
   const audioContext = new AudioContext()
@@ -23,12 +25,29 @@ function playTone(frequency: number, duration: number): void {
   )
 }
 
-const speak = (text: string) => {
-  const utterance = new SpeechSynthesisUtterance(text)
-  console.log(speechSynthesis.getVoices())
-  utterance.voice = speechSynthesis.getVoices()[0]
-  utterance.onerror = e => console.error(e)
-  speechSynthesis.speak(utterance)
+const speak = (text: string) =>
+  new Promise((resolve, reject) => {
+    const utterance = new SpeechSynthesisUtterance(text)
+    // TODO: Get this from configuration state
+    utterance.voice =
+      speechSynthesis.getVoices().find(voice => voice.default) ||
+      speechSynthesis.getVoices()[0]
+    utterance.onerror = reject
+    utterance.onend = resolve
+    speechSynthesis.speak(utterance)
+  })
+
+const useVoices = () => {
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
+
+  useEffect(() => {
+    setVoices(speechSynthesis.getVoices())
+    speechSynthesis.addEventListener("voiceschanged", () => {
+      setVoices(speechSynthesis.getVoices())
+    })
+  }, [])
+
+  return voices
 }
 
-export { playTone, speak }
+export { playTone, speak, useVoices }

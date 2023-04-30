@@ -60,6 +60,7 @@ import SegmentedProgressBar from "components/SegmentedProgressBar"
 import dummyData from "lib/dummyData"
 import useWakeLock from "lib/useWakeLock"
 import useTimer from "lib/useTimer"
+import { useVoices } from "lib/audio"
 
 const Headings = ({ children }: { children: ReactNode }) => (
   <Flex direction="column" gap={16} py={24}>
@@ -172,6 +173,7 @@ const Page = () => {
 
   const { isOpen, onOpen, onClose } = useDisclosure()
 
+  const voices = useVoices()
   const { wakeLockEnabled, wakeLockSupported, toggleWakeLock } = useWakeLock()
   const {
     start,
@@ -247,9 +249,11 @@ const Page = () => {
                 <FormControl>
                   <FormLabel hidden>Voice</FormLabel>
                   <Select placeholder="Select voice">
-                    <option value="option1">Option 1</option>
-                    <option value="option2">Option 2</option>
-                    <option value="option3">Option 3</option>
+                    {voices.map((voice: SpeechSynthesisVoice) => (
+                      <option key={voice.voiceURI} value={voice.voiceURI}>
+                        {voice.name} - {voice.lang} {voice.localService || "*"}
+                      </option>
+                    ))}
                   </Select>
                 </FormControl>
               </VStack>
