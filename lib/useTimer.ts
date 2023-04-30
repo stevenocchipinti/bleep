@@ -1,21 +1,25 @@
 import { useState } from "react"
 import { playTone } from "../lib/audio"
+import type { Block, Program } from "../lib/dummyData"
 
 type Status = "running" | "paused" | "stopped"
 
-interface Block {
+interface BlockController {
   start: () => Promise<void>
   stop: () => void
   pause: () => void
   resume: () => void
+  block: Block
 }
 
-const createIntervalBlock = (
-  duration: number,
+const createBlockController = (
+  block: Block,
   onTick: (secondsLeft: number) => void
-): Block => {
-  if (duration <= 0) throw new Error("Duration must be greater than 0")
-  let secondsLeft = duration
+): BlockController => {
+  const { seconds } = block
+
+  if (seconds <= 0) throw new Error("Duration must be greater than 0")
+  let secondsLeft = seconds
 
   let interval: NodeJS.Timeout | null = null
   let rejectPromise = () => {}
@@ -57,50 +61,56 @@ const createIntervalBlock = (
     stop,
     pause,
     resume,
+    block,
   }
 }
 
-const useTimer = (durations: number[]) => {
+const useTimer = ({ blocks }: Program) => {
   const [status, setStatus] = useState<Status>("stopped")
-  const [currentBlock, setCurrentBlock] = useState<any>(null)
-  const [secondsLeftOfBlock, setSecondsLeftOfBlock] = useState(durations[0])
+  const [currentBlockIndex, setCurrentBlockIndex] = useState(0)
+  const [currentBlockController, setCurrentBlockController] =
+    useState<BlockController | null>(null)
 
-  const secondsLeftOfProgram = 0
-  const text = ""
+  const [secondsLeftOfBlock, setSecondsLeftOfBlock] = useState(0)
+  const [text, setText] = useState("")
 
-  const blocks = durations.map(duration =>
-    createIntervalBlock(duration, secondsLeft => {
+  const blockControllers = blocks.map(block =>
+    createBlockController(block, secondsLeft => {
       console.log("beep", secondsLeft)
       playTone(440, 0.3)
       setSecondsLeftOfBlock(secondsLeft)
+      setText(block.name)
     })
   )
 
   const start = async () => {
     try {
-      for (const block of blocks) {
+      for (const [index, blockController] of blockControllers.entries()) {
         setStatus("running")
-        setCurrentBlock(block)
-        await block.start()
+        setCurrentBlockIndex(index)
+        setCurrentBlockController(blockController)
+        await blockController.start()
       }
       reset()
     } catch (e) {}
   }
 
   const reset = () => {
-    if (currentBlock) currentBlock.stop()
-    setCurrentBlock(null)
+    if (currentBlockController) currentBlockController.stop()
+    setCurrentBlockController(null)
     setStatus("stopped")
-    setSecondsLeftOfBlock(durations[0])
+    setCurrentBlockIndex(0)
+    setSecondsLeftOfBlock(blocks[0].seconds)
+    setText(blocks[0].name)
   }
 
   const pause = () => {
-    if (currentBlock) currentBlock.pause()
+    if (currentBlockController) currentBlockController.pause()
     setStatus("paused")
   }
 
   const resume = () => {
-    if (currentBlock) currentBlock.resume()
+    if (currentBlockController) currentBlockController.resume()
     setStatus("running")
   }
 
@@ -110,16 +120,17 @@ const useTimer = (durations: number[]) => {
     if (status === "stopped") start()
   }
 
-  return {
+  const returnVal = {
     toggle,
     reset,
-    pause,
-    resume,
+    currentBlockIndex,
     secondsLeftOfBlock,
-    secondsLeftOfProgram,
     text,
     status,
   }
+
+  console.table(returnVal)
+  return returnVal
 }
 
 export default useTimer

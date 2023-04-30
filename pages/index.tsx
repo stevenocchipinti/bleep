@@ -61,21 +61,40 @@ const H2 = ({ children }: { children: ReactNode }) => (
 )
 
 const Page = () => {
-  const [workouts, setWorkouts] = useState(dummyData)
+  const [programs, setPrograms] = useState(dummyData)
   const [slideIndex, setSlideIndex] = useState(0)
-  const [workoutIndex, setWorkoutIndex] = useState<number | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
+  const [programIndex, setProgramIndex] = useState<number | null>(null)
 
+  const [isDragging, setIsDragging] = useState(false)
   const { isOpen, onOpen, onClose } = useDisclosure()
-  const { wakeLockEnabled, wakeLockSupported, toggleWakeLock } = useWakeLock()
   const {
-    toggle,
-    reset,
-    secondsLeftOfBlock,
-    secondsLeftOfProgram,
-    text,
-    status,
-  } = useTimer([5, 10])
+    wakeLockEnabled,
+    wakeLockSupported,
+    toggleWakeLock,
+    enableWakeLock,
+    disableWakeLock,
+  } = useWakeLock()
+
+  // TODO: Make this the chosen program program
+  const program = dummyData[0]
+
+  const { toggle, reset, currentBlockIndex, secondsLeftOfBlock, text, status } =
+    useTimer(program)
+
+  useEffect(() => {
+    status === "running" ? enableWakeLock() : disableWakeLock()
+  }, [disableWakeLock, enableWakeLock, status])
+
+  // Used for the progress bars
+  const currentBlockPercent =
+    (secondsLeftOfBlock / program.blocks[currentBlockIndex].seconds) * 100
+  const progressBarData = program.blocks.map((block, index) => ({
+    width: block.seconds,
+    percentDone:
+      currentBlockIndex === index
+        ? status === "stopped" ? 0 : 1 - secondsLeftOfBlock / block.seconds
+        : currentBlockIndex > index ? 1 : 0, // prettier-ignore
+  }))
 
   // prettier-ignore
   useEffect(() => {
@@ -84,8 +103,8 @@ const Page = () => {
     return () => { removeEventListener("popstate", handler) }
   }, [])
 
-  const setWorkout = (index: number) => {
-    setWorkoutIndex(index)
+  const setProgram = (index: number) => {
+    setProgramIndex(index)
     setSlideIndex(1)
 
     // Set up a history stack for the 3 slides
@@ -95,16 +114,16 @@ const Page = () => {
     history.go(-1)
   }
 
-  const onWorkoutDragEnd = (result: any) => {
+  const onProgramDragEnd = (result: any) => {
     setIsDragging(false)
     if (!result.destination) return
     const { source, destination } = result
     if (source.index === destination.index) return
-    setWorkouts(workouts => {
-      const newWorkouts = [...workouts]
-      const [removed] = newWorkouts.splice(source.index, 1)
-      newWorkouts.splice(destination.index, 0, removed)
-      return newWorkouts
+    setPrograms(programs => {
+      const newPrograms = [...programs]
+      const [removed] = newPrograms.splice(source.index, 1)
+      newPrograms.splice(destination.index, 0, removed)
+      return newPrograms
     })
   }
 
@@ -127,7 +146,7 @@ const Page = () => {
             history.go(newIndex - oldIndex)
             setSlideIndex(newIndex)
           }}
-          disabled={workoutIndex === null || isDragging}
+          disabled={programIndex === null || isDragging}
           enableMouseEvents
         >
           {/* Home screen */}
@@ -147,14 +166,14 @@ const Page = () => {
           >
             <Headings>
               <H1>Bleep!</H1>
-              <H2>Choose your workout</H2>
+              <H2>Choose your program</H2>
             </Headings>
 
             <DragDropContext
               onDragStart={onDragStart}
-              onDragEnd={onWorkoutDragEnd}
+              onDragEnd={onProgramDragEnd}
             >
-              <Droppable droppableId="workout-cards" type="workout">
+              <Droppable droppableId="program-cards" type="program">
                 {(provided, snapshot) => (
                   <VStack
                     spacing={4}
@@ -163,23 +182,23 @@ const Page = () => {
                     {...provided.droppableProps}
                     ref={provided.innerRef}
                   >
-                    {workouts.map((workout, index) => (
+                    {programs.map((program, index) => (
                       <Draggable
-                        key={workout.id}
-                        draggableId={workout.id}
+                        key={program.id}
+                        draggableId={program.id}
                         index={index}
                       >
                         {(provided, snapshot) => (
                           <CardButton
-                            text={workout.name}
+                            text={program.name}
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             handleProps={provided.dragHandleProps}
                             isDragging={snapshot.isDragging}
                             style={provided.draggableProps.style}
-                            selected={workoutIndex === index}
-                            onClick={() => setWorkout(index)}
-                            emoji={workout.emoji}
+                            selected={programIndex === index}
+                            onClick={() => setProgram(index)}
+                            emoji={program.emoji}
                           />
                         )}
                       </Draggable>
@@ -206,7 +225,7 @@ const Page = () => {
                   fontSize="xl"
                 />
                 <Heading fontWeight="thin" textAlign="center" as="h1">
-                  {dummyData[workoutIndex || 0].name}
+                  {dummyData[programIndex || 0].name}
                 </Heading>
                 <Menu>
                   <MenuButton
@@ -245,7 +264,7 @@ const Page = () => {
             }
           >
             <Text textAlign="center" fontSize="xl" p={4} pb={8}>
-              {dummyData[workoutIndex || 0].description}
+              {dummyData[programIndex || 0].description}
             </Text>
 
             <DragDropContext
@@ -261,7 +280,7 @@ const Page = () => {
                     {...provided.droppableProps}
                     ref={provided.innerRef}
                   >
-                    {workouts[workoutIndex || 0].blocks.map((block, index) => (
+                    {programs[programIndex || 0].blocks.map((block, index) => (
                       <Draggable
                         key={`${block.name}-${index}`}
                         draggableId={`${block.name}-${index}--TODO-needs-to-be-static`}
@@ -269,11 +288,7 @@ const Page = () => {
                       >
                         {(provided, snapshot) => (
                           <CardButton
-                            text={`${block.name} ${
-                              block.reps
-                                ? ` ⨯${block.reps}`
-                                : ` for ${block.seconds} seconds`
-                            }`}
+                            text={`${block.name} for ${block.seconds} seconds`}
                             togglesBody
                             ref={provided.innerRef}
                             {...provided.draggableProps}
@@ -314,7 +329,7 @@ const Page = () => {
                   fontSize="xl"
                 />
                 <Heading fontWeight="thin" textAlign="center" as="h1">
-                  {dummyData[workoutIndex || 0].name}
+                  {dummyData[programIndex || 0].name}
                 </Heading>
                 <IconButton
                   isDisabled={!wakeLockSupported}
@@ -344,24 +359,20 @@ const Page = () => {
               gap={12}
               p={8}
             >
-              <p>Status: {status}</p>
               <SegmentedProgressBar
-                blocks={[
-                  { width: 10, percentDone: 1 },
-                  { width: 20, percentDone: 0.5 },
-                  { width: 30, percentDone: 0 },
-                ]}
+                blocks={progressBarData}
+                animate={status === "running"}
               />
-              <p>total seconds left: {secondsLeftOfProgram}</p>
               <CircularProgress
+                transition="1s linear"
                 trackColor="gray.700"
                 color="teal.300"
                 capIsRound
                 size="full"
-                value={40}
+                value={currentBlockPercent}
               >
                 <CircularProgressLabel fontSize="6xl">
-                  {secondsLeftOfBlock}
+                  {secondsLeftOfBlock || "00:00"}
                 </CircularProgressLabel>
               </CircularProgress>
               <Heading size="3xl" textAlign="center">
