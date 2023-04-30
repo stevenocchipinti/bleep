@@ -1,29 +1,41 @@
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { playTone } from "../lib/audio"
-/* import data from "../data/dummyData" */
 
 type Status = "running" | "paused" | "stopped"
 
-const createPromise = (
+interface Block {
+  start: () => Promise<void>
+  stop: () => void
+  pause: () => void
+  resume: () => void
+}
+
+const createIntervalBlock = (
   duration: number,
   onTick: (secondsLeft: number) => void
-) => {
-  let interval: NodeJS.Timeout | null = null
-  let rejectPromise = () => {}
-
+): Block => {
   if (duration <= 0) throw new Error("Duration must be greater than 0")
   let secondsLeft = duration
 
-  const promise = new Promise<void>((resolve, reject) => {
-    rejectPromise = reject
-    interval = setInterval(() => {
-      if (secondsLeft === 0) {
-        resolve()
-        clearInterval(interval!)
-      }
-      onTick(secondsLeft--)
-    }, 1000)
-  })
+  let interval: NodeJS.Timeout | null = null
+  let rejectPromise = () => {}
+  let resolvePromise = () => {}
+
+  const tick = () => {
+    if (secondsLeft === 0) {
+      resolvePromise()
+      clearInterval(interval!)
+    }
+    onTick(secondsLeft--)
+  }
+
+  const start = () =>
+    new Promise<void>((resolve, reject) => {
+      resolvePromise = resolve
+      rejectPromise = reject
+      tick()
+      interval = setInterval(tick, 1000)
+    })
 
   const stop = () => {
     if (interval) {
@@ -32,64 +44,77 @@ const createPromise = (
     }
   }
 
-  return {
-    promise,
-    stop,
-  }
-}
-
-/* if (typeof window === "object") window.createPromise = createPromise */
-
-const useTimer = (duration: number) => {
-  const [status, setStatus] = useState<Status>("stopped")
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  const [secondsLeftOfBlock, setSecondsLeftOfBlock] = useState(duration)
-
-  const secondsLeftOfProgram = 0
-  const text = ""
-
-  const startInterval = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current)
-    intervalRef.current = setInterval(() => {
-      console.log("beep")
-      playTone(440, 0.3)
-      setSecondsLeftOfBlock(secondsLeftOfBlock => {
-        const newSecondsLeftOfBlock = secondsLeftOfBlock - 1
-        if (newSecondsLeftOfBlock === 0) {
-          reset()
-        }
-        return newSecondsLeftOfBlock
-      })
-    }, 1000)
-  }
-
-  const stopInterval = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-    }
-  }
-
-  const start = () => {
-    if (secondsLeftOfBlock === 0) setSecondsLeftOfBlock(duration)
-    startInterval()
-    setStatus("running")
-  }
-
-  const reset = () => {
-    setSecondsLeftOfBlock(duration)
-    stopInterval()
-    setStatus("stopped")
-  }
-
   const pause = () => {
-    stopInterval()
-    setStatus("paused")
+    if (interval) clearInterval(interval)
+  }
+
+  const resume = () => {
+    interval = setInterval(tick, 1000)
   }
 
   return {
     start,
+    stop,
+    pause,
+    resume,
+  }
+}
+
+const useTimer = (durations: number[]) => {
+  const [status, setStatus] = useState<Status>("stopped")
+  const [currentBlock, setCurrentBlock] = useState<any>(null)
+  const [secondsLeftOfBlock, setSecondsLeftOfBlock] = useState(durations[0])
+
+  const secondsLeftOfProgram = 0
+  const text = ""
+
+  const blocks = durations.map(duration =>
+    createIntervalBlock(duration, secondsLeft => {
+      console.log("beep", secondsLeft)
+      playTone(440, 0.3)
+      setSecondsLeftOfBlock(secondsLeft)
+    })
+  )
+
+  const start = async () => {
+    try {
+      for (const block of blocks) {
+        setStatus("running")
+        setCurrentBlock(block)
+        await block.start()
+      }
+      reset()
+    } catch (e) {}
+  }
+
+  const reset = () => {
+    if (currentBlock) currentBlock.stop()
+    setCurrentBlock(null)
+    setStatus("stopped")
+    setSecondsLeftOfBlock(durations[0])
+  }
+
+  const pause = () => {
+    if (currentBlock) currentBlock.pause()
+    setStatus("paused")
+  }
+
+  const resume = () => {
+    if (currentBlock) currentBlock.resume()
+    setStatus("running")
+  }
+
+  const toggle = () => {
+    if (status === "running") pause()
+    if (status === "paused") resume()
+    if (status === "stopped") start()
+  }
+
+  return {
+    toggle,
     reset,
     pause,
+    resume,
     secondsLeftOfBlock,
     secondsLeftOfProgram,
     text,

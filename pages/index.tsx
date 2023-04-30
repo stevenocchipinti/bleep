@@ -176,14 +176,13 @@ const Page = () => {
   const voices = useVoices()
   const { wakeLockEnabled, wakeLockSupported, toggleWakeLock } = useWakeLock()
   const {
-    start,
+    toggle,
     reset,
-    pause,
     secondsLeftOfBlock,
     secondsLeftOfProgram,
     text,
     status,
-  } = useTimer(5)
+  } = useTimer([5, 10])
 
   // prettier-ignore
   useEffect(() => {
@@ -488,7 +487,7 @@ const Page = () => {
                 <FooterButton isDisabled={status === "stopped"} onClick={reset}>
                   Reset
                 </FooterButton>
-                <FooterButton onClick={status === "running" ? pause : start}>
+                <FooterButton onClick={toggle}>
                   {status === "running" ? "Pause" : "Start"}
                 </FooterButton>
               </>
