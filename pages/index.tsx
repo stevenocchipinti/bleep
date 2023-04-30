@@ -1,8 +1,6 @@
-import React, { forwardRef, ReactNode, useEffect, useState } from "react"
+import React, { ReactNode, useEffect, useState } from "react"
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd"
 import {
-  Card,
-  CardBody,
   Flex,
   Heading,
   Text,
@@ -32,8 +30,6 @@ import {
   VStack,
   Select,
   Divider,
-  CardHeader,
-  Collapse,
   chakra,
   Textarea,
 } from "@chakra-ui/react"
@@ -42,13 +38,11 @@ import {
   ArrowForwardIcon,
   CopyIcon,
   DeleteIcon,
-  DragHandleIcon,
   HamburgerIcon,
   LinkIcon,
   SettingsIcon,
   UnlockIcon,
   LockIcon,
-  ChevronRightIcon,
 } from "@chakra-ui/icons"
 
 import {
@@ -61,6 +55,7 @@ import dummyData from "lib/dummyData"
 import useWakeLock from "lib/useWakeLock"
 import useTimer from "lib/useTimer"
 import { useVoices } from "lib/audio"
+import CardButton from "components/CardButton"
 
 const Headings = ({ children }: { children: ReactNode }) => (
   <Flex direction="column" gap={16} py={24}>
@@ -79,91 +74,6 @@ const H2 = ({ children }: { children: ReactNode }) => (
     {children}
   </Heading>
 )
-
-type CardButtonProps = {
-  text: string
-  onClick?: React.MouseEventHandler<unknown> | undefined
-  selected?: boolean
-  children?: React.ReactNode
-  isDragging: boolean
-  emoji?: string
-  style: any
-  handleProps: any
-  togglesBody?: boolean
-}
-const CardButton = forwardRef<HTMLDivElement, CardButtonProps>(
-  (
-    {
-      text,
-      children,
-      isDragging,
-      selected,
-      emoji,
-      handleProps,
-      togglesBody = false,
-      ...props
-    },
-    ref
-  ) => {
-    const transforms = {
-      right: "rotate(0deg)",
-      up: "rotate(-90deg)",
-      down: "rotate(90deg)",
-    }
-
-    const { isOpen, onToggle } = useDisclosure()
-
-    return (
-      <Card
-        transition="0.2s"
-        transform={selected ? "scale(1.05)" : undefined}
-        variant={selected ? "filled" : undefined}
-        ref={ref}
-        bg={selected ? "gray.600" : undefined}
-        {...props}
-      >
-        <CardHeader display="flex" alignItems="center" p={2}>
-          <Flex
-            justifyContent="center"
-            alignItems="center"
-            h="full"
-            px={2}
-            {...handleProps}
-          >
-            <DragHandleIcon color={selected ? "gray.500" : "gray.600"} />
-          </Flex>
-          <Text fontSize="lg" fontWeight={selected ? "bold" : "normal"}>
-            {emoji && `${emoji} `}
-            {text}
-          </Text>
-          <Spacer />
-          <IconButton
-            display="flex"
-            variant="unstyled"
-            aria-label="Select"
-            onClick={togglesBody ? onToggle : undefined}
-            icon={
-              <ChevronRightIcon
-                transition="0.2s"
-                transform={
-                  togglesBody ? transforms[isOpen ? "up" : "down"] : undefined
-                }
-                boxSize={5}
-              />
-            }
-          />
-        </CardHeader>
-        <Collapse in={isOpen} animateOpacity>
-          <CardBody p={4} pt={0}>
-            {children}
-          </CardBody>
-        </Collapse>
-      </Card>
-    )
-  }
-)
-
-CardButton.displayName = "CardButton"
 
 const Page = () => {
   const [workouts, setWorkouts] = useState(dummyData)
