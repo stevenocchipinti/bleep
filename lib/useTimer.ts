@@ -79,8 +79,8 @@ const useTimer = ({ blocks }: Program) => {
     setCurrentBlockController(null)
     setStatus("stopped")
     setCurrentBlockIndex(0)
-    setSecondsLeftOfBlock(blocks[0].seconds)
-    setText(blocks[0].name)
+    setSecondsLeftOfBlock(blocks.length === 0 ? 0 : blocks[0].seconds)
+    setText(blocks.length === 0 ? "" : blocks[0].name)
   }, [blocks, currentBlockController])
 
   // Reset everything if the blocks change due to a change of program

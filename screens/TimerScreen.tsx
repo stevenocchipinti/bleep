@@ -35,9 +35,11 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
 
   // Used for the progress bars
   const currentBlockPercent =
-    (secondsLeftOfBlock / program.blocks[currentBlockIndex].seconds) * 100
+    program.blocks.length === 0
+      ? 0
+      : (secondsLeftOfBlock / program.blocks[currentBlockIndex].seconds) * 100
   const progressBarData = program.blocks.map((block, index) => ({
-    width: block.seconds,
+    width: block.seconds || 0,
     percentDone:
       currentBlockIndex === index
         ? status === "stopped" ? 0 : 1 - secondsLeftOfBlock / block.seconds
@@ -74,7 +76,10 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
           <FooterButton isDisabled={status === "stopped"} onClick={reset}>
             Reset
           </FooterButton>
-          <FooterButton onClick={toggle}>
+          <FooterButton
+            isDisabled={program.blocks.length === 0}
+            onClick={toggle}
+          >
             {status === "running" ? "Pause" : "Start"}
           </FooterButton>
         </>

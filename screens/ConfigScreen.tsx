@@ -21,6 +21,7 @@ import {
   Flex,
   Text,
   chakra,
+  Button,
 } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
 import { Program } from "lib/dummyData"
@@ -137,6 +138,9 @@ const ConfigScreen = ({
                 </Draggable>
               ))}
               {provided.placeholder}
+              <Button colorScheme="blue" variant="outline">
+                Add Step
+              </Button>
             </Flex>
           )}
         </Droppable>

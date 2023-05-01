@@ -1,7 +1,14 @@
 import CardButton from "@/components/CardButton"
 import { SwipeableChild } from "@/components/SwipeableView"
 import { SettingsIcon } from "@chakra-ui/icons"
-import { Spacer, IconButton, VStack, Flex, Heading } from "@chakra-ui/react"
+import {
+  Spacer,
+  IconButton,
+  VStack,
+  Flex,
+  Heading,
+  Button,
+} from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
 import { Program } from "lib/dummyData"
 import { ReactNode, useState } from "react"
@@ -110,6 +117,24 @@ const HomeScreen = ({
                 </Draggable>
               ))}
               {provided.placeholder}
+              <Button
+                colorScheme="blue"
+                variant="outline"
+                onClick={() => {
+                  setPrograms(programs => [
+                    ...programs,
+                    {
+                      id: `program-${programs.length}`,
+                      name: "New Program",
+                      description: "",
+                      emoji: "👋",
+                      blocks: [],
+                    },
+                  ])
+                }}
+              >
+                Add Program
+              </Button>
             </VStack>
           )}
         </Droppable>
