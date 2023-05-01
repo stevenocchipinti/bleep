@@ -1,35 +1,19 @@
 import CardButton from "@/components/CardButton"
+import Logo from "@/components/Logo"
 import { SwipeableChild } from "@/components/SwipeableView"
 import { SettingsIcon } from "@chakra-ui/icons"
 import {
   Spacer,
   IconButton,
   VStack,
-  Flex,
   Heading,
   Button,
+  HStack,
+  Flex,
 } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
 import { Program } from "lib/dummyData"
-import { ReactNode, useState } from "react"
-
-const Headings = ({ children }: { children: ReactNode }) => (
-  <Flex direction="column" gap={16} py={24}>
-    {children}
-  </Flex>
-)
-
-const H1 = ({ children }: { children: ReactNode }) => (
-  <Heading textAlign="center" size="4xl" as="h1">
-    {children}
-  </Heading>
-)
-
-const H2 = ({ children }: { children: ReactNode }) => (
-  <Heading textAlign="center" size="xl" as="h2">
-    {children}
-  </Heading>
-)
+import { useState } from "react"
 
 interface HomeScreenProps {
   openSettingsModal: () => void
@@ -80,10 +64,16 @@ const HomeScreen = ({
         </>
       }
     >
-      <Headings>
-        <H1>Bleep!</H1>
-        <H2>Choose your program</H2>
-      </Headings>
+      <Flex px={8} gap={6} justifyContent="center" alignItems="center">
+        <Logo h={20} />
+        <Heading as="h1" size="4xl">
+          Bleep!
+        </Heading>
+      </Flex>
+
+      <Heading as="h2" textAlign="center" px={8} size="xl">
+        Choose your program
+      </Heading>
 
       <DragDropContext onDragStart={onDragStart} onDragEnd={onProgramDragEnd}>
         <Droppable droppableId="program-cards" type="program">
