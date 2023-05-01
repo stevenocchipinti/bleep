@@ -16,6 +16,9 @@ const Page = () => {
     number | null
   >(null)
 
+  const selectedProgram =
+    selectedProgramIndex !== null ? programs[selectedProgramIndex] : null
+
   const { isOpen, onOpen, onClose } = useDisclosure()
   // Make the browser back and forward button work for the slides
   // prettier-ignore
@@ -47,6 +50,7 @@ const Page = () => {
             history.go(newIndex - oldIndex)
             setSlideIndex(newIndex)
           }}
+          disabled={selectedProgram === null}
           enableMouseEvents
         >
           <HomeScreen
@@ -57,27 +61,34 @@ const Page = () => {
             setPrograms={setPrograms}
           />
 
-          <ConfigScreen
-            openSettingsModal={onOpen}
-            programs={programs}
-            selectedProgramIndex={selectedProgramIndex}
-            goForward={() => {
-              history.go(1)
-              setSlideIndex(2)
-            }}
-            goBack={() => {
-              history.go(-1)
-              setSlideIndex(0)
-            }}
-          />
+          {selectedProgram !== null ? (
+            <ConfigScreen
+              program={selectedProgram}
+              openSettingsModal={onOpen}
+              goForward={() => {
+                history.go(1)
+                setSlideIndex(2)
+              }}
+              goBack={() => {
+                history.go(-1)
+                setSlideIndex(0)
+              }}
+            />
+          ) : (
+            <></>
+          )}
 
-          <TimerScreen
-            goBack={() => {
-              history.go(-1)
-              setSlideIndex(1)
-            }}
-            selectedProgramIndex={selectedProgramIndex}
-          />
+          {selectedProgram !== null ? (
+            <TimerScreen
+              program={selectedProgram}
+              goBack={() => {
+                history.go(-1)
+                setSlideIndex(1)
+              }}
+            />
+          ) : (
+            <></>
+          )}
         </SwipableParent>
       </Flex>
     </>

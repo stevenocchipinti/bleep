@@ -39,7 +39,7 @@ const HomeScreen = ({
   programs,
   setPrograms,
 }: HomeScreenProps) => {
-  const [isDragging, setIsDragging] = useState(false)
+  const [_isDragging, setIsDragging] = useState(false)
 
   const onProgramDragEnd = (result: any) => {
     setIsDragging(false)

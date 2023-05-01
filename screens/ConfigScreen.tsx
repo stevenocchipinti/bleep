@@ -23,24 +23,22 @@ import {
   chakra,
 } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
-import dummyData, { Program } from "lib/dummyData"
+import { Program } from "lib/dummyData"
 import { useState } from "react"
 
 interface ConfigScreenProps {
   openSettingsModal: () => void
-  programs: Program[]
+  program: Program
   goBack: () => void
   goForward: () => void
-  selectedProgramIndex: number | null
 }
 const ConfigScreen = ({
+  program,
   openSettingsModal,
-  programs,
   goBack,
   goForward,
-  selectedProgramIndex,
 }: ConfigScreenProps) => {
-  const [isDragging, setIsDragging] = useState(false)
+  const [_isDragging, setIsDragging] = useState(false)
 
   const onBlockDragEnd = () => {
     setIsDragging(false)
@@ -62,7 +60,7 @@ const ConfigScreen = ({
             fontSize="xl"
           />
           <Heading fontWeight="thin" textAlign="center" as="h1">
-            {dummyData[selectedProgramIndex || 0].name}
+            {program.name}
           </Heading>
           <Menu>
             <MenuButton
@@ -98,7 +96,7 @@ const ConfigScreen = ({
       }
     >
       <Text textAlign="center" fontSize="xl" p={4} pb={8}>
-        {dummyData[selectedProgramIndex || 0].description}
+        {program.description}
       </Text>
 
       <DragDropContext onDragStart={onDragStart} onDragEnd={onBlockDragEnd}>
@@ -111,35 +109,33 @@ const ConfigScreen = ({
               {...provided.droppableProps}
               ref={provided.innerRef}
             >
-              {programs[selectedProgramIndex || 0].blocks.map(
-                (block, index) => (
-                  <Draggable
-                    key={`${block.name}-${index}`}
-                    draggableId={`${block.name}-${index}--TODO-needs-to-be-static`}
-                    index={index}
-                  >
-                    {(provided, snapshot) => (
-                      <CardButton
-                        text={`${block.name} for ${block.seconds} seconds`}
-                        togglesBody
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        handleProps={provided.dragHandleProps}
-                        isDragging={snapshot.isDragging}
-                        style={provided.draggableProps.style}
-                        onClick={console.log}
-                      >
-                        <chakra.ul ml={10}>
-                          <li>Wait until done</li>
-                          <li>Lead time</li>
-                          <li>Announcement</li>
-                          <li>Beeps</li>
-                        </chakra.ul>
-                      </CardButton>
-                    )}
-                  </Draggable>
-                )
-              )}
+              {program.blocks.map((block, index) => (
+                <Draggable
+                  key={`${block.name}-${index}`}
+                  draggableId={`${block.name}-${index}--TODO-needs-to-be-static`}
+                  index={index}
+                >
+                  {(provided, snapshot) => (
+                    <CardButton
+                      text={`${block.name} for ${block.seconds} seconds`}
+                      togglesBody
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      handleProps={provided.dragHandleProps}
+                      isDragging={snapshot.isDragging}
+                      style={provided.draggableProps.style}
+                      onClick={console.log}
+                    >
+                      <chakra.ul ml={10}>
+                        <li>Wait until done</li>
+                        <li>Lead time</li>
+                        <li>Announcement</li>
+                        <li>Beeps</li>
+                      </chakra.ul>
+                    </CardButton>
+                  )}
+                </Draggable>
+              ))}
               {provided.placeholder}
             </Flex>
           )}

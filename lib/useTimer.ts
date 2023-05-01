@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { playTone } from "../lib/audio"
 import type { Block, Program } from "../lib/dummyData"
 
@@ -74,16 +74,31 @@ const useTimer = ({ blocks }: Program) => {
   const [secondsLeftOfBlock, setSecondsLeftOfBlock] = useState(0)
   const [text, setText] = useState("")
 
-  const blockControllers = blocks.map(block =>
-    createBlockController(block, secondsLeft => {
-      console.log("beep", secondsLeft)
-      playTone(440, 0.3)
-      setSecondsLeftOfBlock(secondsLeft)
-      setText(block.name)
-    })
-  )
+  const reset = useCallback(() => {
+    if (currentBlockController) currentBlockController.stop()
+    setCurrentBlockController(null)
+    setStatus("stopped")
+    setCurrentBlockIndex(0)
+    setSecondsLeftOfBlock(blocks[0].seconds)
+    setText(blocks[0].name)
+  }, [blocks, currentBlockController])
 
-  const start = async () => {
+  // Reset everything if the blocks change due to a change of program
+  // Otherwise old blocks will be used
+  // prettier-ignore
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { reset() }, [blocks])
+
+  const start = useCallback(async () => {
+    const blockControllers = blocks.map(block =>
+      createBlockController(block, secondsLeft => {
+        if ([1, 2, 3].includes(secondsLeft)) playTone(440, 0.3)
+        if (secondsLeft === 0) playTone(880, 0.8)
+        setSecondsLeftOfBlock(secondsLeft)
+        setText(block.name)
+      })
+    )
+
     try {
       for (const [index, blockController] of blockControllers.entries()) {
         setStatus("running")
@@ -92,35 +107,33 @@ const useTimer = ({ blocks }: Program) => {
         await blockController.start()
       }
       reset()
-    } catch (e) {}
-  }
+    } catch (e) {
+      // Timer stopped, that's ok, do nothing
+    }
+  }, [blocks, reset])
 
-  const reset = () => {
-    if (currentBlockController) currentBlockController.stop()
-    setCurrentBlockController(null)
-    setStatus("stopped")
-    setCurrentBlockIndex(0)
-    setSecondsLeftOfBlock(blocks[0].seconds)
-    setText(blocks[0].name)
-  }
-
-  const pause = () => {
+  const pause = useCallback(() => {
     if (currentBlockController) currentBlockController.pause()
     setStatus("paused")
-  }
+  }, [currentBlockController])
 
-  const resume = () => {
+  const resume = useCallback(() => {
     if (currentBlockController) currentBlockController.resume()
     setStatus("running")
-  }
+  }, [currentBlockController])
 
-  const toggle = () => {
+  const toggle = useCallback(() => {
     if (status === "running") pause()
     if (status === "paused") resume()
     if (status === "stopped") start()
-  }
+  }, [status, pause, resume, start])
 
-  const returnVal = {
+  useEffect(() => {
+    if (blocks[0]?.name) setText(blocks[0].name)
+    if (blocks[0]?.seconds) setSecondsLeftOfBlock(blocks[0].seconds)
+  }, [blocks])
+
+  return {
     toggle,
     reset,
     currentBlockIndex,
@@ -128,9 +141,6 @@ const useTimer = ({ blocks }: Program) => {
     text,
     status,
   }
-
-  console.table(returnVal)
-  return returnVal
 }
 
 export default useTimer

@@ -8,19 +8,16 @@ import {
   CircularProgress,
   CircularProgressLabel,
 } from "@chakra-ui/react"
-import dummyData from "lib/dummyData"
+import { Program } from "lib/dummyData"
 import useTimer from "lib/useTimer"
 import useWakeLock from "lib/useWakeLock"
 import { useEffect } from "react"
 
 interface TimerScreenProps {
+  program: Program
   goBack: () => void
-  selectedProgramIndex: number | null
 }
-const TimerScreen = ({ goBack, selectedProgramIndex }: TimerScreenProps) => {
-  // TODO: Make this the chosen program program
-  const program = dummyData[0]
-
+const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
   const { toggle, reset, currentBlockIndex, secondsLeftOfBlock, text, status } =
     useTimer(program)
 
@@ -55,11 +52,12 @@ const TimerScreen = ({ goBack, selectedProgramIndex }: TimerScreenProps) => {
             aria-label="Back"
             variant="ghost"
             icon={<ArrowBackIcon />}
+            isDisabled={status === "running"}
             onClick={goBack}
             fontSize="xl"
           />
           <Heading fontWeight="thin" textAlign="center" as="h1">
-            {dummyData[selectedProgramIndex || 0].name}
+            {program.name}
           </Heading>
           <IconButton
             isDisabled={!wakeLockSupported}
