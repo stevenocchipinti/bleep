@@ -138,9 +138,7 @@ const ConfigScreen = ({
                 </Draggable>
               ))}
               {provided.placeholder}
-              <Button colorScheme="blue" variant="outline">
-                Add Step
-              </Button>
+              <Button variant="outline">Add Step</Button>
             </Flex>
           )}
         </Droppable>

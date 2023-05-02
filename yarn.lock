@@ -1906,6 +1906,16 @@
   resolved "https://registry.yarnpkg.com/@eslint/js/-/js-8.38.0.tgz#73a8a0d8aa8a8e6fe270431c5e72ae91b5337892"
   integrity sha512-IoD2MfUnOV58ghIHCiil01PcohxjbYR/qCxsoC+xNgUwh1EY8jOOrYmu3d3a71+tJJ23uscEV4X2HJWMsPJu4g==
 
+"@fontsource/commissioner@^4.5.10":
+  version "4.5.10"
+  resolved "https://registry.yarnpkg.com/@fontsource/commissioner/-/commissioner-4.5.10.tgz#30fb6aeb007f737eb21e5c10af3d2a075951e886"
+  integrity sha512-vPfo/Uz/vas0guR7yg5AABzBBW9/PMPnAsL71KgTV5/BjQpWkf3Z8TJJ6rn1GvR48IQtx+z/800V14gAqVxhTA==
+
+"@fontsource/dancing-script@^4.5.11":
+  version "4.5.11"
+  resolved "https://registry.yarnpkg.com/@fontsource/dancing-script/-/dancing-script-4.5.11.tgz#2f3a527dae348ebe0bee358b21a3bc6e123f5630"
+  integrity sha512-pYQoXhP7QEApmE7ZhbDyM/9vpBaHs4R3l4WgicHFLT63A0muibZr4osjPpnYe9US8ClR8UAUv+lNC1q0E6QY/w==
+
 "@hello-pangea/dnd@^16.2.0":
   version "16.2.0"
   resolved "https://registry.yarnpkg.com/@hello-pangea/dnd/-/dnd-16.2.0.tgz#58cbadeb56f8c7a381da696bb7aa3bfbb87876ec"

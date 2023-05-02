@@ -2,6 +2,9 @@ import type { AppProps } from "next/app"
 import Head from "next/head"
 import { ChakraProvider, extendTheme } from "@chakra-ui/react"
 
+import "@fontsource/dancing-script"
+import "@fontsource/commissioner"
+
 export const theme = extendTheme({
   config: {
     initialColorMode: "dark",
@@ -9,10 +12,17 @@ export const theme = extendTheme({
   },
   styles: {
     global: {
+      "*": {
+        WebkitTapHighlightColor: "transparent",
+      },
       "html, body, #__next, #__next > div": {
         height: "100%",
       },
     },
+  },
+  fonts: {
+    heading: "'Commissioner', sans-serif",
+    body: "'Commissioner', sans-serif",
   },
 })
 

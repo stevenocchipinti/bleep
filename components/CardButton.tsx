@@ -14,7 +14,8 @@ import {
 
 interface CardButtonProps {
   text: string
-  onClick?: React.MouseEventHandler<unknown> | undefined
+  onClick?: React.MouseEventHandler<unknown>
+  innerButtonOnClick?: React.MouseEventHandler<unknown>
   selected?: boolean
   children?: React.ReactNode
   isDragging: boolean
@@ -34,6 +35,7 @@ const CardButton = forwardRef<CardButtonProps, "div">(
       emoji,
       handleProps,
       togglesBody = false,
+      innerButtonOnClick,
       ...props
     },
     ref
@@ -72,9 +74,9 @@ const CardButton = forwardRef<CardButtonProps, "div">(
           <Spacer />
           <IconButton
             display="flex"
-            variant="unstyled"
-            aria-label="Select"
-            onClick={togglesBody ? onToggle : undefined}
+            variant="ghost"
+            aria-label="Toggle body"
+            onClick={togglesBody ? onToggle : innerButtonOnClick}
             icon={
               <ChevronRightIcon
                 transition="0.2s"

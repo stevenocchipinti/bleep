@@ -28,15 +28,15 @@ const Page = () => {
     return () => { removeEventListener("popstate", handler) }
   }, [])
 
-  const selectProgramByIndex = (index: number) => {
+  const selectProgramByIndex = (index: number, skip: boolean = false) => {
     setSelectedProgramIndex(index)
-    setSlideIndex(1)
+    setSlideIndex(skip ? 2 : 1)
 
     // Set up a history stack for the 3 slides
     history.replaceState({ slide: 0 }, "")
     history.pushState({ slide: 1 }, "")
     history.pushState({ slide: 2 }, "")
-    history.go(-1)
+    if (!skip) history.go(-1)
   }
 
   return (

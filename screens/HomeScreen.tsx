@@ -8,7 +8,6 @@ import {
   VStack,
   Heading,
   Button,
-  HStack,
   Flex,
 } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
@@ -18,7 +17,7 @@ import { useState } from "react"
 interface HomeScreenProps {
   openSettingsModal: () => void
   selectedProgramIndex: number | null
-  selectProgramByIndex: (index: number) => void
+  selectProgramByIndex: (index: number, skip?: boolean) => void
   programs: Program[]
   setPrograms: React.Dispatch<React.SetStateAction<Program[]>>
 }
@@ -64,9 +63,9 @@ const HomeScreen = ({
         </>
       }
     >
-      <Flex px={8} gap={6} justifyContent="center" alignItems="center">
+      <Flex px={8} gap={5} justifyContent="center" alignItems="center">
         <Logo h={20} />
-        <Heading as="h1" size="4xl">
+        <Heading as="h1" fontSize="7xl" fontFamily="dancing script">
           Bleep!
         </Heading>
       </Flex>
@@ -101,6 +100,10 @@ const HomeScreen = ({
                       style={provided.draggableProps.style}
                       selected={selectedProgramIndex === index}
                       onClick={() => selectProgramByIndex(index)}
+                      innerButtonOnClick={e => {
+                        e.stopPropagation()
+                        selectProgramByIndex(index, true)
+                      }}
                       emoji={program.emoji}
                     />
                   )}
@@ -108,7 +111,6 @@ const HomeScreen = ({
               ))}
               {provided.placeholder}
               <Button
-                colorScheme="blue"
                 variant="outline"
                 onClick={() => {
                   setPrograms(programs => [
@@ -123,7 +125,7 @@ const HomeScreen = ({
                   ])
                 }}
               >
-                Add Program
+                New program
               </Button>
             </VStack>
           )}
