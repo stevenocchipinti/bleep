@@ -1,13 +1,8 @@
-import SegmentedProgressBar from "@/components/SegmentedProgressBar"
-import { SwipeableChild, FooterButton } from "@/components/SwipeableView"
+import CircularProgressBar from "components/CircularProgressBar"
+import SegmentedProgressBar from "components/SegmentedProgressBar"
+import { SwipeableChild, FooterButton } from "components/SwipeableView"
 import { ArrowBackIcon, LockIcon, UnlockIcon } from "@chakra-ui/icons"
-import {
-  IconButton,
-  Heading,
-  Flex,
-  CircularProgress,
-  CircularProgressLabel,
-} from "@chakra-ui/react"
+import { IconButton, Heading, Flex } from "@chakra-ui/react"
 import { Program } from "lib/dummyData"
 import useTimer from "lib/useTimer"
 import useWakeLock from "lib/useWakeLock"
@@ -33,11 +28,17 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
     status === "running" ? enableWakeLock() : disableWakeLock()
   }, [disableWakeLock, enableWakeLock, status])
 
-  // Used for the progress bars
-  const currentBlockPercent =
-    program.blocks.length === 0
-      ? 0
-      : (secondsLeftOfBlock / program.blocks[currentBlockIndex].seconds) * 100
+  // Used for the circular progress bar
+  const currentBlockPercent = (n: number) => {
+    const currentBlockSeconds = program.blocks[currentBlockIndex].seconds
+    if (program.blocks.length === 0) return 0
+    return ((secondsLeftOfBlock + n) / currentBlockSeconds) * 100
+  }
+
+  const from = status === "stopped" ? 100 : currentBlockPercent(0)
+  const to = status === "stopped" ? 100 : currentBlockPercent(-1)
+
+  // Used for the segmented progress bar
   const progressBarData = program.blocks.map((block, index) => ({
     width: block.seconds || 0,
     percentDone:
@@ -96,18 +97,13 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
           blocks={progressBarData}
           animate={status === "running"}
         />
-        <CircularProgress
-          transition="1s linear"
-          trackColor="gray.700"
-          color="teal.300"
-          capIsRound
-          size="full"
-          value={currentBlockPercent}
-        >
-          <CircularProgressLabel fontSize="6xl">
-            {secondsLeftOfBlock || "00:00"}
-          </CircularProgressLabel>
-        </CircularProgress>
+
+        <CircularProgressBar
+          from={from}
+          to={to}
+          text={`${secondsLeftOfBlock}` || "00:00"}
+        ></CircularProgressBar>
+
         <Heading size="3xl" textAlign="center">
           {text}
         </Heading>
