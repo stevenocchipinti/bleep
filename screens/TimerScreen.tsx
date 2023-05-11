@@ -1,3 +1,5 @@
+import { useEffect } from "react"
+import { useMachine } from "@xstate/react"
 import CircularProgressBar from "components/CircularProgressBar"
 import SegmentedProgressBar from "components/SegmentedProgressBar"
 import { SwipeableChild, FooterButton } from "components/SwipeableView"
@@ -6,15 +8,18 @@ import { IconButton, Heading, Flex } from "@chakra-ui/react"
 import { Program } from "lib/dummyData"
 import useTimer from "lib/useTimer"
 import useWakeLock from "lib/useWakeLock"
-import { useEffect } from "react"
+import timerMachine from "lib/timerMachine"
 
 interface TimerScreenProps {
   program: Program
   goBack: () => void
 }
 const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
-  const { toggle, reset, currentBlockIndex, secondsLeftOfBlock, text, status } =
-    useTimer(program)
+  const [state, send] = useMachine(timerMachine)
+  console.table(state)
+
+  const currentBlockIndex = 0
+  const secondsLeftOfBlock = state.context.secondsRemaining
 
   const {
     wakeLockEnabled,
@@ -25,8 +30,8 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
   } = useWakeLock()
 
   useEffect(() => {
-    status === "running" ? enableWakeLock() : disableWakeLock()
-  }, [disableWakeLock, enableWakeLock, status])
+    state.matches("running") ? enableWakeLock() : disableWakeLock()
+  }, [disableWakeLock, enableWakeLock, state])
 
   // Used for the circular progress bar
   const currentBlockPercent = (n: number) => {
@@ -35,15 +40,15 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
     return ((secondsLeftOfBlock + n) / currentBlockSeconds) * 100
   }
 
-  const from = status === "stopped" ? 100 : currentBlockPercent(0)
-  const to = status === "stopped" ? 100 : currentBlockPercent(-1)
+  const from = state.matches("stopped") ? 100 : currentBlockPercent(0)
+  const to = state.matches("stopped") ? 100 : currentBlockPercent(-1)
 
   // Used for the segmented progress bar
   const progressBarData = program.blocks.map((block, index) => ({
     width: block.seconds || 0,
     percentDone:
       currentBlockIndex === index
-        ? status === "stopped" ? 0 : 1 - secondsLeftOfBlock / block.seconds
+        ? state.matches("stopped") ? 0 : 1 - secondsLeftOfBlock / block.seconds
         : currentBlockIndex > index ? 1 : 0, // prettier-ignore
   }))
 
@@ -55,7 +60,7 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
             aria-label="Back"
             variant="ghost"
             icon={<ArrowBackIcon />}
-            isDisabled={status === "running"}
+            isDisabled={state.matches("running")}
             onClick={goBack}
             fontSize="xl"
           />
@@ -74,15 +79,30 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
       }
       footer={
         <>
-          <FooterButton isDisabled={status === "stopped"} onClick={reset}>
+          <FooterButton
+            isDisabled={!state.can({ type: "RESET" })}
+            onClick={() => send("RESET")}
+          >
             Reset
           </FooterButton>
-          <FooterButton
-            isDisabled={program.blocks.length === 0}
-            onClick={toggle}
-          >
-            {status === "running" ? "Pause" : "Start"}
-          </FooterButton>
+
+          {state.can({ type: "PAUSE" }) && (
+            <FooterButton
+              isDisabled={program.blocks.length === 0}
+              onClick={() => send("PAUSE")}
+            >
+              Pause
+            </FooterButton>
+          )}
+
+          {state.can({ type: "START" }) && (
+            <FooterButton
+              isDisabled={!state.can({ type: "START" })}
+              onClick={() => send("START")}
+            >
+              Start
+            </FooterButton>
+          )}
         </>
       }
     >
@@ -95,7 +115,7 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
       >
         <SegmentedProgressBar
           blocks={progressBarData}
-          animate={status === "running"}
+          animate={state.matches("running")}
         />
 
         <CircularProgressBar
@@ -105,7 +125,7 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
         ></CircularProgressBar>
 
         <Heading size="3xl" textAlign="center">
-          {text}
+          Machine test
         </Heading>
       </Flex>
     </SwipeableChild>
