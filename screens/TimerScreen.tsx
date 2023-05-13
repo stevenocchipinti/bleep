@@ -16,7 +16,8 @@ interface TimerScreenProps {
 }
 const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
   const [state, send] = useMachine(timerMachine)
-  console.table(state)
+  console.log(state.value)
+  console.table(state.context)
 
   const currentBlockIndex = 0
   const secondsLeftOfBlock = state.context.secondsRemaining
