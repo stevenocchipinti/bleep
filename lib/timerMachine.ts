@@ -1,24 +1,31 @@
-import { createMachine, assign } from "xstate"
+import { createMachine, assign, send } from "xstate"
 import dummyData from "./dummyData"
 
 const dummyProgram = dummyData[0]
 
+type LoadedEvent = {
+  type: "LOADED"
+  data: typeof dummyProgram
+}
+
 const timerMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5QBcCWBbMAnAdAGQHsBDCVAOygGIICywdyA3Aga3rU10JPKgSYIBjImloBtAAwBdSVMSgADgVipRZeSAAeiALQBGCRJwBWAGymAzAE4LxiXYsAOCwCYANCACeul3qs4rABZAvQtTAHYXCVM7YwsAX3iPDmwcWGQCBQVISgBlABUAQQAlfNkNJRU1DW0EHRcXHHCrFxtHF1dA30dw4w9vBEDjHHbjF2MQmJdHONNE5IxUrABXMjJeSgAFQoBVXIBRcqQQStVUWhrEPUCcC2tHQIte-sQLUNuraL8DPT8rY3mIBSuBWaw2xX2BzK0gqyjOF2OtT0pkcARR4Uc9j0vQxencXl0eNuLi6eh6AKSQMWINW6wolCOijh1URiF8eluxhs4WCPPCFhC+IGOhRI3CBkcktsvWMGMBwJwoLpUBwggIqzQFAABDQAO5kSj5ACSAGEANKMk7M87qVkIKI3KymCROzHY2WOPEvBChVESXHjeXUnAKIjLWA5CFQy2nFmgWr6cYjT6mcbeoI4aZ4ikLTghsMRiB5IqlGPWhHxxD+QJOl1PPoEn3WExWcIxVMUylkAgQOAaYGwqo2y51MI3exBBqBcKGVNC3SuDlBZytYzI+xhIN57ikCiD+G2yuj5E4CddEkz6INb31AU4YIr0xWB6tGYuLepdKZbIQfdxrSEtip5vGmjY6BmqYGNyOZUnmSq8H+w52qE4QjFygT2GuOKevOCB2CYAYkiiJI1nMlIKvBFCquqZCalAOoEPqiEVgBPozGhQSYe6Abeh0-gSCBMEKqG4aQMxh6sYmRjQd6bwWB8V6dvEQA */
+    /** @xstate-layout N4IgpgJg5mDOIC5QBcCWBbMAnAdAGQHsBDCVAOygGIICywdyA3Aga3rU10JPKgSYIBjImloBtAAwBdSVMSgADgVipRZeSAAeiACwBWHHr0SAjAA4JOgGx6zJgEw6AzABoQAT0QBaExKs5LAE4TAHZHKydAvStHAF9Ytw5sHFhkAgUFSEoAZQAVAEEAJVzZDSUVNQ1tBCcJQJwdCRDm+xCzPXtg1w9EBwNAgacQyNsQ50t4xIxkrABXMjJeSgAFfIBVbIBRUqQQctVUWirEeybDYesnJ2MJJxs9N08EHU6cK2d2wJ0zYaszK0mICSuDmCyWhU2WxK0jKygOR121ScrUMPx+VjGgT8Jh0j0QYRwZheERaWPsNgBCSB0xB80WFEoO0UcMqiN0fwaUXsTmcRnadjxz3s5yiVluL3s0TMgOBOFB9KgOEEBHmaAoAAIaAB3MiUXIASQAwgBpJl7FmHdRs552AJtYI6LF6a5-QXOkKEwJmMxOEzI8l-ewymk4BREWawLIQqFm-as0DVZ04AM895EmwmJ2CyX1cZY0IOsXNYOcUPhyMQHIFYqxi0IhMnM7DELO-32VpGXE9GpWeqZv2mVqBewOHTxKlkAgQOAaYGwiqW44ILynHAF50-ExGEeRQVeZEGEJWDNfIa1MxfEvJbikCjz+FWhsIFFmU7WBxEnRtKwmPfcszJseHT6HUXqBO8V64Kk6SZBA97xloiDXG81jvCOFi9g4gSCiY-ivlExg2F+uFjJBcp0rw8GLtaQx9t6-oSB0YqtFYgpXP4GY4nogS+hS-xkfKvBKiqZBqlAmoEDqVH1ohQoeuYPrtox5ISCxgovDoa56CYOISPygRHkGVKymGEaQNJj6yR0yatK0Ol3MEF7qa87xON6GJfAMrTjrEQA */
     id: "timer",
     initial: "Loading",
     context: {
-      secondsRemaining: 30,
       program: null,
+      currentBlockIndex: 0,
+      secondsRemaining: 0,
     },
     schema: {
       context: {} as {
-        secondsRemaining: number
         program: typeof dummyProgram | null
+        currentBlockIndex: number
+        secondsRemaining: number
       },
       events: {} as
-        | { type: "LOADED"; data: typeof dummyProgram }
+        | LoadedEvent
         | { type: "START" }
         | { type: "RESET" }
         | { type: "PAUSE" }
@@ -58,7 +65,7 @@ const timerMachine = createMachine(
         states: {
           "counting down": {
             invoke: {
-              src: "timerInterval",
+              src: "startTimer",
             },
 
             on: {
@@ -81,7 +88,6 @@ const timerMachine = createMachine(
       paused: {
         on: {
           RESET: "stopped",
-
           START: "running",
         },
       },
@@ -91,27 +97,52 @@ const timerMachine = createMachine(
   },
   {
     guards: {
-      timerFinished: context => context.secondsRemaining === 0,
+      timerFinished: ({ program, currentBlockIndex, secondsRemaining }) =>
+        !!program &&
+        secondsRemaining === 0 &&
+        currentBlockIndex === program.blocks.length - 1,
     },
     actions: {
-      decrementTimer: assign({
-        secondsRemaining: ({ secondsRemaining }) => secondsRemaining - 1,
+      decrementTimer: assign(context => {
+        const { program, currentBlockIndex, secondsRemaining } = context
+        if (!program || currentBlockIndex === null) return context
+
+        let newSecondsRemaining = secondsRemaining - 1
+        let newCurrentBlockIndex = currentBlockIndex
+
+        if (
+          newSecondsRemaining <= 0 &&
+          currentBlockIndex < program.blocks.length - 1
+        ) {
+          newCurrentBlockIndex++
+          newSecondsRemaining = program.blocks[newCurrentBlockIndex].seconds
+        }
+
+        return {
+          secondsRemaining: newSecondsRemaining,
+          currentBlockIndex: newCurrentBlockIndex,
+          program,
+        }
       }),
+
       resetTimer: assign({
-        secondsRemaining: 30,
+        secondsRemaining: ({ program }) => program?.blocks[0].seconds || 0,
+        currentBlockIndex: 0,
       }),
+
       assignProgram: assign({
-        program: (_, event: { type: "LOADED"; data: typeof dummyProgram }) =>
-          event.data,
+        program: (_, event: LoadedEvent) => event.data,
+        currentBlockIndex: 0,
       }),
     },
     services: {
-      timerInterval: () => send => {
+      startTimer: () => send => {
+        send("TICK")
         const interval = setInterval(() => send("TICK"), 1000)
         return () => clearInterval(interval)
       },
       loadData: () => {
-        return new Promise((resolve, reject) => {
+        return new Promise(resolve => {
           setTimeout(() => {
             resolve(dummyProgram)
           }, 1000)

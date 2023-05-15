@@ -19,7 +19,8 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
   console.log(state.value)
   console.table(state.context)
 
-  const currentBlockIndex = 0
+  const currentBlockIndex = state.context.currentBlockIndex
+  const currentBlock = program.blocks[currentBlockIndex]
   const secondsLeftOfBlock = state.context.secondsRemaining
 
   const {
@@ -126,7 +127,7 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
         ></CircularProgressBar>
 
         <Heading size="3xl" textAlign="center">
-          Machine test
+          {currentBlock.name}
         </Heading>
       </Flex>
     </SwipeableChild>
