@@ -45,10 +45,11 @@ const dummyData: Program[] = [
     description: "A yoga program that I just made up for the dummy data",
     emoji: "🧘",
     blocks: [
-      { type: "timer", name: "Downward Dog", seconds: 5 },
-      { type: "timer", name: "Upward Dog", seconds: 5 },
-      { type: "timer", name: "Cobra", seconds: 5 },
-      { type: "timer", name: "Downward Dog", seconds: 5 },
+      {
+        type: "timer",
+        name: "Downward Dog",
+        seconds: 5,
+      },
       { type: "timer", name: "Upward Dog", seconds: 5 },
       { type: "timer", name: "Cobra", seconds: 5 },
       { type: "timer", name: "Child's Pose", seconds: 5 },

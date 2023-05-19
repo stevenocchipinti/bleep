@@ -32,9 +32,24 @@ const speak = (text: string) =>
     utterance.voice =
       speechSynthesis.getVoices().find(voice => voice.default) ||
       speechSynthesis.getVoices()[0]
-    utterance.onerror = reject
+    // utterance.onerror = () => reject("Error speaking")
     utterance.onend = resolve
     speechSynthesis.speak(utterance)
+  })
+
+// NOTE: Pretty sure this can't be cancelled
+const speakCountdown = (seconds: number) =>
+  new Promise<void>(async (resolve, reject) => {
+    let secondsRemaining = seconds
+    speak("Starting in").catch(reject)
+    const interval = setInterval(() => {
+      if (secondsRemaining === 0) {
+        clearInterval(interval)
+        resolve()
+      } else {
+        speak(`${secondsRemaining--}`).catch(reject)
+      }
+    }, 1000)
   })
 
 const useVoices = () => {
@@ -50,4 +65,4 @@ const useVoices = () => {
   return voices
 }
 
-export { playTone, speak, useVoices }
+export { playTone, speak, speakCountdown, useVoices }
