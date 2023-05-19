@@ -17,7 +17,7 @@ interface TimerScreenProps {
 const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
   const [state, send] = useMachine(timerMachine)
   console.log(state.value)
-  console.table(state.context)
+  // console.table(state.context)
 
   const currentBlockIndex = state.context.currentBlockIndex
   const currentBlock = program.blocks[currentBlockIndex]
@@ -41,9 +41,12 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
     if (program.blocks.length === 0) return 0
     return ((secondsLeftOfBlock + n) / currentBlockSeconds) * 100
   }
-
-  const from = state.matches("stopped") ? 100 : currentBlockPercent(0)
-  const to = state.matches("stopped") ? 100 : currentBlockPercent(-1)
+  const from = state.matches({ running: "counting down" })
+    ? currentBlockPercent(0)
+    : 100
+  const to = state.matches({ running: "counting down" })
+    ? currentBlockPercent(-1)
+    : 100
 
   // Used for the segmented progress bar
   const progressBarData = program.blocks.map((block, index) => ({
@@ -126,7 +129,14 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
           text={`${secondsLeftOfBlock}` || "00:00"}
         ></CircularProgressBar>
 
-        <Heading size="3xl" textAlign="center">
+        <Heading
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          flexGrow={1}
+          size="3xl"
+          textAlign="center"
+        >
           {currentBlock.name}
         </Heading>
       </Flex>
