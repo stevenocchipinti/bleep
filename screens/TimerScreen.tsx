@@ -6,7 +6,6 @@ import { SwipeableChild, FooterButton } from "components/SwipeableView"
 import { ArrowBackIcon, LockIcon, UnlockIcon } from "@chakra-ui/icons"
 import { IconButton, Heading, Flex } from "@chakra-ui/react"
 import { Program } from "lib/dummyData"
-import useTimer from "lib/useTimer"
 import useWakeLock from "lib/useWakeLock"
 import timerMachine from "lib/timerMachine"
 
