@@ -1,5 +1,4 @@
 import { useEffect } from "react"
-import { useMachine } from "@xstate/react"
 import CircularProgressBar from "components/CircularProgressBar"
 import SegmentedProgressBar from "components/SegmentedProgressBar"
 import { SwipeableChild, FooterButton } from "components/SwipeableView"
@@ -7,14 +6,15 @@ import { ArrowBackIcon, LockIcon, UnlockIcon } from "@chakra-ui/icons"
 import { IconButton, Heading, Flex } from "@chakra-ui/react"
 import { Program } from "lib/dummyData"
 import useWakeLock from "lib/useWakeLock"
-import timerMachine from "lib/timerMachine"
+import { useTimerActor } from "lib/useTimerMachine"
 
 interface TimerScreenProps {
   program: Program
   goBack: () => void
 }
 const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
-  const [state, send] = useMachine(timerMachine)
+  const [state, send] = useTimerActor()
+
   console.log(state.value)
   // console.table(state.context)
 

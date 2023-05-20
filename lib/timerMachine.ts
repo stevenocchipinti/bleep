@@ -1,6 +1,6 @@
 import { createMachine, assign, send } from "xstate"
 import dummyData from "./dummyData"
-import { speak, speakCountdown } from "./audio"
+import { speak } from "./audio"
 
 const dummyProgram = dummyData[0]
 
@@ -175,11 +175,10 @@ const timerMachine = createMachine(
     },
 
     services: {
-      loadData: () => {
-        return new Promise(resolve => {
+      loadData: () =>
+        new Promise(resolve => {
           setTimeout(() => resolve(dummyProgram), 1000)
-        })
-      },
+        }),
       startTimer: () => send => {
         const interval = setInterval(() => send("TICK"), 1000)
         return () => clearInterval(interval)
