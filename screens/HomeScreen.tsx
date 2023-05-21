@@ -12,24 +12,28 @@ import {
 } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
 import { Program } from "lib/dummyData"
+import { useTimerActor } from "lib/useTimerMachine"
 import { useState } from "react"
 
 interface HomeScreenProps {
   openSettingsModal: () => void
-  selectedProgramIndex: number | null
   selectProgramByIndex: (index: number, skip?: boolean) => void
-  programs: Program[]
   setPrograms: React.Dispatch<React.SetStateAction<Program[]>>
 }
 
 const HomeScreen = ({
   openSettingsModal,
-  selectedProgramIndex,
   selectProgramByIndex,
-  programs,
   setPrograms,
 }: HomeScreenProps) => {
   const [_isDragging, setIsDragging] = useState(false)
+
+  const [state, send] = useTimerActor()
+  console.table(state.context)
+  console.log(state.value)
+
+  const programs = state.context.allPrograms
+  const selectedProgramIndex = state.context.selectedProgramIndex
 
   const onProgramDragEnd = (result: any) => {
     setIsDragging(false)

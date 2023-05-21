@@ -8,13 +8,14 @@ import SettingsModal from "components/SettingsModal"
 import HomeScreen from "screens/HomeScreen"
 import ConfigScreen from "screens/ConfigScreen"
 import TimerScreen from "screens/TimerScreen"
+import { useTimerActor } from "lib/useTimerMachine"
 
 const Page = () => {
   const [programs, setPrograms] = useState(dummyData)
   const [slideIndex, setSlideIndex] = useState(0)
-  const [selectedProgramIndex, setSelectedProgramIndex] = useState<
-    number | null
-  >(null)
+
+  const [state, send] = useTimerActor()
+  const selectedProgramIndex = state.context.selectedProgramIndex
 
   const selectedProgram =
     selectedProgramIndex !== null ? programs[selectedProgramIndex] : null
@@ -29,7 +30,7 @@ const Page = () => {
   }, [])
 
   const selectProgramByIndex = (index: number, skip: boolean = false) => {
-    setSelectedProgramIndex(index)
+    send({ type: "SELECT_PROGRAM", index })
     setSlideIndex(skip ? 2 : 1)
 
     // Set up a history stack for the 3 slides
@@ -55,9 +56,7 @@ const Page = () => {
         >
           <HomeScreen
             openSettingsModal={onOpen}
-            selectedProgramIndex={selectedProgramIndex}
             selectProgramByIndex={selectProgramByIndex}
-            programs={programs}
             setPrograms={setPrograms}
           />
 
