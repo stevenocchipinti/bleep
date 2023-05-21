@@ -11,6 +11,7 @@ type TickEvent = { type: "TICK" }
 type LeadTickEvent = { type: "LEAD_TICK" }
 type FinishLeadIn = { type: "FINISH_LEAD_IN" }
 type SelectProgramEvent = { type: "SELECT_PROGRAM"; index: number }
+type ContinueEvent = { type: "CONTINUE" }
 type ReorderProgramsEvent = {
   type: "REORDER_PROGRAMS"
   sourceIndex: number
@@ -26,11 +27,12 @@ type Events =
   | TickEvent
   | LeadTickEvent
   | FinishLeadIn
+  | ContinueEvent
   | ReorderProgramsEvent
 
 const timerMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5QBcCWBbMAnAdAGwHsBDCVAOygGIICywdyA3Aga3rU10JPKgSYIBjImloBtAAwBdSVMSgADgVipRZeSAAeiAGwBmHACYALPoCcOgIw6JAVj1mAHDoA0IAJ6JDO2zmPGJS2NDCUdDe2M9WwBfaLcObBwFLAIoLCJ0AAIyAmRM2DA8MEFkSEoAZQBRABlKgGEAFQB9AAUAJQB5AHE2gEEAWVkNJRU1DW0EW19jR2MAdgk5vR05xz09CWM3TwR5iT9F4zMJQxCJPUcg2PiMROTU9KyCopLIHFhkAgUFMvKG3raDSGSBAI1UqFo40QlgkOhwa2CQVshjmc0MZn820QZj0hnhOn0kQ2YXCc2uIASuHuaQy+UKxVKEBwWAArmQyLxKC1egBVKrAxTKcGQkETZx4jaBKbeAkzVweRCOWyWHBOE6OHE6MyGC6GcmUpIpGlPemvJms9mctqVKpA6TDIVjUWIBz7FbKxxrRyoqyOLEIS4q2zGWwnJxmSwXWyOfW3KlGx50l6M5lsjkUSgC0GOiHqZ27WxmHDRhyFtHnJV6f2oouekLBExzbXzWOcQ0PWnPBlvC3pqA4QQENloCiZGgAdzIlAaAEk6gBpLNgp2gCaWaxwnwe8LonSRf2WHXGHDrdZzdc6HX6HStu4JzumlO93gDodkEdQMcESeZ+0g5e5lCCCXgYF5WIYlgYlMthzAe6xwoY3pSmqaJ6Le8YdiayY9mmL69Oyb6CLwmQAEaEIILDULQ9ACGwOAGtSiZdmaqaWhQOD4TkbJEaOZFCCw-BkMwwhqLIS45iKq4uvoOCWDBe51kqRxVgqCDrlMxYwbMwbhhGxjoe2xpJt25q4exnGEcRg7DhOU61L0AAiTSzgu4mjIB+aor4MEBAE3o+P5B6kieEhmNqyLWE2IYGYxD7YaZbH9hZ3FWW+yC2ZQABiM4AHIzuUAASTT2U5uVucKeZSQG6zFrMCx6JYTa+pYB5ycedirJGJzuvpcQUnGhlMY+bwKEQLIFBAlDWra5UrloiDRr4l7BssJj+NYWyqQsx5zEckROFqu3BjF95YSZSRjRNFT-ICs0eVVXk4Ki1gWHMyoov6SoqmqiGatquoGdwpAZtgKRUngIgAGYEFg6D0QNQO8IJwkiLmYl-oK7mSfNCAmL4YRrBI5wXJEyoqTsMLHj4RMrRBpyojGfUMadxlmhUNT1M07TdH0gwY9mWOVTj57Hv4GyRLMSq7YY-rGIeT32HJb0XgTBk5JksXoLAVF0AwQmsOwA3q5rsDI0IqPiNId3YxMuJwvYURywiEGerYB4aXou0zBikF1j4sR9TkEBwBolIOoLQEALQGASSrOLMISQciMuqY1smhnYpMontiyA8QwNQOHFVAciT0NXJxw6o1Rx+qnixGBskFvY4RN6HLvU3G2mvZLkrOMkXc0TEcqpHPYoUWK9sz+g47VhdqWqWGEqEnZhfeQAP904-4J4NXLDUwWqMz+lYcxGHth4yhqTgr0ZzEph8Xw-BAG829ix6K-JqxRDCLVbWnYSHiinLGEmwb5DXiqxPsL8hYTG1DvIIkYlaH1rhTc4+wOqXELGcOwZgwFxXOs+di1l3zEVstAoCP9T5HWRBqc8cwrC-wpl1TSqwM62C1NePBZ0WKEKSgRFKvFyIsHIfmII+x1gIP3k2FuR9U7rlPlML+ME7Aam8FwteCU+wcX4WQHin5iHpW-ELACr9Ji7T8H5JuM9oytTTootYyjozz3UXfEal117-gkjAxAj11gtwxPVEmsEtqbCentXaCx2GRj1EzI2BANanXgJ4iO+Z7COD8Msc4MEzimHlKg0+OpAhmHsGiEIyJcEByAA */
+    /** @xstate-layout N4IgpgJg5mDOIC5QBcCWBbMAnAdAGwHsBDCVAOygGIICywdyA3Aga3rU10JPKgSYIBjImloBtAAwBdSVMSgADgVipRZeSAAeiAGwBmHACYALPoCcOgIw6JAVj1mAHDoA0IAJ6JDO2zmPGJS2NDCUdDe2M9WwBfaLcObHxiUgpKbCwCXAU8EQAzTPQcBK5k3n4yZmE1WVkNJRU1DW0EE18wxz0JCT09R0jbSz03TwRLCWMcHy7bSMNLQ0MAdkXHWPiMRIUMqCwidAACMgJkfdgwPDBBZEhKAGUAUQAZe4BhABUAfQAFACUAeQA4j8AIIAWVqSBA9VUqFoTUQtl8xj6iwkiz0OhWPXGw0QxlRfjRxjMEgWXV6QTWIGKOC2BB2e1O50u1wgdyer0+v0BIPB0jqyhhcMhzWxfmsGMGi30wUWuIQ+IkhMWxNJIW6YSpNLpDIOZwuV0gOFgyAICgUN1ub2BPzeEMUgsaIsQYx0OA6wSCtiWi0MZn88rMekM7p0MuxYXCiy1Gyy212euZhogOCwAFcyGReJQvsCAKoPe1Qx2w9TOhDOEOdQKI7xh5GuDyIRwDHBOUmOIM6MyGXqGGOcWnxxn6llG9OZ7M-e4PO38yHQp2gUUkyaLAaODqOZZWRzyxyWSw4Ga2UlOMyDFurOLU2ND+kJpkG1mpjNZ1JFxel+EK2xmY8dGYf6+hq9jyss-6biEwQmIsPb4gOmzDomz7jm+vA4IIBAZmgFD7DQADuZCUG8ACSLwANKfiWwrLgi9g4KEhjOC2+LbhY8qWNKIYWHoqLemGZjojoiFxg+I5Ji+E7vlAmHYWQuFQPhBBEZQ1ENN+5YXiGOh+j4JIWOEm6cZYLaMaZxi2GEOhhMi-Y3tqyFPmOKbSRhwKZvJgi8PsABGhCCCw1C0PQAhsEUd46o+o7Jq+k4UDgHlHBm3l4f5QgsOUlQiKWNTzg6Gm0VoiB6PiOCSv44wtiYxKcZ0BgSPBcEklYtjRg5kVOTFUnoQlSVeT5WE4YRxHPMCAAiHxkZR6lCmWdEIIibrzH+yJ-t2VjGJxMwTNKjh2Cs+hSnoon3rqzmxW5fWeSlg3ycgI2UAAYqRABypG3AAEh8Y2TW9s1LsVCDdosRgSJiESbnxYbbf6RgOCqxhcfoDgiR1g5RRJqEpgoRBpmcbLTrOAOaQtVm+LpMwYjVSM6FtTYIKiu3EpETgg5ZxinZjKEubSeME3c1q2iTRXNMsvjLNYFjrvMcoMy2R7tsxXY9n2p1HPs3OwMFdAMBUrDsHeGta1lQg5eI0gi-NQPBm69hREjHpzJutjbb4fH+J2SNONZMTo0h4k85dvWyf1t1pQFQU0LrYWGxjXWSWh8WhzdZCpUp6WBabVS5ZblhyAuNHW80h5Ht0kt0+D1iHZxSNKnTSz+sEPZhCd-tied3VJzJiUEUQMJ4VhCnkGmYCUC8fyvWRr15vcVs-iE-7emYJILKiQbeq7DOHj0RiHt2DsnvYsQ3kcEBwBoxQCoVxeIAAtEEIaNeuwSenByOcaDlinnYdnehitZTrcBSFAa+c0fzehwOiQ8f5SR6C4sSPc280Tw0CEJKy5Ikac3bmdR8RwThdwgGAwGzRiRtmJPYRqFhpZ9HlA4CYVCezdlMksXsXME7Y2IaTIGd84bPxmCYOY79pTyisKDEwTdy58QEewwOF0XwmjNBaIhhcb4-jhvYb+0osQDECOBLi7o5iN38IeLo2D1jxzkYQuKMkuGi3vqYRi6DX5CIvCI5BwYcCmQPPtYkjdrwWIDp3ROrkQ5yRwj5Eadjb7A23OVEkURgx+LmI2EY1dQa00alEXSnYliyOCdjGx7lU7pz8pHaJP5ggSwhpZVWzEowmUsP+GyYQgimFJJTfJ0UQlFOuslNOd1hoqWtl+exwMGL6HCNiboPZwi1zmGuBwzFSrIk9F0rGvNcb40gBU8s4tyq9EaoqHoKJwLjCgSzFU-ErDBnVgQTWyF4CqPAeWewjg-AYm6G1dUphUkuhQb2NB9hfQhGXusoOPVk6937opfYQ9cKj12QtRWpJLLrhWCEWyCwTK2GWlBfEQRBjBDbrEIAA */
     id: "timer",
 
     initial: "loading",
@@ -128,7 +130,17 @@ const timerMachine = createMachine(
               "Announcing block": {
                 invoke: {
                   src: "announceBlock",
-                  onDone: "Announcing countdown",
+
+                  onDone: [
+                    {
+                      target: "Announcing countdown",
+                      cond: "isTimerBlock",
+                    },
+                    {
+                      target: "Awaiting continue",
+                      cond: "isPauseBlock",
+                    },
+                  ],
                 },
 
                 exit: "stopTalking",
@@ -148,6 +160,15 @@ const timerMachine = createMachine(
                   },
 
                   FINISH_LEAD_IN: "counting down",
+                },
+              },
+
+              "Awaiting continue": {
+                on: {
+                  CONTINUE: {
+                    target: "Announcing block",
+                    actions: "incrementBlock",
+                  },
                 },
               },
             },
@@ -199,6 +220,10 @@ const timerMachine = createMachine(
         !!program &&
         secondsRemaining === 0 &&
         currentBlockIndex < program.blocks.length - 1,
+      isTimerBlock: ({ program, currentBlockIndex }) =>
+        !!program && program.blocks[currentBlockIndex].type === "timer",
+      isPauseBlock: ({ program, currentBlockIndex }) =>
+        !!program && program.blocks[currentBlockIndex].type === "pause",
     },
 
     actions: {
@@ -207,13 +232,18 @@ const timerMachine = createMachine(
       }),
       incrementBlock: assign({
         currentBlockIndex: ({ currentBlockIndex }) => currentBlockIndex + 1,
-        secondsRemaining: ({ program, currentBlockIndex }) =>
-          program?.blocks[currentBlockIndex + 1].seconds || 0,
+        secondsRemaining: ({ program, currentBlockIndex }) => {
+          const block = program?.blocks[currentBlockIndex + 1]
+          return block?.type === "timer" ? block.seconds : 0
+        },
       }),
       resetTimer: assign({
-        secondsRemaining: ({ program }) => program?.blocks[0].seconds || 0,
         leadSecondsRemaining: 3,
         currentBlockIndex: 0,
+        secondsRemaining: ({ program, currentBlockIndex }) => {
+          const block = program?.blocks[currentBlockIndex + 1]
+          return block?.type === "timer" ? block.seconds : 0
+        },
       }),
       stopTalking: () => {
         speechSynthesis.cancel()

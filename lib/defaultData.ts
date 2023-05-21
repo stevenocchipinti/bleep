@@ -4,14 +4,13 @@ export interface TimerBlock {
   seconds: number
 }
 
-export interface RepsBlock {
-  type: "reps"
+export interface PauseBlock {
+  type: "pause"
   name: string
-  reps: number
+  reps?: number
 }
 
-/* export type Block = TimerBlock | RepsBlock */
-export type Block = TimerBlock
+export type Block = TimerBlock | PauseBlock
 
 export interface Program {
   id: string
@@ -22,23 +21,35 @@ export interface Program {
 }
 
 const defaultData: Program[] = [
-  /* {
+  {
+    id: "foo",
+    name: "Foo",
+    description: "A simple test program",
+    emoji: "💥",
+    blocks: [
+      { type: "timer", name: "Warmup", seconds: 10 },
+      { type: "pause", name: "A pause" },
+      { type: "pause", name: "A pause with reps", reps: 25 },
+      { type: "timer", name: "Cool down", seconds: 5 },
+    ],
+  },
+  {
     id: "kaz",
     name: "Knee Ability Zero",
     description: "Knee Ability Zero is a knee rehab program by Ben Patrick",
     emoji: "🦵",
     blocks: [
-      { type: "reps", name: "Tibialis Raise", reps: 25 },
-      { type: "reps", name: "FHL Calf Raise", reps: 25 },
-      { type: "reps", name: "Tibialis Raise (again)", reps: 25 },
-      { type: "reps", name: "KOT Calf Raise", reps: 25 },
-      { type: "reps", name: "Patrick Step", reps: 25 },
-      { type: "reps", name: "ATG Split Squat", reps: 25 },
-      { type: "reps", name: "Elephant Walk", reps: 30 },
+      { type: "pause", name: "Tibialis Raise", reps: 25 },
+      { type: "pause", name: "FHL Calf Raise", reps: 25 },
+      { type: "pause", name: "Tibialis Raise (again)", reps: 25 },
+      { type: "pause", name: "KOT Calf Raise", reps: 25 },
+      { type: "pause", name: "Patrick Step", reps: 25 },
+      { type: "pause", name: "ATG Split Squat", reps: 25 },
+      { type: "pause", name: "Elephant Walk", reps: 30 },
       { type: "timer", name: "L-Sit", seconds: 60 },
       { type: "timer", name: "Couch Stretch", seconds: 60 },
     ],
-  }, */
+  },
   {
     id: "yoga",
     name: "Yoga",
