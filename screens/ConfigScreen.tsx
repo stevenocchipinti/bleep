@@ -128,7 +128,13 @@ const ConfigScreen = ({
                 >
                   {(provided, snapshot) => (
                     <CardButton
-                      text={`${block.name} for ${block.seconds} seconds`}
+                      text={`${block.name} ${
+                        block.type === "timer"
+                          ? `for ${block.seconds} seconds`
+                          : typeof block?.reps === "number"
+                          ? `for ${block.reps} reps`
+                          : ""
+                      }`}
                       togglesBody
                       ref={provided.innerRef}
                       {...provided.draggableProps}

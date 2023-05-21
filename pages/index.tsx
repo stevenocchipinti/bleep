@@ -17,6 +17,8 @@ const Page = () => {
   const [state, send] = useTimerActor()
   const selectedProgramIndex = state.context.selectedProgramIndex
 
+  const hasProgramSelected = state.matches("program selected")
+  const isRunning = state.matches({ "program selected": "running" })
   const selectedProgram =
     selectedProgramIndex !== null ? programs[selectedProgramIndex] : null
 
@@ -51,7 +53,7 @@ const Page = () => {
             history.go(newIndex - oldIndex)
             setSlideIndex(newIndex)
           }}
-          disabled={selectedProgram === null}
+          disabled={!hasProgramSelected || isRunning}
           enableMouseEvents
         >
           <HomeScreen
