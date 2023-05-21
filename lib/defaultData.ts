@@ -21,7 +21,7 @@ export interface Program {
   blocks: Block[]
 }
 
-const dummyData: Program[] = [
+const defaultData: Program[] = [
   /* {
     id: "kaz",
     name: "Knee Ability Zero",
@@ -76,4 +76,4 @@ const dummyData: Program[] = [
   },
 ]
 
-export default dummyData
+export default defaultData

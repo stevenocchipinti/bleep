@@ -11,7 +11,7 @@ import {
   Flex,
 } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
-import { Program } from "lib/dummyData"
+import { Program } from "lib/defaultData"
 import { useTimerActor } from "lib/useTimerMachine"
 import { useState } from "react"
 
@@ -29,7 +29,7 @@ const HomeScreen = ({
   const [_isDragging, setIsDragging] = useState(false)
 
   const [state, send] = useTimerActor()
-  console.table(state.context)
+  // console.table(state.context)
   console.log(state.value)
 
   const programs = state.context.allPrograms
@@ -44,6 +44,7 @@ const HomeScreen = ({
       const newPrograms = [...programs]
       const [removed] = newPrograms.splice(source.index, 1)
       newPrograms.splice(destination.index, 0, removed)
+      console.log({ source, destination })
       return newPrograms
     })
   }

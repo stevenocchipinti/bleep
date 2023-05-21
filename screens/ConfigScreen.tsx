@@ -22,9 +22,10 @@ import {
   Text,
   chakra,
   Button,
+  Spacer,
 } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
-import { Program } from "lib/dummyData"
+import { Program } from "lib/defaultData"
 import { useState } from "react"
 
 interface ConfigScreenProps {
@@ -96,7 +97,15 @@ const ConfigScreen = ({
         </FooterButton>
       }
     >
-      <Text textAlign="center" fontSize="xl" p={4} pb={8}>
+      <Text
+        display="flex"
+        alignItems="center"
+        flexGrow={1}
+        textAlign="center"
+        fontSize="xl"
+        p={4}
+        pb={8}
+      >
         {program.description}
       </Text>
 
@@ -107,6 +116,7 @@ const ConfigScreen = ({
               direction="column"
               gap={4}
               p={4}
+              pb={0}
               {...provided.droppableProps}
               ref={provided.innerRef}
             >

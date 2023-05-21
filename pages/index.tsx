@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react"
 import { Flex, useDisclosure } from "@chakra-ui/react"
 
 import { SwipableParent } from "components/SwipeableView"
-import dummyData from "lib/dummyData"
+import dummyData from "lib/defaultData"
 import SettingsModal from "components/SettingsModal"
 
 import HomeScreen from "screens/HomeScreen"

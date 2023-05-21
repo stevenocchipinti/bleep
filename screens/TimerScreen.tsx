@@ -4,9 +4,16 @@ import SegmentedProgressBar from "components/SegmentedProgressBar"
 import { SwipeableChild, FooterButton } from "components/SwipeableView"
 import { ArrowBackIcon, LockIcon, UnlockIcon } from "@chakra-ui/icons"
 import { IconButton, Heading, Flex } from "@chakra-ui/react"
-import { Program } from "lib/dummyData"
+import { Program } from "lib/defaultData"
 import useWakeLock from "lib/useWakeLock"
 import { useTimerActor } from "lib/useTimerMachine"
+
+// The nested states are long and error prone now, this is just for short-hand
+const states = {
+  running: { "program selected": "running" },
+  countingDown: { "program selected": { running: "counting down" } },
+  stopped: { "program selected": "stopped" },
+}
 
 interface TimerScreenProps {
   program: Program
@@ -31,7 +38,7 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
   } = useWakeLock()
 
   useEffect(() => {
-    state.matches("running") ? enableWakeLock() : disableWakeLock()
+    state.matches(states.running) ? enableWakeLock() : disableWakeLock()
   }, [disableWakeLock, enableWakeLock, state])
 
   // Used for the circular progress bar
@@ -40,19 +47,15 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
     if (program.blocks.length === 0) return 0
     return ((secondsLeftOfBlock + n) / currentBlockSeconds) * 100
   }
-  const from = state.matches({ running: "counting down" })
-    ? currentBlockPercent(0)
-    : 100
-  const to = state.matches({ running: "counting down" })
-    ? currentBlockPercent(-1)
-    : 100
+  const from = state.matches(states.countingDown) ? currentBlockPercent(0) : 100
+  const to = state.matches(states.countingDown) ? currentBlockPercent(-1) : 100
 
   // Used for the segmented progress bar
   const progressBarData = program.blocks.map((block, index) => ({
     width: block.seconds || 0,
     percentDone:
       currentBlockIndex === index
-        ? state.matches("stopped") ? 0 : 1 - secondsLeftOfBlock / block.seconds
+        ? state.matches(states.stopped) ? 0 : 1 - secondsLeftOfBlock / block.seconds
         : currentBlockIndex > index ? 1 : 0, // prettier-ignore
   }))
 
@@ -64,7 +67,7 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
             aria-label="Back"
             variant="ghost"
             icon={<ArrowBackIcon />}
-            isDisabled={state.matches("running")}
+            isDisabled={state.matches(states.running)}
             onClick={goBack}
             fontSize="xl"
           />
@@ -119,7 +122,7 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
       >
         <SegmentedProgressBar
           blocks={progressBarData}
-          animate={state.matches("running")}
+          animate={state.matches(states.running)}
         />
 
         <CircularProgressBar
