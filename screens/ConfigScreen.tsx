@@ -22,25 +22,27 @@ import {
   Text,
   chakra,
   Button,
-  Spacer,
 } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
-import { Program } from "lib/defaultData"
+import { useTimerActor } from "lib/useTimerMachine"
 import { useState } from "react"
 
 interface ConfigScreenProps {
   openSettingsModal: () => void
-  program: Program
   goBack: () => void
   goForward: () => void
 }
 const ConfigScreen = ({
-  program,
   openSettingsModal,
   goBack,
   goForward,
 }: ConfigScreenProps) => {
   const [_isDragging, setIsDragging] = useState(false)
+
+  const { state, send } = useTimerActor()
+  const { program } = state.context
+
+  if (program === null) return null
 
   const onBlockDragEnd = () => {
     setIsDragging(false)
@@ -100,6 +102,7 @@ const ConfigScreen = ({
       <Text
         display="flex"
         alignItems="center"
+        justifyContent="center"
         flexGrow={1}
         textAlign="center"
         fontSize="xl"

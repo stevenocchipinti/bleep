@@ -11,42 +11,36 @@ import {
   Flex,
 } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
-import { Program } from "lib/defaultData"
 import { useTimerActor } from "lib/useTimerMachine"
 import { useState } from "react"
 
 interface HomeScreenProps {
   openSettingsModal: () => void
   selectProgramByIndex: (index: number, skip?: boolean) => void
-  setPrograms: React.Dispatch<React.SetStateAction<Program[]>>
 }
 
 const HomeScreen = ({
   openSettingsModal,
   selectProgramByIndex,
-  setPrograms,
 }: HomeScreenProps) => {
   const [_isDragging, setIsDragging] = useState(false)
 
   const { state, send } = useTimerActor()
-  // console.table(state.context)
-  console.log(state.value)
-
-  const programs = state.context.allPrograms
-  const selectedProgramIndex = state.context.selectedProgramIndex
+  const { allPrograms, selectedProgramIndex } = state.context
 
   const onProgramDragEnd = (result: any) => {
     setIsDragging(false)
     if (!result.destination) return
     const { source, destination } = result
     if (source.index === destination.index) return
-    setPrograms(programs => {
-      const newPrograms = [...programs]
-      const [removed] = newPrograms.splice(source.index, 1)
-      newPrograms.splice(destination.index, 0, removed)
-      console.log({ source, destination })
-      return newPrograms
-    })
+    // TODO: Implement reordering of programs
+    // setPrograms(programs => {
+    //   const newPrograms = [...programs]
+    //   const [removed] = newPrograms.splice(source.index, 1)
+    //   newPrograms.splice(destination.index, 0, removed)
+    //   console.log({ source, destination })
+    //   return newPrograms
+    // })
   }
 
   const onDragStart = () => {
@@ -89,7 +83,7 @@ const HomeScreen = ({
               {...provided.droppableProps}
               ref={provided.innerRef}
             >
-              {programs.map((program, index) => (
+              {allPrograms.map((program, index) => (
                 <Draggable
                   key={program.id}
                   draggableId={program.id}
@@ -118,16 +112,17 @@ const HomeScreen = ({
               <Button
                 variant="outline"
                 onClick={() => {
-                  setPrograms(programs => [
-                    ...programs,
-                    {
-                      id: `program-${programs.length}`,
-                      name: "New Program",
-                      description: "",
-                      emoji: "👋",
-                      blocks: [],
-                    },
-                  ])
+                  // TODO: Implement adding new programs
+                  // setPrograms(programs => [
+                  //   ...programs,
+                  //   {
+                  //     id: `program-${programs.length}`,
+                  //     name: "New Program",
+                  //     description: "",
+                  //     emoji: "👋",
+                  //     blocks: [],
+                  //   },
+                  // ])
                 }}
               >
                 New program

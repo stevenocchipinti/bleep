@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react"
 import { Flex, useDisclosure } from "@chakra-ui/react"
 
 import { SwipableParent } from "components/SwipeableView"
-import dummyData from "lib/defaultData"
 import SettingsModal from "components/SettingsModal"
 
 import HomeScreen from "screens/HomeScreen"
@@ -11,18 +10,14 @@ import TimerScreen from "screens/TimerScreen"
 import { useTimerActor } from "lib/useTimerMachine"
 
 const Page = () => {
-  const [programs, setPrograms] = useState(dummyData)
   const [slideIndex, setSlideIndex] = useState(0)
 
   const { state, is, send } = useTimerActor()
-  const selectedProgramIndex = state.context.selectedProgramIndex
+  const { program } = state.context
 
-  const hasProgramSelected = is("program selected")
-  const isRunning = is("running")
-  const selectedProgram =
-    selectedProgramIndex !== null ? programs[selectedProgramIndex] : null
-
+  // Setting modal
   const { isOpen, onOpen, onClose } = useDisclosure()
+
   // Make the browser back and forward button work for the slides
   // prettier-ignore
   useEffect(() => {
@@ -53,18 +48,16 @@ const Page = () => {
             history.go(newIndex - oldIndex)
             setSlideIndex(newIndex)
           }}
-          disabled={!hasProgramSelected || isRunning}
+          disabled={!is("program selected") || is("running")}
           enableMouseEvents
         >
           <HomeScreen
             openSettingsModal={onOpen}
             selectProgramByIndex={selectProgramByIndex}
-            setPrograms={setPrograms}
           />
 
-          {selectedProgram !== null ? (
+          {program !== null ? (
             <ConfigScreen
-              program={selectedProgram}
               openSettingsModal={onOpen}
               goForward={() => {
                 history.go(1)
@@ -79,7 +72,7 @@ const Page = () => {
             <></>
           )}
 
-          {selectedProgram !== null ? (
+          {program !== null ? (
             <TimerScreen
               goBack={() => {
                 history.go(-1)

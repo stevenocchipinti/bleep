@@ -4,7 +4,7 @@ import SegmentedProgressBar from "components/SegmentedProgressBar"
 import { SwipeableChild, FooterButton } from "components/SwipeableView"
 import { ArrowBackIcon, LockIcon, UnlockIcon } from "@chakra-ui/icons"
 import { IconButton, Heading, Flex, Button } from "@chakra-ui/react"
-import { Program, TimerBlock } from "lib/defaultData"
+import { TimerBlock } from "lib/defaultData"
 import useWakeLock from "lib/useWakeLock"
 import { useTimerActor } from "lib/useTimerMachine"
 
@@ -28,19 +28,18 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
     is("running") ? enableWakeLock() : disableWakeLock()
   }, [disableWakeLock, enableWakeLock, is, state])
 
-  const program = state.context.program
+  const { program } = state.context
   if (!program) return null
 
-  const currentBlockIndex = state.context.currentBlockIndex
+  const { currentBlockIndex, secondsRemaining } = state.context
   const currentBlock = program.blocks[currentBlockIndex]
-  const secondsLeftOfBlock = state.context.secondsRemaining
 
   // Used for the circular progress bar
   const currentBlockPercent = (n: number) => {
     if (currentBlock.type !== "timer") return 0
     const currentBlockSeconds = currentBlock.seconds
     if (program.blocks.length === 0) return 0
-    return ((secondsLeftOfBlock + n) / currentBlockSeconds) * 100
+    return ((secondsRemaining + n) / currentBlockSeconds) * 100
   }
   const from = is("counting down") ? currentBlockPercent(0) : 100
   const to = is("counting down") ? currentBlockPercent(-1) : 100
@@ -59,7 +58,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
       currentBlockIndex === index
         ? is("stopped")
           ? 0
-          : 1 - secondsLeftOfBlock / (block.type === "timer" ? block.seconds : 0)
+          : 1 - secondsRemaining / (block.type === "timer" ? block.seconds : 0)
         : currentBlockIndex > index ? 1 : 0, // prettier-ignore
   }))
 
@@ -135,7 +134,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
           <CircularProgressBar
             from={from}
             to={to}
-            text={`${secondsLeftOfBlock}` || "00:00"}
+            text={`${secondsRemaining}` || "00:00"}
           ></CircularProgressBar>
         )}
 
