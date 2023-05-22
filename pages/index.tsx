@@ -81,7 +81,6 @@ const Page = () => {
 
           {selectedProgram !== null ? (
             <TimerScreen
-              program={selectedProgram}
               goBack={() => {
                 history.go(-1)
                 setSlideIndex(1)

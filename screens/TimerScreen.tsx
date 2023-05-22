@@ -17,19 +17,9 @@ const states = {
 }
 
 interface TimerScreenProps {
-  program: Program
   goBack: () => void
 }
-const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
-  const [state, send] = useTimerActor()
-
-  console.log(state.value)
-  // console.table(state.context)
-
-  const currentBlockIndex = state.context.currentBlockIndex
-  const currentBlock = program.blocks[currentBlockIndex]
-  const secondsLeftOfBlock = state.context.secondsRemaining
-
+const TimerScreen = ({ goBack }: TimerScreenProps) => {
   const {
     wakeLockEnabled,
     wakeLockSupported,
@@ -38,9 +28,20 @@ const TimerScreen = ({ program, goBack }: TimerScreenProps) => {
     disableWakeLock,
   } = useWakeLock()
 
+  const [state, send] = useTimerActor()
+  console.log(state.value)
+  // console.table(state.context)
+
   useEffect(() => {
     state.matches(states.running) ? enableWakeLock() : disableWakeLock()
   }, [disableWakeLock, enableWakeLock, state])
+
+  const program = state.context.program
+  if (!program) return null
+
+  const currentBlockIndex = state.context.currentBlockIndex
+  const currentBlock = program.blocks[currentBlockIndex]
+  const secondsLeftOfBlock = state.context.secondsRemaining
 
   // Used for the circular progress bar
   const currentBlockPercent = (n: number) => {

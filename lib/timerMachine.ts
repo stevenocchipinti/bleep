@@ -246,8 +246,8 @@ const timerMachine = createMachine(
       resetTimer: assign({
         leadSecondsRemaining: 3,
         currentBlockIndex: 0,
-        secondsRemaining: ({ program, currentBlockIndex }) => {
-          const block = program?.blocks[currentBlockIndex + 1]
+        secondsRemaining: ({ program }) => {
+          const block = program?.blocks[0]
           return block?.type === "timer" ? block.seconds : 0
         },
       }),
