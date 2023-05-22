@@ -8,14 +8,6 @@ import { Program, TimerBlock } from "lib/defaultData"
 import useWakeLock from "lib/useWakeLock"
 import { useTimerActor } from "lib/useTimerMachine"
 
-// The nested states are long and error prone now, this is just for short-hand
-const states = {
-  running: { "program selected": "running" },
-  countingDown: { "program selected": { running: "counting down" } },
-  stopped: { "program selected": "stopped" },
-  waiting: { "program selected": { running: "Awaiting continue" } },
-}
-
 interface TimerScreenProps {
   goBack: () => void
 }
@@ -28,13 +20,13 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
     disableWakeLock,
   } = useWakeLock()
 
-  const [state, send] = useTimerActor()
+  const { state, is, send } = useTimerActor()
   console.log(state.value)
   // console.table(state.context)
 
   useEffect(() => {
-    state.matches(states.running) ? enableWakeLock() : disableWakeLock()
-  }, [disableWakeLock, enableWakeLock, state])
+    is("running") ? enableWakeLock() : disableWakeLock()
+  }, [disableWakeLock, enableWakeLock, is, state])
 
   const program = state.context.program
   if (!program) return null
@@ -50,8 +42,8 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
     if (program.blocks.length === 0) return 0
     return ((secondsLeftOfBlock + n) / currentBlockSeconds) * 100
   }
-  const from = state.matches(states.countingDown) ? currentBlockPercent(0) : 100
-  const to = state.matches(states.countingDown) ? currentBlockPercent(-1) : 100
+  const from = is("counting down") ? currentBlockPercent(0) : 100
+  const to = is("counting down") ? currentBlockPercent(-1) : 100
 
   // Used for the segmented progress bar
   // BUG: Seems to start too early for the first step and too late for the last step
@@ -65,7 +57,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
     width: block.type === "timer" ? block.seconds || 0 : averageBlockSeconds,
     percentDone:
       currentBlockIndex === index
-        ? state.matches(states.stopped)
+        ? is("stopped")
           ? 0
           : 1 - secondsLeftOfBlock / (block.type === "timer" ? block.seconds : 0)
         : currentBlockIndex > index ? 1 : 0, // prettier-ignore
@@ -79,7 +71,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
             aria-label="Back"
             variant="ghost"
             icon={<ArrowBackIcon />}
-            isDisabled={state.matches(states.running)}
+            isDisabled={is("running")}
             onClick={goBack}
             fontSize="xl"
           />
@@ -108,7 +100,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
           {state.can({ type: "PAUSE" }) && (
             <FooterButton
               isDisabled={
-                program.blocks.length === 0 || state.matches(states.waiting)
+                program.blocks.length === 0 || is("Awaiting continue")
               }
               onClick={() => send("PAUSE")}
             >
@@ -136,7 +128,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
       >
         <SegmentedProgressBar
           blocks={progressBarData}
-          animate={state.matches(states.running)}
+          animate={is("running")}
         />
 
         {currentBlock.type === "timer" && (

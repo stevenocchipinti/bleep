@@ -14,11 +14,11 @@ const Page = () => {
   const [programs, setPrograms] = useState(dummyData)
   const [slideIndex, setSlideIndex] = useState(0)
 
-  const [state, send] = useTimerActor()
+  const { state, is, send } = useTimerActor()
   const selectedProgramIndex = state.context.selectedProgramIndex
 
-  const hasProgramSelected = state.matches("program selected")
-  const isRunning = state.matches({ "program selected": "running" })
+  const hasProgramSelected = is("program selected")
+  const isRunning = is("running")
   const selectedProgram =
     selectedProgramIndex !== null ? programs[selectedProgramIndex] : null
 

@@ -28,7 +28,7 @@ const HomeScreen = ({
 }: HomeScreenProps) => {
   const [_isDragging, setIsDragging] = useState(false)
 
-  const [state, send] = useTimerActor()
+  const { state, send } = useTimerActor()
   // console.table(state.context)
   console.log(state.value)
 

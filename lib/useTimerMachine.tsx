@@ -22,7 +22,14 @@ const TimerProvider = ({ children }: TimerProviderProps) => {
 
 const useTimerActor = () => {
   const timerActor = useContext(TimerActorContext)
-  return useActor(timerActor)
+  const [state, send] = useActor(timerActor)
+
+  return {
+    state,
+    is: (partialState: string) =>
+      JSON.stringify(state.value).includes(partialState),
+    send,
+  }
 }
 
 export { TimerProvider, useTimerActor }
