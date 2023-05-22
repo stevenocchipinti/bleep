@@ -22,10 +22,41 @@ import {
   Text,
   chakra,
   Button,
+  TextProps,
+  Grid,
 } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
 import { useTimerActor } from "lib/useTimerMachine"
 import { useState } from "react"
+
+// TODO: De-dup this from CardButton.tsx
+interface ChipProps extends TextProps {
+  children: React.ReactNode
+  colorScheme: "blue" | "purple" | "green" | "gray"
+  // inactive?: boolean
+}
+const Chip = ({ children, colorScheme, ...props }: ChipProps) => {
+  const [inactive, setInactive] = useState(true)
+  return (
+    <Text
+      border={inactive ? "1px" : "2px"}
+      borderColor={inactive ? "gray.500" : `${colorScheme}.500`}
+      borderRadius="lg"
+      minW="3rem"
+      textAlign="center"
+      py={1}
+      px={2}
+      m={2}
+      ml={0}
+      fontSize="sm"
+      bg={inactive ? "gray.700" : `${colorScheme}.800`}
+      onClick={() => setInactive(!inactive)}
+      {...props}
+    >
+      {children}
+    </Text>
+  )
+}
 
 interface ConfigScreenProps {
   openSettingsModal: () => void
@@ -91,7 +122,7 @@ const ConfigScreen = ({
       }
       footer={
         <FooterButton
-          span={2}
+          span={4}
           onClick={goForward}
           rightIcon={<ArrowForwardIcon />}
         >
@@ -131,13 +162,13 @@ const ConfigScreen = ({
                 >
                   {(provided, snapshot) => (
                     <CardButton
-                      text={`${block.name} ${
-                        block.type === "timer"
-                          ? `for ${block.seconds} seconds`
-                          : typeof block?.reps === "number"
-                          ? `for ${block.reps} reps`
-                          : ""
-                      }`}
+                      seconds={
+                        block.type === "timer" ? block.seconds : undefined
+                      }
+                      reps={
+                        block.type === "pause" ? block?.reps || 0 : undefined
+                      }
+                      text={block.name}
                       togglesBody
                       ref={provided.innerRef}
                       {...provided.draggableProps}
@@ -146,12 +177,11 @@ const ConfigScreen = ({
                       style={provided.draggableProps.style}
                       onClick={console.log}
                     >
-                      <chakra.ul ml={10}>
-                        <li>Wait until done</li>
-                        <li>Lead time</li>
-                        <li>Announcement</li>
-                        <li>Beeps</li>
-                      </chakra.ul>
+                      <Grid templateColumns="1fr 1fr 1fr">
+                        <Chip colorScheme="blue">Timer</Chip>
+                        <Chip colorScheme="purple">Pause</Chip>
+                        <Chip colorScheme="green">Speak</Chip>
+                      </Grid>
                     </CardButton>
                   )}
                 </Draggable>

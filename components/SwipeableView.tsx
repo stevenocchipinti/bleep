@@ -53,14 +53,14 @@ const Header = ({ children, transparent = false }: HeaderProps) => {
 const Footer = ({ children }: { children: ReactNode }) => {
   return (
     <Grid
-      templateColumns="repeat(2, 1fr)"
+      templateColumns="1fr 1fr 1fr 1fr"
       position="sticky"
       bottom={0}
       left={0}
       right={0}
       justifyContent="center"
       p={5}
-      gap={6}
+      gap={4}
       bg="hsl(220deg 26% 8% / 40%)"
       shadow="0 4px 30px rgba(0, 0, 0, 0.1)"
       backdropFilter="blur(5px)"
@@ -83,6 +83,7 @@ const FooterButton = ({ children, span, ...props }: FooterButtonProps) => (
       colorScheme="teal"
       size="lg"
       borderRadius="xl"
+      px={2}
       {...props}
     >
       {children}

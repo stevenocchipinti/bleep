@@ -21,7 +21,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
   } = useWakeLock()
 
   const { state, is, send } = useTimerActor()
-  console.log(state.value)
+  console.log(JSON.stringify(state.value))
   // console.table(state.context)
 
   useEffect(() => {
@@ -90,10 +90,19 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
       footer={
         <>
           <FooterButton
+            isDisabled={!state.can({ type: "PREVIOUS" })}
+            onClick={() => send("PREVIOUS")}
+            fontSize="3xl"
+          >
+            {"⏮"}
+          </FooterButton>
+
+          <FooterButton
             isDisabled={!state.can({ type: "RESET" })}
             onClick={() => send("RESET")}
+            fontSize="3xl"
           >
-            Reset
+            {"⏹"}
           </FooterButton>
 
           {state.can({ type: "PAUSE" }) && (
@@ -102,8 +111,9 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
                 program.blocks.length === 0 || is("Awaiting continue")
               }
               onClick={() => send("PAUSE")}
+              fontSize="3xl"
             >
-              Pause
+              {"⏸"}
             </FooterButton>
           )}
 
@@ -111,10 +121,19 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
             <FooterButton
               isDisabled={!state.can({ type: "START" })}
               onClick={() => send("START")}
+              fontSize="3xl"
             >
-              Start
+              {"⏵️"}
             </FooterButton>
           )}
+
+          <FooterButton
+            isDisabled={!state.can({ type: "NEXT" })}
+            onClick={() => send("NEXT")}
+            fontSize="3xl"
+          >
+            {"⏭"}
+          </FooterButton>
         </>
       }
     >
@@ -162,6 +181,10 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
           size="3xl"
           textAlign="center"
         >
+          {currentBlock.type === "pause" &&
+            currentBlock?.reps &&
+            currentBlock.reps > 0 &&
+            `${currentBlock.reps}⨯ `}
           {currentBlock.name}
         </Heading>
       </Flex>
