@@ -1,5 +1,4 @@
-import CardButton from "@/components/CardButton"
-import { SwipeableChild, FooterButton } from "@/components/SwipeableView"
+import { useState } from "react"
 import {
   ArrowBackIcon,
   HamburgerIcon,
@@ -20,43 +19,19 @@ import {
   MenuDivider,
   Flex,
   Text,
-  chakra,
   Button,
-  TextProps,
-  Grid,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
 } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
-import { useTimerActor } from "lib/useTimerMachine"
-import { useState } from "react"
 
-// TODO: De-dup this from CardButton.tsx
-interface ChipProps extends TextProps {
-  children: React.ReactNode
-  colorScheme: "blue" | "purple" | "green" | "gray"
-  // inactive?: boolean
-}
-const Chip = ({ children, colorScheme, ...props }: ChipProps) => {
-  const [inactive, setInactive] = useState(true)
-  return (
-    <Text
-      border={inactive ? "1px" : "2px"}
-      borderColor={inactive ? "gray.500" : `${colorScheme}.500`}
-      borderRadius="lg"
-      minW="3rem"
-      textAlign="center"
-      py={1}
-      px={2}
-      m={2}
-      ml={0}
-      fontSize="sm"
-      bg={inactive ? "gray.700" : `${colorScheme}.800`}
-      onClick={() => setInactive(!inactive)}
-      {...props}
-    >
-      {children}
-    </Text>
-  )
-}
+import CardButton from "@/components/CardButton"
+import { ChipTab } from "@/components/Chip"
+import { SwipeableChild, FooterButton } from "@/components/SwipeableView"
+import { useTimerActor } from "lib/useTimerMachine"
+import React from "react"
 
 interface ConfigScreenProps {
   openSettingsModal: () => void
@@ -175,13 +150,31 @@ const ConfigScreen = ({
                       handleProps={provided.dragHandleProps}
                       isDragging={snapshot.isDragging}
                       style={provided.draggableProps.style}
-                      onClick={console.log}
                     >
-                      <Grid templateColumns="1fr 1fr 1fr">
-                        <Chip colorScheme="blue">Timer</Chip>
-                        <Chip colorScheme="purple">Pause</Chip>
-                        <Chip colorScheme="green">Speak</Chip>
-                      </Grid>
+                      <Tabs variant="unstyled">
+                        <TabList
+                          display="grid"
+                          gridTemplateColumns="1fr 1fr 1fr"
+                        >
+                          <ChipTab colorScheme="blue">Timer</ChipTab>
+                          <ChipTab colorScheme="purple">Pause</ChipTab>
+                          <ChipTab colorScheme="green">Message</ChipTab>
+                        </TabList>
+                        <TabPanels>
+                          <TabPanel>
+                            <Text>Name</Text>
+                            <Text>Duration</Text>
+                          </TabPanel>
+                          <TabPanel>
+                            <Text>Name</Text>
+                            <Text>Reps</Text>
+                          </TabPanel>
+                          <TabPanel>
+                            <Text>Name</Text>
+                            <Text>Message</Text>
+                          </TabPanel>
+                        </TabPanels>
+                      </Tabs>
                     </CardButton>
                   )}
                 </Draggable>

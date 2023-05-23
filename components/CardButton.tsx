@@ -11,8 +11,9 @@ import {
   Spacer,
   useDisclosure,
   chakra,
-  TextProps,
 } from "@chakra-ui/react"
+
+import Chip from "@/components/Chip"
 
 const PauseIcon = ({ size }: { size: string }) => (
   <chakra.svg
@@ -31,31 +32,6 @@ const PauseIcon = ({ size }: { size: string }) => (
     />
   </chakra.svg>
 )
-
-interface ChipProps extends TextProps {
-  children: React.ReactNode
-  colorScheme: "blue" | "purple"
-}
-const Chip = ({ children, colorScheme, ...props }: ChipProps) => {
-  return (
-    <Text
-      border="1px"
-      borderColor={`${colorScheme}.500`}
-      borderRadius="lg"
-      minW="3rem"
-      textAlign="center"
-      py={1}
-      px={2}
-      m={2}
-      ml={0}
-      fontSize="sm"
-      bg={`${colorScheme}.800`}
-      {...props}
-    >
-      {children}
-    </Text>
-  )
-}
 
 interface CardButtonProps {
   text: string
