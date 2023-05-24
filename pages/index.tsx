@@ -1,113 +1,91 @@
-import Head from "next/head"
-import { useState, useEffect } from "react"
+import React, { useEffect, useState } from "react"
+import { Flex, useDisclosure } from "@chakra-ui/react"
 
-import { styled, Button, Text } from "@nextui-org/react"
+import { SwipableParent } from "components/SwipeableView"
+import SettingsModal from "components/SettingsModal"
 
-import useWakeLock from "../lib/useWakeLock"
-import useTimer from "lib/useTimer"
+import HomeScreen from "screens/HomeScreen"
+import ConfigScreen from "screens/ConfigScreen"
+import TimerScreen from "screens/TimerScreen"
+import { useTimerActor } from "lib/useTimerMachine"
 
-const Layout = styled("div", {
-  display: "flex",
-  flexDirection: "column",
-  height: "100%",
-  gap: "$8",
-  padding: "$8",
-  justifyContent: "space-between",
-  backgroundColor: "$background",
-})
+const Page = () => {
+  const [slideIndex, setSlideIndex] = useState(0)
 
-const Display = styled("div", {
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "center",
-  textAlign: "center",
-  flex: 1,
-})
+  const { state, is, send } = useTimerActor()
+  const { program } = state.context
 
-const Actions = styled("div", {
-  display: "flex",
-  gap: "$8",
-  "& > :last-child": {
-    flex: 1,
-  },
-})
+  // Setting modal
+  const { isOpen, onOpen, onClose } = useDisclosure()
 
-const Textarea = styled("textarea", {
-  padding: "$sm $md",
-  borderRadius: "$md",
-  border: "none",
-  flex: 1,
-  resize: "none",
-})
-
-const Home = () => {
-  const {
-    timerRunning,
-    startTimer,
-    stopTimer,
-    currentBlockText,
-    timerString,
-    setBlocksFromText,
-    blocksText,
-    blocks,
-  } = useTimer()
-
-  const {
-    wakeLockEnabled,
-    wakeLockSupported,
-    toggleWakeLock,
-    enableWakeLock,
-    disableWakeLock,
-  } = useWakeLock()
-
+  // Make the browser back and forward button work for the slides
+  // prettier-ignore
   useEffect(() => {
-    timerRunning ? enableWakeLock() : disableWakeLock()
-    return disableWakeLock
-  }, [timerRunning])
+    const handler = ({state}: {state: any}) => { setSlideIndex(state.slide) }
+    addEventListener("popstate", handler)
+    return () => { removeEventListener("popstate", handler) }
+  }, [])
+
+  const selectProgramByIndex = (index: number, skip: boolean = false) => {
+    send({ type: "SELECT_PROGRAM", index })
+    setSlideIndex(skip ? 2 : 1)
+
+    // Set up a history stack for the 3 slides
+    history.replaceState({ slide: 0 }, "")
+    history.pushState({ slide: 1 }, "")
+    history.pushState({ slide: 2 }, "")
+    if (!skip) history.go(-1)
+  }
 
   return (
-    <Layout>
-      <Display>
-        <Text h1>{timerString}</Text>
-        <Text h2>{currentBlockText}</Text>
-      </Display>
+    <>
+      <SettingsModal isOpen={isOpen} onClose={onClose} />
 
-      <Textarea
-        placeholder={"10: Rest\n30: Exercise"}
-        value={blocksText}
-        onChange={e => setBlocksFromText(e.target.value)}
-      />
-
-      <Actions>
-        <Button
-          color={wakeLockSupported && wakeLockEnabled ? "error" : "success"}
-          size="xl"
-          bordered
-          auto
-          disabled={!wakeLockSupported}
-          onClick={toggleWakeLock}
-          css={{ fontSize: "$2xl" }}
-          title={
-            wakeLockSupported
-              ? `Screen WakeLock ${wakeLockEnabled ? "enabled" : "disabled"}`
-              : "WakeLock not supported"
-          }
+      <Flex direction="column" h="100%">
+        <SwipableParent
+          index={slideIndex}
+          onChangeIndex={(newIndex, oldIndex) => {
+            history.go(newIndex - oldIndex)
+            setSlideIndex(newIndex)
+          }}
+          disabled={!is("program selected") || is("running")}
+          enableMouseEvents
         >
-          {wakeLockSupported && wakeLockEnabled ? "🔒" : "🔓"}
-        </Button>
+          <HomeScreen
+            openSettingsModal={onOpen}
+            selectProgramByIndex={selectProgramByIndex}
+          />
 
-        <Button
-          color="gradient"
-          size="xl"
-          auto
-          disabled={blocks.length === 0}
-          onClick={timerRunning ? stopTimer : startTimer}
-        >
-          {timerRunning ? "Stop" : "Start"}
-        </Button>
-      </Actions>
-    </Layout>
+          {program !== null ? (
+            <ConfigScreen
+              openSettingsModal={onOpen}
+              goForward={() => {
+                history.go(1)
+                setSlideIndex(2)
+              }}
+              goBack={() => {
+                history.go(-1)
+                setSlideIndex(0)
+              }}
+            />
+          ) : (
+            <></>
+          )}
+
+          {program !== null ? (
+            <TimerScreen
+              goBack={() => {
+                history.go(-1)
+                setSlideIndex(1)
+              }}
+            />
+          ) : (
+            <></>
+          )}
+        </SwipableParent>
+      </Flex>
+    </>
   )
 }
 
-export default Home
+export default Page

@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react"
+
 function playTone(frequency: number, duration: number): void {
   const rampTime = 0.02
   const audioContext = new AudioContext()
@@ -23,12 +25,44 @@ function playTone(frequency: number, duration: number): void {
   )
 }
 
-const speak = (text: string) => {
-  const utterance = new SpeechSynthesisUtterance(text)
-  console.log(speechSynthesis.getVoices())
-  utterance.voice = speechSynthesis.getVoices()[0]
-  utterance.onerror = e => console.error(e)
-  speechSynthesis.speak(utterance)
+const speak = (text: string) =>
+  new Promise((resolve, reject) => {
+    const utterance = new SpeechSynthesisUtterance(text)
+    // TODO: Get this from configuration state
+    utterance.voice =
+      speechSynthesis.getVoices().find(voice => voice.default) ||
+      speechSynthesis.getVoices()[0]
+    // utterance.onerror = () => reject("Error speaking")
+    utterance.onend = resolve
+    speechSynthesis.speak(utterance)
+  })
+
+// NOTE: Pretty sure this can't be cancelled
+const speakCountdown = (seconds: number) =>
+  new Promise<void>(async (resolve, reject) => {
+    let secondsRemaining = seconds
+    speak("Starting in").catch(reject)
+    const interval = setInterval(() => {
+      if (secondsRemaining === 0) {
+        clearInterval(interval)
+        resolve()
+      } else {
+        speak(`${secondsRemaining--}`).catch(reject)
+      }
+    }, 1000)
+  })
+
+const useVoices = () => {
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
+
+  useEffect(() => {
+    setVoices(speechSynthesis.getVoices())
+    speechSynthesis.addEventListener("voiceschanged", () => {
+      setVoices(speechSynthesis.getVoices())
+    })
+  }, [])
+
+  return voices
 }
 
-export { playTone, speak }
+export { playTone, speak, speakCountdown, useVoices }

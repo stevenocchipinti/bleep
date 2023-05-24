@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 
 const useWakeLock = () => {
   const [wakeLockEnabled, setWakeLockEnabled] = useState<boolean>(false)
@@ -8,7 +8,7 @@ const useWakeLock = () => {
 
   const wakeLockSentinel = React.useRef<WakeLockSentinel | null>(null)
 
-  const enableWakeLock = () => {
+  const enableWakeLock = useCallback(() => {
     if (!wakeLockSupported) return
     navigator.wakeLock
       .request("screen")
@@ -19,24 +19,21 @@ const useWakeLock = () => {
       .catch(() => {
         console.error("Wake lock request failed")
       })
-  }
+  }, [wakeLockSupported])
 
-  const disableWakeLock = () => {
-    if (!wakeLockSentinel.current) {
-      console.warn("There is no wakelock to disable")
-      return
-    }
+  const disableWakeLock = useCallback(() => {
+    if (!wakeLockSentinel.current) return
     wakeLockSentinel.current?.release()
     setWakeLockEnabled(false)
-  }
+  }, [])
 
-  const toggleWakeLock = () => {
+  const toggleWakeLock = useCallback(() => {
     if (wakeLockEnabled) {
       disableWakeLock()
     } else {
       enableWakeLock()
     }
-  }
+  }, [wakeLockEnabled, enableWakeLock, disableWakeLock])
 
   useEffect(() => {
     setWakeLockSupported("wakeLock" in navigator)
