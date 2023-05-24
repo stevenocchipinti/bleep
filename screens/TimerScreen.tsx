@@ -3,7 +3,7 @@ import CircularProgressBar from "components/CircularProgressBar"
 import SegmentedProgressBar from "components/SegmentedProgressBar"
 import { SwipeableChild, FooterButton } from "components/SwipeableView"
 import { ArrowBackIcon, LockIcon, UnlockIcon } from "@chakra-ui/icons"
-import { IconButton, Heading, Flex, Button } from "@chakra-ui/react"
+import { IconButton, Heading, Text, Flex, Button } from "@chakra-ui/react"
 import { TimerBlock } from "lib/defaultData"
 import useWakeLock from "lib/useWakeLock"
 import { useTimerActor } from "lib/useTimerMachine"
@@ -187,6 +187,12 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
             `${currentBlock.reps}⨯ `}
           {currentBlock.name}
         </Heading>
+
+        {currentBlock.type === "message" && (
+          <Text textAlign="center" flexGrow={1}>
+            {currentBlock.message}
+          </Text>
+        )}
       </Flex>
     </SwipeableChild>
   )

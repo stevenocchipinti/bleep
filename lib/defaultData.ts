@@ -10,7 +10,13 @@ export interface PauseBlock {
   reps?: number
 }
 
-export type Block = TimerBlock | PauseBlock
+export interface MessageBlock {
+  type: "message"
+  name: string
+  message: string
+}
+
+export type Block = TimerBlock | PauseBlock | MessageBlock
 
 export interface Program {
   id: string
@@ -27,10 +33,16 @@ const defaultData: Program[] = [
     description: "A simple test program",
     emoji: "💥",
     blocks: [
+      { type: "message", name: "Welcome", message: "Welcome to the test" },
       { type: "timer", name: "Warmup", seconds: 10 },
       { type: "pause", name: "A pause" },
       { type: "pause", name: "A pause with reps", reps: 25 },
       { type: "timer", name: "Cool down", seconds: 5 },
+      {
+        type: "message",
+        name: "The end",
+        message: "Congratulations, you made it!",
+      },
     ],
   },
   {
