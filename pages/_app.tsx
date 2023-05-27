@@ -1,11 +1,18 @@
 import type { AppProps } from "next/app"
 import Head from "next/head"
-import { ChakraProvider, extendTheme } from "@chakra-ui/react"
+import {
+  ChakraProvider,
+  StyleFunctionProps,
+  extendTheme,
+  theme as defaultTheme,
+} from "@chakra-ui/react"
 
 import { TimerProvider } from "lib/useTimerMachine"
 
 import "@fontsource/dancing-script"
 import "@fontsource/commissioner"
+
+const defaultButtonStyles = defaultTheme.components.Button
 
 export const theme = extendTheme({
   config: {
@@ -25,6 +32,67 @@ export const theme = extendTheme({
   fonts: {
     heading: "'Commissioner', sans-serif",
     body: "'Commissioner', sans-serif",
+  },
+
+  // Sticky hover fix for all buttons
+  // https://github.com/chakra-ui/chakra-ui/issues/6173
+  components: {
+    Button: {
+      variants: {
+        solid: (props: StyleFunctionProps) => ({
+          "@media(hover: none)": {
+            _hover: { bg: "transparent" },
+            _active: {
+              bg: defaultButtonStyles.variants?.solid(props)._hover.bg,
+            },
+          },
+        }),
+        outline: (props: StyleFunctionProps) => ({
+          "@media(hover: none)": {
+            _hover: { bg: "transparent" },
+            _active: {
+              bg: defaultButtonStyles.variants?.outline(props)._hover.bg,
+            },
+          },
+        }),
+        ghost: (props: StyleFunctionProps) => ({
+          "@media(hover: none)": {
+            _hover: { bg: "transparent" },
+            _active: {
+              bg: defaultButtonStyles.variants?.ghost(props)._hover.bg,
+            },
+          },
+        }),
+      },
+    },
+    IconButton: {
+      variants: {
+        solid: (props: StyleFunctionProps) => ({
+          "@media(hover: none)": {
+            _hover: { bg: "transparent" },
+            _active: {
+              bg: defaultButtonStyles.variants?.solid(props)._hover.bg,
+            },
+          },
+        }),
+        outline: (props: StyleFunctionProps) => ({
+          "@media(hover: none)": {
+            _hover: { bg: "transparent" },
+            _active: {
+              bg: defaultButtonStyles.variants?.outline(props)._hover.bg,
+            },
+          },
+        }),
+        ghost: (props: StyleFunctionProps) => ({
+          "@media(hover: none)": {
+            _hover: { bg: "transparent" },
+            _active: {
+              bg: defaultButtonStyles.variants?.ghost(props)._hover.bg,
+            },
+          },
+        }),
+      },
+    },
   },
 })
 
