@@ -39,6 +39,27 @@ export const theme = extendTheme({
   components: {
     Button: {
       variants: {
+        brand: (props: StyleFunctionProps) => ({
+          color: "gray.800",
+          bgGradient: "linear-gradient(to-br, teal.200, green.200)",
+          _disabled: {
+            bgGradient: "linear-gradient(to-br, teal.200, green.200)",
+          },
+          _hover: {
+            bgGradient: "linear-gradient(to-tr, teal.200, green.200)",
+            _disabled: {
+              bgGradient: "linear-gradient(to-br, teal.200, green.200)",
+            },
+          },
+          "@media(hover: none)": {
+            _hover: {
+              bgGradient: "linear-gradient(to-br, teal.200, green.200)",
+            },
+            _active: {
+              bgGradient: "linear-gradient(to-tr, teal.200, green.200)",
+            },
+          },
+        }),
         solid: (props: StyleFunctionProps) => ({
           "@media(hover: none)": {
             _hover: { bg: "transparent" },

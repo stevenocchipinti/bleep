@@ -83,7 +83,7 @@ const FooterButton = ({ children, span, ...props }: FooterButtonProps) => (
       colorScheme="teal"
       size="lg"
       borderRadius="xl"
-      px={5}
+      px={6}
       {...props}
     >
       {children}

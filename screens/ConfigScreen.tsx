@@ -115,6 +115,7 @@ const ConfigScreen = ({
       }
       footer={
         <FooterButton
+          variant="brand"
           span={4}
           onClick={goForward}
           rightIcon={<ArrowForwardIcon />}

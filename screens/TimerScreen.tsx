@@ -173,8 +173,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
             h="300px"
             w="300px"
             fontSize="3xl"
-            colorScheme="teal"
-            bgGradient="linear-gradient(to-br, teal.200, green.200)"
+            variant="brand"
             onClick={() => send("CONTINUE")}
           >
             Continue
