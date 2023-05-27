@@ -173,7 +173,7 @@ const ConfigScreen = ({
                       style={provided.draggableProps.style}
                     >
                       <Tabs
-                        index={["timer", "pause", "message"].indexOf(
+                        defaultIndex={["timer", "pause", "message"].indexOf(
                           block.type
                         )}
                         onChange={console.log}
@@ -192,7 +192,7 @@ const ConfigScreen = ({
                             <FormControl>
                               <FormLabel>Name</FormLabel>
                               <Input
-                                value={block.name}
+                                defaultValue={block.name}
                                 placeholder="Name"
                                 variant="filled"
                               />
@@ -201,7 +201,7 @@ const ConfigScreen = ({
                               <FormLabel>Duration</FormLabel>
                               <Flex gap={2} alignItems="center">
                                 <Input
-                                  value={
+                                  defaultValue={
                                     block.type === "timer"
                                       ? Math.floor(block.seconds / 60)
                                       : ""
@@ -213,7 +213,7 @@ const ConfigScreen = ({
                                   :
                                 </Text>
                                 <Input
-                                  value={
+                                  defaultValue={
                                     block.type === "timer"
                                       ? block.seconds % 60
                                       : ""
@@ -228,7 +228,7 @@ const ConfigScreen = ({
                             <FormControl>
                               <FormLabel>Name</FormLabel>
                               <Input
-                                value={block.name}
+                                defaultValue={block.name}
                                 placeholder="Name"
                                 variant="filled"
                               />
@@ -240,7 +240,9 @@ const ConfigScreen = ({
                                 Reps
                               </FormLabel>
                               <Input
-                                value={block.type === "pause" ? block.reps : ""}
+                                defaultValue={
+                                  block.type === "pause" ? block.reps : ""
+                                }
                                 type="number"
                                 placeholder="Reps"
                                 variant="filled"
@@ -251,7 +253,7 @@ const ConfigScreen = ({
                             <FormControl>
                               <FormLabel>Name</FormLabel>
                               <Input
-                                value={block.name}
+                                defaultValue={block.name}
                                 placeholder="Name"
                                 variant="filled"
                               />
@@ -263,7 +265,7 @@ const ConfigScreen = ({
                                 Message
                               </FormLabel>
                               <Textarea
-                                value={
+                                defaultValue={
                                   block.type === "message" ? block.message : ""
                                 }
                                 variant="filled"
