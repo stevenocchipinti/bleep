@@ -143,6 +143,7 @@ const ConfigScreen = ({
                       reps={
                         block.type === "pause" ? block?.reps || 0 : undefined
                       }
+                      message={block.type === "message"}
                       text={block.name}
                       togglesBody
                       ref={provided.innerRef}

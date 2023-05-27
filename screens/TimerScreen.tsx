@@ -4,9 +4,17 @@ import SegmentedProgressBar from "components/SegmentedProgressBar"
 import { SwipeableChild, FooterButton } from "components/SwipeableView"
 import { ArrowBackIcon, LockIcon, UnlockIcon } from "@chakra-ui/icons"
 import { IconButton, Heading, Text, Flex, Button } from "@chakra-ui/react"
+
 import { TimerBlock } from "lib/defaultData"
 import useWakeLock from "lib/useWakeLock"
 import { useTimerActor } from "lib/useTimerMachine"
+import {
+  PauseIcon,
+  PlayIcon,
+  StopIcon,
+  RewindIcon,
+  FastForwardIcon,
+} from "components/icons"
 
 interface TimerScreenProps {
   goBack: () => void
@@ -92,17 +100,15 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
           <FooterButton
             isDisabled={!state.can({ type: "PREVIOUS" })}
             onClick={() => send("PREVIOUS")}
-            fontSize="3xl"
           >
-            {"⏮"}
+            <RewindIcon />
           </FooterButton>
 
           <FooterButton
             isDisabled={!state.can({ type: "RESET" })}
             onClick={() => send("RESET")}
-            fontSize="3xl"
           >
-            {"⏹"}
+            <StopIcon />
           </FooterButton>
 
           {state.can({ type: "PAUSE" }) && (
@@ -111,9 +117,8 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
                 program.blocks.length === 0 || is("Awaiting continue")
               }
               onClick={() => send("PAUSE")}
-              fontSize="3xl"
             >
-              {"⏸"}
+              <PauseIcon />
             </FooterButton>
           )}
 
@@ -121,18 +126,16 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
             <FooterButton
               isDisabled={!state.can({ type: "START" })}
               onClick={() => send("START")}
-              fontSize="3xl"
             >
-              {"⏵️"}
+              <PlayIcon />
             </FooterButton>
           )}
 
           <FooterButton
             isDisabled={!state.can({ type: "NEXT" })}
             onClick={() => send("NEXT")}
-            fontSize="3xl"
           >
-            {"⏭"}
+            <FastForwardIcon />
           </FooterButton>
         </>
       }
