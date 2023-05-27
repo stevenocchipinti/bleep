@@ -98,6 +98,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
       footer={
         <>
           <FooterButton
+            variant="ghost"
             isDisabled={!state.can({ type: "PREVIOUS" })}
             onClick={() => send("PREVIOUS")}
           >
@@ -105,6 +106,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
           </FooterButton>
 
           <FooterButton
+            variant="ghost"
             isDisabled={!state.can({ type: "RESET" })}
             onClick={() => send("RESET")}
           >
@@ -113,6 +115,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
 
           {state.can({ type: "PAUSE" }) && (
             <FooterButton
+              variant="ghost"
               isDisabled={
                 program.blocks.length === 0 || is("Awaiting continue")
               }
@@ -124,6 +127,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
 
           {state.can({ type: "START" }) && (
             <FooterButton
+              variant="ghost"
               isDisabled={!state.can({ type: "START" })}
               onClick={() => send("START")}
             >
@@ -132,6 +136,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
           )}
 
           <FooterButton
+            variant="ghost"
             isDisabled={!state.can({ type: "NEXT" })}
             onClick={() => send("NEXT")}
           >

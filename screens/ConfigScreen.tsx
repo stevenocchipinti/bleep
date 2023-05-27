@@ -24,6 +24,10 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
+  FormControl,
+  FormLabel,
+  Input,
+  Textarea,
 } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
 
@@ -32,6 +36,20 @@ import { ChipTab } from "@/components/Chip"
 import { SwipeableChild, FooterButton } from "@/components/SwipeableView"
 import { useTimerActor } from "lib/useTimerMachine"
 import React from "react"
+
+const OptionalIndicator = () => (
+  <Text color="gray.400" fontSize="xs" ml={2} as="span">
+    (optional)
+  </Text>
+)
+
+const FlexTabPanel = ({ children }: { children: React.ReactNode }) => (
+  <TabPanel>
+    <Flex gap={4} direction="column">
+      {children}
+    </Flex>
+  </TabPanel>
+)
 
 interface ConfigScreenProps {
   openSettingsModal: () => void
@@ -144,6 +162,7 @@ const ConfigScreen = ({
                         block.type === "pause" ? block?.reps || 0 : undefined
                       }
                       message={block.type === "message"}
+                      error={false}
                       text={block.name}
                       togglesBody
                       ref={provided.innerRef}
@@ -152,7 +171,13 @@ const ConfigScreen = ({
                       isDragging={snapshot.isDragging}
                       style={provided.draggableProps.style}
                     >
-                      <Tabs variant="unstyled">
+                      <Tabs
+                        index={["timer", "pause", "message"].indexOf(
+                          block.type
+                        )}
+                        onChange={console.log}
+                        variant="unstyled"
+                      >
                         <TabList
                           display="grid"
                           gridTemplateColumns="1fr 1fr 1fr"
@@ -162,18 +187,89 @@ const ConfigScreen = ({
                           <ChipTab colorScheme="green">Message</ChipTab>
                         </TabList>
                         <TabPanels>
-                          <TabPanel>
-                            <Text>Name</Text>
-                            <Text>Duration</Text>
-                          </TabPanel>
-                          <TabPanel>
-                            <Text>Name</Text>
-                            <Text>Reps</Text>
-                          </TabPanel>
-                          <TabPanel>
-                            <Text>Name</Text>
-                            <Text>Message</Text>
-                          </TabPanel>
+                          <FlexTabPanel>
+                            <FormControl>
+                              <FormLabel>Name</FormLabel>
+                              <Input
+                                value={block.name}
+                                placeholder="Name"
+                                variant="filled"
+                              />
+                            </FormControl>
+                            <FormControl>
+                              <FormLabel>Duration</FormLabel>
+                              <Flex gap={2} alignItems="center">
+                                <Input
+                                  value={
+                                    block.type === "timer"
+                                      ? Math.floor(block.seconds / 60)
+                                      : ""
+                                  }
+                                  placeholder="Minutes"
+                                  variant="filled"
+                                />
+                                <Text fontSize="2xl" as="span">
+                                  :
+                                </Text>
+                                <Input
+                                  value={
+                                    block.type === "timer"
+                                      ? block.seconds % 60
+                                      : ""
+                                  }
+                                  placeholder="Seconds"
+                                  variant="filled"
+                                />
+                              </Flex>
+                            </FormControl>
+                          </FlexTabPanel>
+                          <FlexTabPanel>
+                            <FormControl>
+                              <FormLabel>Name</FormLabel>
+                              <Input
+                                value={block.name}
+                                placeholder="Name"
+                                variant="filled"
+                              />
+                            </FormControl>
+                            <FormControl>
+                              <FormLabel
+                                optionalIndicator={<OptionalIndicator />}
+                              >
+                                Reps
+                              </FormLabel>
+                              <Input
+                                value={block.type === "pause" ? block.reps : ""}
+                                type="number"
+                                placeholder="Reps"
+                                variant="filled"
+                              />
+                            </FormControl>
+                          </FlexTabPanel>
+                          <FlexTabPanel>
+                            <FormControl>
+                              <FormLabel>Name</FormLabel>
+                              <Input
+                                value={block.name}
+                                placeholder="Name"
+                                variant="filled"
+                              />
+                            </FormControl>
+                            <FormControl>
+                              <FormLabel
+                                optionalIndicator={<OptionalIndicator />}
+                              >
+                                Message
+                              </FormLabel>
+                              <Textarea
+                                value={
+                                  block.type === "message" ? block.message : ""
+                                }
+                                variant="filled"
+                                placeholder="Message"
+                              />
+                            </FormControl>
+                          </FlexTabPanel>
                         </TabPanels>
                       </Tabs>
                     </CardButton>

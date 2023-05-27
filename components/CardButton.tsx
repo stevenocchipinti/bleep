@@ -11,16 +11,15 @@ import {
   Spacer,
   useDisclosure,
 } from "@chakra-ui/react"
-import { PauseIcon } from "components/icons"
 
-import Chip from "@/components/Chip"
-import SpeechBubbleIcon from "./icons/SpeechBubbleIcon"
+import { ErrorChip, MessageChip, PauseChip, TimerChip } from "@/components/Chip"
 
 interface CardButtonProps {
   text: string
   seconds?: number
   reps?: number
   message?: boolean
+  error?: boolean
   onClick?: React.MouseEventHandler<unknown>
   innerButtonOnClick?: React.MouseEventHandler<unknown>
   selected?: boolean
@@ -39,6 +38,7 @@ const CardButton = forwardRef<CardButtonProps, "div">(
       seconds,
       reps,
       message,
+      error,
       children,
       isDragging,
       selected,
@@ -67,7 +67,12 @@ const CardButton = forwardRef<CardButtonProps, "div">(
         bg={selected ? "gray.600" : undefined}
         {...props}
       >
-        <CardHeader display="flex" alignItems="center" p={0}>
+        <CardHeader
+          display="flex"
+          alignItems="center"
+          p={0}
+          opacity={error ? 0.7 : 1}
+        >
           <Flex
             justifyContent="center"
             alignItems="center"
@@ -78,20 +83,14 @@ const CardButton = forwardRef<CardButtonProps, "div">(
             <DragHandleIcon color={selected ? "gray.500" : "gray.600"} />
           </Flex>
 
-          {message === true && (
-            <Chip colorScheme="green">
-              <SpeechBubbleIcon h={5} mx="auto" />
-            </Chip>
-          )}
-
-          {typeof seconds === "number" && (
-            <Chip colorScheme="blue">{seconds}s</Chip>
-          )}
-
-          {typeof reps === "number" && (
-            <Chip colorScheme="purple">
-              {reps === 0 ? <PauseIcon h={5} mx="auto" /> : `${reps}⨯`}
-            </Chip>
+          {error === true ? (
+            <ErrorChip />
+          ) : (
+            <>
+              {message === true && <MessageChip />}
+              {typeof seconds === "number" && <TimerChip seconds={seconds} />}
+              {typeof reps === "number" && <PauseChip reps={reps} />}
+            </>
           )}
 
           <Text my={3} fontSize="lg" fontWeight={selected ? "bold" : "normal"}>
