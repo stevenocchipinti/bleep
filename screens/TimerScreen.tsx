@@ -32,9 +32,11 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
   console.log(JSON.stringify(state.value))
   // console.table(state.context)
 
+  const isRunning = is("running")
+
   useEffect(() => {
-    is("running") ? enableWakeLock() : disableWakeLock()
-  }, [disableWakeLock, enableWakeLock, is, state])
+    isRunning ? enableWakeLock() : disableWakeLock()
+  }, [disableWakeLock, enableWakeLock, isRunning])
 
   const { program } = state.context
   if (!program) return null
