@@ -1,4 +1,4 @@
-import { useState } from "react"
+import React, { useState } from "react"
 import {
   ArrowBackIcon,
   HamburgerIcon,
@@ -35,7 +35,7 @@ import CardButton from "@/components/CardButton"
 import { ChipTab } from "@/components/Chip"
 import { SwipeableChild, FooterButton } from "@/components/SwipeableView"
 import { useTimerActor } from "lib/useTimerMachine"
-import React from "react"
+import { BlockSchema } from "lib/types"
 
 const OptionalIndicator = () => (
   <Text color="gray.400" fontSize="xs" ml={2} as="span">
@@ -163,7 +163,7 @@ const ConfigScreen = ({
                         block.type === "pause" ? block?.reps || 0 : undefined
                       }
                       message={block.type === "message"}
-                      error={false}
+                      error={!BlockSchema.safeParse(block).success}
                       text={block.name}
                       togglesBody
                       ref={provided.innerRef}
@@ -259,11 +259,7 @@ const ConfigScreen = ({
                               />
                             </FormControl>
                             <FormControl>
-                              <FormLabel
-                                optionalIndicator={<OptionalIndicator />}
-                              >
-                                Message
-                              </FormLabel>
+                              <FormLabel>Message</FormLabel>
                               <Textarea
                                 defaultValue={
                                   block.type === "message" ? block.message : ""

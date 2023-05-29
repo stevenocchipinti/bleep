@@ -1,7 +1,11 @@
-import { createMachine, assign, send } from "xstate"
-import defaultData, { Program } from "./defaultData"
-import { playTone, speak } from "./audio"
+import { createMachine, assign } from "xstate"
+import { assign as immerAssign } from "@xstate/immer"
 import localforage from "localforage"
+
+import defaultData from "./defaultData"
+import { ProgramSchema } from "./types"
+import { Block, Program } from "./types"
+import { playTone, speak } from "./audio"
 
 type LoadedEvent = { type: "LOADED"; data: Program[] }
 type StartEvent = { type: "START" }
@@ -14,6 +18,11 @@ type SelectProgramEvent = { type: "SELECT_PROGRAM"; index: number }
 type ContinueEvent = { type: "CONTINUE" }
 type NextEvent = { type: "NEXT" }
 type PreviousEvent = { type: "PREVIOUS" }
+type UpdateBlockEvent = {
+  type: "UPDATE_BLOCK"
+  index: number
+  block: Block
+}
 type ReorderProgramsEvent = {
   type: "REORDER_PROGRAMS"
   sourceIndex: number
@@ -32,11 +41,12 @@ type Events =
   | ContinueEvent
   | NextEvent
   | PreviousEvent
+  | UpdateBlockEvent
   | ReorderProgramsEvent
 
 const timerMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5QBcCWBbMAnAdAGwHsBDCVAOygGIICywdyA3Aga3rU10JPKgSYIBjImloBtAAwBdSVMSgADgVipRZeSAAeiAGwBmHACYALPoCcOgIw6JAVj1mAHDoA0IAJ6JDO2zmPGJS2NDCUdDe2M9WwBfaLcObHxiUgpKbCwCXAU8EQAzTPQcBK5k3n4yZmE1WVkNJRU1DW0EE18wxz0JCT09R0jbSz03TwRLCWMcHy7bSMNLQ0MAdkXHWPiMRIUMqCwidAACMgJkfdgwPDBBZEhKAGUAUQAZe4BhABUAfQAFACUAeQA4j8AIIAWVqSBA9VUqFoTUQtl8xj6iwkiz0OhWPXGw0QxlRfjRxjMEgWXV6QTWIGKOC2BB2e1O50u1wgdyer0+v0BIPB0jqyhhcMhzWxfmsGMGi30wUWuIQ+IkhMWxNJIW6YSpNLpDIOZwuV0gOFgyAICgUN1ub2BPzeEMUgsaIsQenCOEc4x8DnGjjMQWM8rMrqMOiDxls3X9hjMWo2WW2uz1zMNEGNpvNNwAcvcABp2-mQ6FO0DNAC00aV3WCvQ6QQWZnl0omxkstmWxMWC1msc4tITjP1LKNJrNFrZv3uADUAJJ-ACqt3tUMdsPUzoQpcsZkMOEs1kWEb9znCco8iEcizMOBWtiWZnDi39MTi1LjffpiaZBtZOCwAFcyDIXhKC+YEF3uJci1XeEEAvK9lgPQZoxmElTxGRwBhwJxSV9DFt16Qwe02fsk2-I1-0A4CfnuB58zkQsV2FEsXRJSZEMcDoL2lSxHHlRw9xwGYI2jX1Bgw1YX21EivyHVMKKA1JszzSDGLXZiN0iK9ZVdUM9EiXo0MQeZrBwbpO07QwOn8MxFiI+MPwHZMf3k4CJxnedFwLB0Gmg9dS2JZsyVbZDxhVeVBkxXdQ33PdSTGZ91l7HVP0HFNfwAhSqBUnymK0PFbCvWwOjMArOw1exG0vd0wnGLtLxMWzJLfZLHLIuSMt4HBBAIAC0AofYaAAdzISg3mnF4AGlsqFNS8tggrTPvJYwj0TsisMcKdB0Hdjxbbw9C3S87PfXUZLSlyKC6nqyD6qABoIYbKGm4s5psnRJh0fi23sMYukscL9qMDFLzCJwLA6Y6WtI2T0soy7gUA67BF4fYACNCEEFhqFoegBDYIpmuk1LnI6+HEYA5H+vRoQWHKSoRFXGovOXHLZuaExAp4iyxhWaNwqiHceKDXn71DJZIaJpzyNJqAcARo4KZR6nMexugGAqVh2EJhzofOmW5fJshKbu5XaYEKpGekMRLHo7yZpghZ3rMZ3neWNFwnmXiz1GfxHF3bdb3DV1iW2iWdbOkm4dl+WkaVjGsZoNW8a1pLJba2HMoNhWjbjmm6aEBnxCtwxbZZ+31zmP2WwCEJA9CW8hm91tTCiiNbB0SIujmRrEuI8PielqOs9j-rut6oaRueYEABEPjGybnt89SL18PTgm3UWxg48KAivV091Me9QjsGMmtT-upfaoeY8V0fruQCfKAAMWnTNp1uAAJD4p9n1-F9y5ooZFhGDGGLVEAwbCGR9voHAGJAg8Q9NtduYdToDyvpnYEg0iAwjvjdcgf4wCUBeH8TMY1MxzggszKCACjIHlMiJKwB4WyIh4gDaM14li9AOuMbhEle72VQZfDOnUb4536pgWAsAiAwFVrjDW+MpIX3ThdaOhtjb7AkVImA+cLZFxkFQ1SMFNwhHdBIKwPRDA6TCHMTa21JgSGFgdSwKpwh6BQSlIRCgiB-jOGyaitF-5swRBhSY4RIjbX8C2DujZxjXgCg4ZwNlwzGHca1GGXifGWmtLaQJMFli+GWNYCwiElh8UwthSyQYxYEWOkcfYUNYCyPVswBRb46kNJ0YXMgTNS7UKCQgHSgkegzB4npSuGFwqIlgSqZE94twcW8M+F8RwIBwA0MUAUrMjEFSVMEEIwUSqhVsOFYBrYuhWDmIsvcJVjrcBSFATZ5d1K3mvE4nZljnHEi9iMHmQNAg2SKuSauqSDhHBOGgx5L1mjEiwsSewDiLDFL6PKBwEwEXbmimETsbiz590EW1SFS85qlhmDuPZgRbyHPxMc72jCjDxJ8M4LaGIQUR2HOmMchKaEIHvH4EwiL7wdFRHzb2j4CkzMsiEDu1hWVoOERQLl-TNyfVMeY10ViFjhS6MAjCFLVrLGijoWVQiVFXV6ijCeiqYKfWAd6KIwdtxzADE3duwCtqIl5ksUIlJcUCI8co-Woj1GmytRXEqsCnDhNvKSphWrw1RECKYDi21PqEV9Sdf1MNTVBpRmPG6lqGJbPXF6SYrpbw+HvLMBsTdLLNk9vYfeJJwjGoDdfLBOC7rdTwWQAhob1JjCwq6BYozHxzH0PzDuglAgrGsqM8YLas2BrUSjTR0iwB9rmrWvwq18SWT0h0DaTctpKmGZW6MxIGoLrShk3xG7mj5Ngb0BxioegohiRMFU94VTgPMWm-hOB2kkXgIWp5c17BVzgVEMqnpXBNzRH8rc9gLJ2GjLEWIQA */
+    /** @xstate-layout N4IgpgJg5mDOIC5QBcCWBbMAnAdAGwHsBDCVAOygGIICywdyA3Aga3rU10JPKgSYIBjImloBtAAwBdSVMSgADgVipRZeSAAeiAGwBmHACYALPoCcOgIw6JAVj1mAHDoA0IAJ6JDO2zmPGJS2NDCUdDe2M9WwBfaLcObHxiUgpKbCwCXAU8EQAzTPQcBK5k3n4yZmE1WVkNJRU1DW0EE18wxz0JCT09R0jbSz03TwRLCWMcHy7bSMNLQ0MAdkXHWPiMRIUMqCwidAACMgJkfdgwPDBBZEhKAGUAUQAZe4BhABUAfQAFACUAeQA4j8AIIAWVqSBA9VUqFoTUQtl8xj6iwkiz0OhWPXGw0QxlRfjRxjMEgWXV6QTWIGKOC2BB2e1O50u1wgdyer0+v0BIPB0jqyhhcMhzWxfmsGMGi30wUWuIQ+IkhMWxNJIW6YSpNLpDIOZwuV0gOFgyAICgUN1ub2BPzeEMUgsaIoRPhwg0siJJEjMvXR8rG-hwPWWcwxekMekWWo2WW2uz1zMNEGNpvNN3tUMdsPUzoQAFoBo4cCtLNLkV1ItZ-aFDMXIlErHMgoZVnFqTHaXHGfqWUaTWaLcmAJIQC6UABy9wAGnb+ZDoU7QM1BkiW91EZj-LYLPK+jpJuGbON-KrDNHOJ36fGmQbWSmB0aR2PfvcAGpDv4AVVuGYX2fhox2DgMy2OEGL2GMOhLNWUHAc4iwmI4YzzK26wXjq149kmOBYAArmQZC8JQXzAt+9y-lmwpLogli0WYbrHpYHRmCxziuB4iAWBM4xsbYqJjOGMRttqXYJreRp4QRRE-PcDyznI86UTm1EIFBEzhI4YTdGimk6OxIyOLYRbLGYwRWCqEg6MY56bKJN69smkmEakk4zhRDT-rmeb9EYZbhP4LadPpNHhvRSzGEZlknlBNmxle3aJneTlES+75fj+c4Oh5VFaIg3kkr5tGDI464OEMHGjOWhJWYsMyLPMCyoe26F2VhSX4c5VDuUKym5QgqK1sEGKIQMEVmIYu56JYOAVuNmLesEFixZeur2dhyUUDgggEPhaAUPsNAAO5kJQbxDi8ADS3WLn1zgTPMTErLVlmLGYcoVUxSGTIEJV2DomkLEJaG2fFYkOThHW8FtO1kHtUAHQQx2UNdnkqU4006GYfGRSeczBZVX1vVYzgRkZtFNSJoNre1UmbcCBEw4IvD7AARoQggsNQtD0AIbBFB2GEJeJjmQ3TDP4Uz+1s0ILDlJUIjZjUmWZtlvXNCY9H+KZCEIcE4wYv6fFKuNjjSlBU32DFwkC61iUSaLUA4PTRwS8z0sc1zdAMBUrDsDbVNtfbtOO87jNu+zssCFUivSGIlgKVlPUARGtakrVThkpiSzlSM1h6TgPqWGY8ymD6DhRtbLUB3bIvB074tkJL8Pu5zNBe7zftV6tge1519cu434cy3LQgK+IseGAnKtJ7mCwGP41hzN0z16Y4-plgXx7+Bi-0+Gelcg93NcQ3Xoeu-t227UdJ3PMCAAiHxnZdKM5c0mlKpGTE+mN9jdP6UFFksnYPQyJlhWVMstQWYN1oO37mHC+MNkDX0oAAMSHOOIctwAASHxb4P3QS-NWiABpGF6IYH0cxDJhAmh9f6qcWK2BepEb0WNIG22FifPuwJDpEBhAg2G5BcJgEoC8P444zrjk-ORZWf5X40RKjNPipgFiYj4npGhud-BFlMJieq4xaIzD0Gw6uHCNohwbk3fYmBYCwCIDAT2PMfZ80pkfUxsCz6D32tY2xMAR7R3HjIGRSkAJ5gMcWFY9glhF28Gid6udNLTRAabKwdgzKaWMa48GCgiC4TOGyGSclCEATCKuUytgrIAJWGvCq0pfDojRB6SMURNQHzipk7C2TcmWmtLaIpuZkK+G9M4H6iIzbyi4jNZEekjYCXCMtI4+woGwAcd7ZgziOwLKWX4seZAlZT1kUQhAh5gI9BmExEBlDDKG18JGLRpki4Ax8BkzCx8LRYBUCaIifSVJ5m8GFUkEU0RonGlWCqZSC6NMxuc0yptnlC3Bv2NMbJPxfDvsCN49wPgACFHh-GfkE1WITQLTRJP9MY6JOhohzsQqykxMagWMEXRaaI4XQLvEQGxqAoCdWRgSmePzXoGCsiVRlWMTAUl3NuAudDvCRj6HjVl1MjQcpUNyr58cBSEq8v9Awy8goWFLH0Mw4zTB0stiKy2cxFU91WUQPAqAICswjpQFFaKMXYtxfi-ZwSvJvSVNYd+nQNIkmpQgYuBhdZGVegMMYzhYhtiOBAOAGhiiav5X1UJll9wBpKkGoyJINE0UWG6Rh+tMRBCskxfewMSg8AoGmm6zRQLFimh6AtU0VROGrMWiMgQ3qRW6Iy6yrSVrXiOCcHuDbUZ9WJAXYkv8WKY0xH0eUDhuIsTmsXMICEjEjqgUqiAU65H5mQkWHN2lg1-wqtuIs+gYl6XXAJa1x9EWDiPYc0JtKkmgXqrMAa8pd5ukPKWMC4Vn0cNfY+UcYB30hNovub9US-19vGQsN0PhP6r0jBXGto74UwODrBryEpwmGXDPVOasT-QqLgjC0kLFIg6HA+DMx0NdrM2vkRlSmNBqlixpGKCVlyHr2cISYkekJTjWJMxgjXCLFDw5lxvqlK-AxMjBqI1-oprcUcPx5EEYioU39u0mmcmB6WMvrDTjiktXcaMnSwIUSdIzGMIbboJaFiMo0iqJje72EsfcTwvh8NtoCLIEIpTy5fBYwzqTVJnQViGw6EYRlIHgjwWHbh-dNrWMeMsd4uxMGbPpvVrpvwUwKX6YiK5j6pt6JonsOGAz0oWlZf8x0nJeTIs0UCBMCTTFghjG8FZeUtSW0NPsOiIy1bmqHxeRwpgdqHVOplt1-Mv10MYl0yTImthqzlILmXHoxJnAgZk3eN5Hy4Zre8n0QkDWbD4krKh42HoAg2BmKZN68yCCLNEvAYrjaES9D8BidcCEKx6W7aQvtk2ySgTMOd5VnK1X1sB9O5oeYOjcV6JiTGdgzaFv6oy9DWNTBk3Id0eN0QgA */
     id: "timer",
 
     initial: "loading",
@@ -89,26 +99,39 @@ const timerMachine = createMachine(
         states: {
           stopped: {
             on: {
-              START: {
-                target: "running",
-              },
-
-              NEXT: {
-                target: "stopped",
-                cond: "nextBlockAvailable",
-                actions: "nextBlock",
-                internal: true,
-              },
-
-              PREVIOUS: {
-                target: "stopped",
-                cond: "previousBlockAvailable",
-                actions: "previousBlock",
-                internal: true,
-              },
+              START: "running",
+              UPDATE_BLOCK: "assigning",
             },
 
             entry: ["resetTimer", "stopTalking"],
+
+            states: {
+              Idle: {
+                on: {
+                  NEXT: {
+                    target: "Idle",
+                    cond: "nextBlockAvailable",
+                    actions: "nextBlock",
+                    internal: true,
+                  },
+
+                  PREVIOUS: {
+                    target: "Idle",
+                    cond: "previousBlockAvailable",
+                    actions: "previousBlock",
+                    internal: true,
+                  },
+                },
+
+                description: `This is just stopped`,
+              },
+            },
+
+            initial: "Idle",
+            always: {
+              target: "invalid block",
+              cond: "isInvalid",
+            },
           },
 
           running: {
@@ -232,6 +255,31 @@ const timerMachine = createMachine(
               START: "running",
             },
           },
+
+          "invalid block": {
+            entry: () => console.warn("INVALID BLOCK"),
+
+            on: {
+              UPDATE_BLOCK: "assigning",
+            },
+          },
+
+          persisting: {
+            always: "stopped",
+            entry: "persistProgram",
+          },
+
+          assigning: {
+            entry: "updateBlock",
+
+            always: [
+              {
+                target: "invalid block",
+                cond: "isInvalid",
+              },
+              "persisting",
+            ],
+          },
         },
 
         on: {
@@ -276,6 +324,11 @@ const timerMachine = createMachine(
         !!program && currentBlockIndex > 0,
       nextBlockAvailable: ({ program, currentBlockIndex }) =>
         !!program && currentBlockIndex < program.blocks.length - 1,
+      isInvalid: ({ program }) => {
+        const x = !!program && !ProgramSchema.safeParse(program).success
+        console.warn("isInvalid", x, ProgramSchema.safeParse(program))
+        return x
+      },
     },
 
     actions: {
@@ -326,6 +379,12 @@ const timerMachine = createMachine(
       assignAllPrograms: assign({
         allPrograms: (_, event: LoadedEvent) => event.data,
       }),
+      updateBlock: immerAssign((context, event: UpdateBlockEvent) => {
+        const { index, block } = event
+        context.allPrograms[context.currentBlockIndex].blocks[index] = block
+        context.program = context.allPrograms[context.currentBlockIndex]
+      }),
+      persistProgram: () => console.log("PERSISTING PROGRAM"),
     },
 
     services: {

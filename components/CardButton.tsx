@@ -67,12 +67,7 @@ const CardButton = forwardRef<CardButtonProps, "div">(
         bg={selected ? "gray.600" : undefined}
         {...props}
       >
-        <CardHeader
-          display="flex"
-          alignItems="center"
-          p={0}
-          opacity={error ? 0.7 : 1}
-        >
+        <CardHeader display="flex" alignItems="center" p={0}>
           <Flex
             justifyContent="center"
             alignItems="center"

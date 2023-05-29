@@ -5,7 +5,7 @@ import { SwipeableChild, FooterButton } from "components/SwipeableView"
 import { ArrowBackIcon, LockIcon, UnlockIcon } from "@chakra-ui/icons"
 import { IconButton, Heading, Text, Flex, Button } from "@chakra-ui/react"
 
-import { TimerBlock } from "lib/defaultData"
+import type { TimerBlock } from "lib/types"
 import useWakeLock from "lib/useWakeLock"
 import { useTimerActor } from "lib/useTimerMachine"
 import {
@@ -66,7 +66,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
     width: block.type === "timer" ? block.seconds || 0 : averageBlockSeconds,
     percentDone:
       currentBlockIndex === index
-        ? is("stopped")
+        ? !is("running")
           ? 0
           : 1 - secondsRemaining / (block.type === "timer" ? block.seconds : 0)
         : currentBlockIndex > index ? 1 : 0, // prettier-ignore

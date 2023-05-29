@@ -1,30 +1,4 @@
-export interface TimerBlock {
-  type: "timer"
-  name: string
-  seconds: number
-}
-
-export interface PauseBlock {
-  type: "pause"
-  name: string
-  reps?: number
-}
-
-export interface MessageBlock {
-  type: "message"
-  name: string
-  message: string
-}
-
-export type Block = TimerBlock | PauseBlock | MessageBlock
-
-export interface Program {
-  id: string
-  name: string
-  description: string
-  emoji: string
-  blocks: Block[]
-}
+import type { Program } from "./types"
 
 const defaultData: Program[] = [
   {
