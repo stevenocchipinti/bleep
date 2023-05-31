@@ -2,18 +2,21 @@ import { z } from "zod"
 
 const TimerBlockSchema = z.object({
   type: z.literal("timer"),
+  disabled: z.boolean().default(false).optional(),
   name: z.string().min(1),
   seconds: z.number().positive().min(1),
 })
 
 const PauseBlockSchema = z.object({
   type: z.literal("pause"),
+  disabled: z.boolean().default(false).optional(),
   name: z.string().min(1),
   reps: z.number().positive().optional(),
 })
 
 const MessageBlockSchema = z.object({
   type: z.literal("message"),
+  disabled: z.boolean().default(false).optional(),
   name: z.string().min(1),
   message: z.string().min(1),
 })

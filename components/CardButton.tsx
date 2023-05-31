@@ -19,6 +19,7 @@ interface CardButtonProps {
   seconds?: number
   reps?: number
   message?: boolean
+  disabled?: boolean
   error?: boolean
   onClick?: React.MouseEventHandler<unknown>
   innerButtonOnClick?: React.MouseEventHandler<unknown>
@@ -28,7 +29,7 @@ interface CardButtonProps {
   emoji?: string
   style: any
   handleProps: any
-  togglesBody?: boolean
+  isExpanded?: boolean
 }
 
 const CardButton = forwardRef<CardButtonProps, "div">(
@@ -39,12 +40,13 @@ const CardButton = forwardRef<CardButtonProps, "div">(
       reps,
       message,
       error,
+      disabled,
       children,
       isDragging,
       selected,
       emoji,
       handleProps,
-      togglesBody = false,
+      isExpanded,
       innerButtonOnClick,
       ...props
     },
@@ -56,12 +58,11 @@ const CardButton = forwardRef<CardButtonProps, "div">(
       down: "rotate(90deg)",
     }
 
-    const { isOpen, onToggle } = useDisclosure()
-
     return (
       <Card
         transition="0.2s"
         transform={selected ? "scale(1.05)" : undefined}
+        opacity={disabled ? 0.7 : 1}
         variant={selected ? "filled" : undefined}
         ref={ref}
         bg={selected ? "gray.600" : undefined}
@@ -82,9 +83,13 @@ const CardButton = forwardRef<CardButtonProps, "div">(
             <ErrorChip />
           ) : (
             <>
-              {message === true && <MessageChip />}
-              {typeof seconds === "number" && <TimerChip seconds={seconds} />}
-              {typeof reps === "number" && <PauseChip reps={reps} />}
+              {message === true && <MessageChip disabled={disabled} />}
+              {typeof seconds === "number" && (
+                <TimerChip disabled={disabled} seconds={seconds} />
+              )}
+              {typeof reps === "number" && (
+                <PauseChip disabled={disabled} reps={reps} />
+              )}
             </>
           )}
 
@@ -100,12 +105,16 @@ const CardButton = forwardRef<CardButtonProps, "div">(
             variant="ghost"
             aria-label="Toggle body"
             m={1}
-            onClick={togglesBody ? onToggle : innerButtonOnClick}
+            onClick={
+              typeof isExpanded === "boolean" ? undefined : innerButtonOnClick
+            }
             icon={
               <ChevronRightIcon
                 transition="0.2s"
                 transform={
-                  togglesBody ? transforms[isOpen ? "up" : "down"] : undefined
+                  typeof isExpanded === "boolean"
+                    ? transforms[isExpanded ? "up" : "down"]
+                    : undefined
                 }
                 boxSize={5}
               />
@@ -113,7 +122,7 @@ const CardButton = forwardRef<CardButtonProps, "div">(
           />
         </CardHeader>
 
-        <Collapse in={isOpen} animateOpacity>
+        <Collapse in={isExpanded} animateOpacity>
           <CardBody p={4} pt={0}>
             {children}
           </CardBody>

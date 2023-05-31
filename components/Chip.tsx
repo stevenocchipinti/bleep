@@ -6,6 +6,7 @@ interface ChipProps extends TextProps {
   children: React.ReactNode
   colorScheme: "blue" | "purple" | "green" | "gray" | "red"
   isSelected?: boolean
+  isDisabled?: boolean
 }
 const Chip = React.forwardRef(
   (
@@ -48,17 +49,17 @@ const ChipTab = React.forwardRef((props: ChipProps, ref: React.Ref<any>) => {
 })
 ChipTab.displayName = "ChipTab"
 
-const MessageChip = () => (
-  <Chip colorScheme="green">
+const MessageChip = ({ disabled }: { disabled?: boolean }) => (
+  <Chip colorScheme={disabled ? "gray" : "green"}>
     <SpeechBubbleIcon h={5} mx="auto" />
   </Chip>
 )
 
-const TimerChip = (props: { seconds: number }) => {
+const TimerChip = (props: { seconds: number; disabled?: boolean }) => {
   const minutes = Math.floor(props.seconds / 60)
   const seconds = props.seconds % 60
   return (
-    <Chip colorScheme="blue">
+    <Chip colorScheme={props.disabled ? "gray" : "blue"}>
       {[
         minutes > 0 ? `${minutes}m` : "",
         seconds > 0 ? `${seconds}s` : "",
@@ -67,8 +68,14 @@ const TimerChip = (props: { seconds: number }) => {
   )
 }
 
-const PauseChip = ({ reps }: { reps: number }) => (
-  <Chip colorScheme="purple">
+const PauseChip = ({
+  reps,
+  disabled,
+}: {
+  reps: number
+  disabled?: boolean
+}) => (
+  <Chip colorScheme={disabled ? "gray" : "purple"}>
     {reps === 0 ? <PauseIcon h={5} mx="auto" /> : `${reps}⨯`}
   </Chip>
 )
