@@ -475,7 +475,7 @@ const ConfigScreen = ({
                 )
               })}
               {provided.placeholder}
-              <Button variant="outline">Add Step</Button>
+              <Button variant="outline">Add block</Button>
             </Flex>
           )}
         </Droppable>

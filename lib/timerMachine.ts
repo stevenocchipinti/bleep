@@ -296,21 +296,28 @@ const timerMachine = createMachine(
       timerFinished: ({ program, currentBlockIndex, secondsRemaining }) =>
         !!program &&
         secondsRemaining <= 0 &&
-        currentBlockIndex >= program.blocks.length,
+        currentBlockIndex >= program.blocks.filter(b => !b.disabled).length,
       blockFinished: ({ program, currentBlockIndex, secondsRemaining }) =>
         !!program &&
         secondsRemaining <= 0 &&
-        currentBlockIndex <= program.blocks.length,
+        currentBlockIndex <= program.blocks.filter(b => !b.disabled).length,
       isTimerBlock: ({ program, currentBlockIndex }) =>
-        !!program && program.blocks[currentBlockIndex].type === "timer",
+        !!program &&
+        program.blocks.filter(b => !b.disabled)[currentBlockIndex].type ===
+          "timer",
       isPauseBlock: ({ program, currentBlockIndex }) =>
-        !!program && program.blocks[currentBlockIndex].type === "pause",
+        !!program &&
+        program.blocks.filter(b => !b.disabled)[currentBlockIndex].type ===
+          "pause",
       isMessageBlock: ({ program, currentBlockIndex }) =>
-        !!program && program.blocks[currentBlockIndex].type === "message",
+        !!program &&
+        program.blocks.filter(b => !b.disabled)[currentBlockIndex].type ===
+          "message",
       previousBlockAvailable: ({ program, currentBlockIndex }) =>
         !!program && currentBlockIndex > 0,
       nextBlockAvailable: ({ program, currentBlockIndex }) =>
-        !!program && currentBlockIndex < program.blocks.length - 1,
+        !!program &&
+        currentBlockIndex < program.blocks.filter(b => !b.disabled).length - 1,
       isInvalid: ({ program }) =>
         !!program && !ProgramSchema.safeParse(program).success,
     },
@@ -328,14 +335,18 @@ const timerMachine = createMachine(
       nextBlock: assign({
         currentBlockIndex: ({ currentBlockIndex }) => currentBlockIndex + 1,
         secondsRemaining: ({ program, currentBlockIndex }) => {
-          const block = program?.blocks[currentBlockIndex + 1]
+          const block = program?.blocks.filter(b => !b.disabled)[
+            currentBlockIndex + 1
+          ]
           return block?.type === "timer" ? block.seconds : 0
         },
       }),
       previousBlock: assign({
         currentBlockIndex: ({ currentBlockIndex }) => currentBlockIndex - 1,
         secondsRemaining: ({ program, currentBlockIndex }) => {
-          const block = program?.blocks[currentBlockIndex - 1]
+          const block = program?.blocks.filter(b => !b.disabled)[
+            currentBlockIndex - 1
+          ]
           return block?.type === "timer" ? block.seconds : 0
         },
       }),
@@ -343,7 +354,7 @@ const timerMachine = createMachine(
         leadSecondsRemaining: 3,
         currentBlockIndex: 0,
         secondsRemaining: ({ program }) => {
-          const block = program?.blocks[0]
+          const block = program?.blocks.filter(b => !b.disabled)[0]
           return block?.type === "timer" ? block.seconds : 0
         },
       }),
@@ -381,11 +392,14 @@ const timerMachine = createMachine(
       announceBlock:
         ({ program, currentBlockIndex }) =>
         () => {
-          const block = program?.blocks[currentBlockIndex]
+          const block = program?.blocks.filter(b => !b.disabled)[
+            currentBlockIndex
+          ]
           if (block?.type === "timer")
             return speak(`${block.name} for ${block.seconds} seconds`)
           else if (block?.type === "pause" && block?.reps && block.reps > 0)
             return speak(`${block.name} for ${block.reps} reps`)
+          else if (block?.type === "pause") return speak(block.name)
           else return Promise.resolve()
         },
       announceCountdown:
@@ -401,7 +415,9 @@ const timerMachine = createMachine(
       announceMessage:
         ({ program, currentBlockIndex }) =>
         () => {
-          const block = program?.blocks[currentBlockIndex]
+          const block = program?.blocks.filter(b => !b.disabled)[
+            currentBlockIndex
+          ]
           if (block?.type === "message") return speak(block.message)
           else return Promise.resolve()
         },

@@ -11,6 +11,7 @@ import {
   Flex,
 } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
+import { ProgramSchema } from "lib/types"
 import { useTimerActor } from "lib/useTimerMachine"
 import { useState } from "react"
 
@@ -83,31 +84,35 @@ const HomeScreen = ({
               {...provided.droppableProps}
               ref={provided.innerRef}
             >
-              {allPrograms.map((program, index) => (
-                <Draggable
-                  key={program.id}
-                  draggableId={program.id}
-                  index={index}
-                >
-                  {(provided, snapshot) => (
-                    <CardButton
-                      text={program.name}
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      handleProps={provided.dragHandleProps}
-                      isDragging={snapshot.isDragging}
-                      style={provided.draggableProps.style}
-                      selected={selectedProgramIndex === index}
-                      onClick={() => selectProgramByIndex(index)}
-                      innerButtonOnClick={e => {
-                        e.stopPropagation()
-                        selectProgramByIndex(index, true)
-                      }}
-                      emoji={program.emoji}
-                    />
-                  )}
-                </Draggable>
-              ))}
+              {allPrograms.map((program, index) => {
+                const isValid = ProgramSchema.safeParse(program).success
+                return (
+                  <Draggable
+                    key={program.id}
+                    draggableId={program.id}
+                    index={index}
+                  >
+                    {(provided, snapshot) => (
+                      <CardButton
+                        text={program.name}
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        handleProps={provided.dragHandleProps}
+                        isDragging={snapshot.isDragging}
+                        style={provided.draggableProps.style}
+                        selected={selectedProgramIndex === index}
+                        onClick={() => selectProgramByIndex(index)}
+                        error={!isValid}
+                        innerButtonOnClick={e => {
+                          e.stopPropagation()
+                          selectProgramByIndex(index, isValid)
+                        }}
+                        emoji={program.emoji}
+                      />
+                    )}
+                  </Draggable>
+                )
+              })}
               {provided.placeholder}
               <Button
                 variant="outline"

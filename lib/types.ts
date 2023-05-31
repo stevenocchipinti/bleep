@@ -32,7 +32,10 @@ const ProgramSchema = z.object({
   name: z.string(),
   description: z.string(),
   emoji: z.string(),
-  blocks: z.array(BlockSchema),
+  blocks: z
+    .array(BlockSchema)
+    .nonempty()
+    .refine(arr => arr.some(e => !e.disabled)),
 })
 
 type TimerBlock = z.infer<typeof TimerBlockSchema>

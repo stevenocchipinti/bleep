@@ -5,7 +5,7 @@ import { SwipeableChild, FooterButton } from "components/SwipeableView"
 import { ArrowBackIcon, LockIcon, UnlockIcon } from "@chakra-ui/icons"
 import { IconButton, Heading, Text, Flex, Button } from "@chakra-ui/react"
 
-import type { TimerBlock } from "lib/types"
+import { ProgramSchema, TimerBlock } from "lib/types"
 import useWakeLock from "lib/useWakeLock"
 import { useTimerActor } from "lib/useTimerMachine"
 import {
@@ -14,6 +14,7 @@ import {
   StopIcon,
   RewindIcon,
   FastForwardIcon,
+  ExclamationIcon,
 } from "components/icons"
 
 interface TimerScreenProps {
@@ -29,7 +30,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
   } = useWakeLock()
 
   const { state, is, send } = useTimerActor()
-  console.log(JSON.stringify(state.value))
+  // console.log(JSON.stringify(state.value))
   // console.table(state.context)
 
   const isRunning = is("running")
@@ -40,15 +41,18 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
 
   const { program } = state.context
   if (!program) return null
+  const isValid = ProgramSchema.safeParse(program).success
 
   const { currentBlockIndex, secondsRemaining } = state.context
-  const currentBlock = program.blocks[currentBlockIndex]
+  const blocks = program.blocks.filter(b => !b.disabled)
+
+  const currentBlock = blocks[currentBlockIndex]
 
   // Used for the circular progress bar
   const currentBlockPercent = (n: number) => {
     if (currentBlock.type !== "timer") return 0
     const currentBlockSeconds = currentBlock.seconds
-    if (program.blocks.length === 0) return 0
+    if (blocks.length === 0) return 0
     return ((secondsRemaining + n) / currentBlockSeconds) * 100
   }
   const from = is("counting down") ? currentBlockPercent(0) : 100
@@ -56,13 +60,13 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
 
   // Used for the segmented progress bar
   // BUG: Seems to start too early for the first step and too late for the last step
-  const timerBlocks: TimerBlock[] = program.blocks.filter(
+  const timerBlocks: TimerBlock[] = blocks.filter(
     block => block.type === "timer"
   ) as TimerBlock[]
   const averageBlockSeconds =
     timerBlocks.reduce((acc, block) => acc + block.seconds, 0) /
     timerBlocks.length
-  const progressBarData = program.blocks.map((block, index) => ({
+  const progressBarData = blocks.map((block, index) => ({
     width: block.type === "timer" ? block.seconds || 0 : averageBlockSeconds,
     percentDone:
       currentBlockIndex === index
@@ -115,19 +119,15 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
             <StopIcon />
           </FooterButton>
 
-          {state.can({ type: "PAUSE" }) && (
+          {state.can({ type: "PAUSE" }) ? (
             <FooterButton
               variant="ghost"
-              isDisabled={
-                program.blocks.length === 0 || is("Awaiting continue")
-              }
+              isDisabled={blocks.length === 0 || is("Awaiting continue")}
               onClick={() => send("PAUSE")}
             >
               <PauseIcon />
             </FooterButton>
-          )}
-
-          {state.can({ type: "START" }) && (
+          ) : (
             <FooterButton
               variant="ghost"
               isDisabled={!state.can({ type: "START" })}
@@ -159,48 +159,54 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
           animate={is("running")}
         />
 
-        {currentBlock.type === "timer" && (
-          <CircularProgressBar
-            from={from}
-            to={to}
-            text={`${secondsRemaining}` || "00:00"}
-          ></CircularProgressBar>
-        )}
+        {isValid ? (
+          <>
+            {currentBlock.type === "timer" && (
+              <CircularProgressBar
+                from={from}
+                to={to}
+                text={`${secondsRemaining}` || "00:00"}
+              ></CircularProgressBar>
+            )}
 
-        {currentBlock.type === "pause" && (
-          <Button
-            isDisabled={!state.can({ type: "CONTINUE" })}
-            borderRadius="50%"
-            mx="auto"
-            h="300px"
-            w="300px"
-            fontSize="3xl"
-            variant="brand"
-            onClick={() => send("CONTINUE")}
-          >
-            Continue
-          </Button>
-        )}
+            {currentBlock.type === "pause" && (
+              <Button
+                isDisabled={!state.can({ type: "CONTINUE" })}
+                borderRadius="50%"
+                mx="auto"
+                h="300px"
+                w="300px"
+                fontSize="3xl"
+                variant="brand"
+                onClick={() => send("CONTINUE")}
+              >
+                Continue
+              </Button>
+            )}
 
-        <Heading
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          flexGrow={1}
-          size="3xl"
-          textAlign="center"
-        >
-          {currentBlock.type === "pause" &&
-            currentBlock?.reps &&
-            currentBlock.reps > 0 &&
-            `${currentBlock.reps}⨯ `}
-          {currentBlock.name}
-        </Heading>
+            <Heading
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              flexGrow={1}
+              size="3xl"
+              textAlign="center"
+            >
+              {currentBlock.type === "pause" &&
+                currentBlock?.reps &&
+                currentBlock.reps > 0 &&
+                `${currentBlock.reps}⨯ `}
+              {currentBlock.name}
+            </Heading>
 
-        {currentBlock.type === "message" && (
-          <Text textAlign="center" flexGrow={1}>
-            {currentBlock.message}
-          </Text>
+            {currentBlock.type === "message" && (
+              <Text textAlign="center" flexGrow={1}>
+                {currentBlock.message}
+              </Text>
+            )}
+          </>
+        ) : (
+          <ExclamationIcon stroke="red.200" />
         )}
       </Flex>
     </SwipeableChild>
