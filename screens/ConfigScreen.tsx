@@ -420,7 +420,15 @@ const ConfigScreen = ({
                 )
               })}
               {provided.placeholder}
-              <Button variant="outline">Add block</Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCurrentBlock(program.blocks.length)
+                  send({ type: "ADD_BLOCK" })
+                }}
+              >
+                Add block
+              </Button>
             </Flex>
           )}
         </Droppable>
