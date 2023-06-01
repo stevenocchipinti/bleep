@@ -1,6 +1,7 @@
 import { Box, Flex } from "@chakra-ui/react"
 import { TimerBlock } from "lib/types"
 import { useTimerActor } from "lib/useTimerMachine"
+import { currentProgramFrom } from "lib/timerMachine"
 
 interface Segment {
   width: number
@@ -11,7 +12,9 @@ const SegmentedProgressBar = () => {
   // BUG: Seems to start too early for the first step and too late for the last step
 
   const { is, state } = useTimerActor()
-  const { program, currentBlockIndex, secondsRemaining } = state.context
+  const { program, currentBlockIndex, secondsRemaining } = currentProgramFrom(
+    state.context
+  )
   if (!program) return null
 
   const { blocks } = program
@@ -53,6 +56,7 @@ const SegmentedProgressBar = () => {
             transition: animate ? "1s linear" : undefined,
             transform: `scaleX(${block.percentDone})`,
             transformOrigin: "left",
+            height: "100%",
             position: "absolute",
           }}
         />

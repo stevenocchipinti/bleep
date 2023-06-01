@@ -1,11 +1,10 @@
 import { useEffect } from "react"
 import CircularProgressBar from "components/CircularProgressBar"
-import SegmentedProgressBar from "components/SegmentedProgressBar"
 import { SwipeableChild, FooterButton } from "components/SwipeableView"
 import { ArrowBackIcon, LockIcon, UnlockIcon } from "@chakra-ui/icons"
 import { IconButton, Heading, Text, Flex, Button } from "@chakra-ui/react"
 
-import { ProgramSchema, TimerBlock } from "lib/types"
+import { ProgramSchema } from "lib/types"
 import useWakeLock from "lib/useWakeLock"
 import { useTimerActor } from "lib/useTimerMachine"
 import {
@@ -16,6 +15,7 @@ import {
   FastForwardIcon,
   ExclamationIcon,
 } from "components/icons"
+import { currentProgramFrom } from "lib/timerMachine"
 
 interface TimerScreenProps {
   goBack: () => void
@@ -39,7 +39,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
     isRunning ? enableWakeLock() : disableWakeLock()
   }, [disableWakeLock, enableWakeLock, isRunning])
 
-  const { program } = state.context
+  const { program } = currentProgramFrom(state.context)
   if (!program) return null
   const isValid = ProgramSchema.safeParse(program).success
 

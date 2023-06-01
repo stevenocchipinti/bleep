@@ -44,6 +44,7 @@ import {
   PauseBlock,
   MessageBlock,
 } from "lib/types"
+import { currentProgramFrom } from "lib/timerMachine"
 
 const OptionalIndicator = () => (
   <Text color="gray.400" fontSize="xs" ml={2} as="span">
@@ -73,7 +74,7 @@ const ConfigScreen = ({
   const [currentBlock, setCurrentBlock] = useState<number | null>(null)
 
   const { state, send } = useTimerActor()
-  const { program } = state.context
+  const { program } = currentProgramFrom(state.context)
 
   if (program === null) return null
   const programValid = ProgramSchema.safeParse(program).success
