@@ -29,13 +29,12 @@ import {
   Input,
   Textarea,
   Switch,
-  NumberInput,
-  NumberInputField,
 } from "@chakra-ui/react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
 
 import CardButton from "@/components/CardButton"
 import { ChipTab } from "@/components/Chip"
+import { DurationInput } from "@/components/DurationInput"
 import { SwipeableChild, FooterButton } from "@/components/SwipeableView"
 import { useTimerActor } from "lib/useTimerMachine"
 import {
@@ -59,61 +58,6 @@ const FlexTabPanel = ({ children }: { children: React.ReactNode }) => (
     </Flex>
   </TabPanel>
 )
-
-interface DurationInputProps {
-  totalSeconds: number
-  onChange?: (totalSeconds: number) => void
-}
-const DurationInput = ({ totalSeconds, onChange }: DurationInputProps) => {
-  const secondsFrom = (totalSeconds: number) => totalSeconds % 60 || 0
-  const minutesFrom = (totalSeconds: number) =>
-    Math.floor(totalSeconds / 60) || 0
-
-  const [seconds, setSeconds] = useState(secondsFrom(totalSeconds))
-  const [minutes, setMinutes] = useState(minutesFrom(totalSeconds))
-
-  const validSeconds = (s: number) => s >= 0 && s <= 59
-  const validMinutes = (m: number) => m >= 0
-
-  const onChangeSeconds = useCallback(() => {
-    if (validMinutes(minutes) && validSeconds(seconds))
-      onChange?.(minutes * 60 + seconds)
-  }, [seconds, minutes, onChange])
-
-  return (
-    <Flex gap={2} alignItems="center">
-      <NumberInput
-        min={0}
-        placeholder="Minutes"
-        variant="filled"
-        textAlign="right"
-        onChange={valueString => {
-          setMinutes(parseInt(valueString) || 0)
-          onChangeSeconds()
-        }}
-        value={minutesFrom(totalSeconds)}
-      >
-        <NumberInputField />
-      </NumberInput>
-      <Text fontSize="2xl" as="span">
-        :
-      </Text>
-      <NumberInput
-        max={59}
-        min={0}
-        placeholder="Seconds"
-        variant="filled"
-        onChange={valueString => {
-          setSeconds(parseInt(valueString) || 0)
-          onChangeSeconds()
-        }}
-        value={secondsFrom(totalSeconds)}
-      >
-        <NumberInputField />
-      </NumberInput>
-    </Flex>
-  )
-}
 
 interface ConfigScreenProps {
   openSettingsModal: () => void
