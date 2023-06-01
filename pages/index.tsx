@@ -8,12 +8,13 @@ import HomeScreen from "screens/HomeScreen"
 import ConfigScreen from "screens/ConfigScreen"
 import TimerScreen from "screens/TimerScreen"
 import { useTimerActor } from "lib/useTimerMachine"
+import { currentProgramFrom } from "lib/timerMachine"
 
 const Page = () => {
   const [slideIndex, setSlideIndex] = useState(0)
 
   const { state, is, send } = useTimerActor()
-  const { program } = state.context
+  const { program } = currentProgramFrom(state.context)
 
   // Setting modal
   const { isOpen, onOpen, onClose } = useDisclosure()
