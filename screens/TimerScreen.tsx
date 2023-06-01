@@ -58,24 +58,6 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
   const from = is("counting down") ? currentBlockPercent(0) : 100
   const to = is("counting down") ? currentBlockPercent(-1) : 100
 
-  // Used for the segmented progress bar
-  // BUG: Seems to start too early for the first step and too late for the last step
-  const timerBlocks: TimerBlock[] = blocks.filter(
-    block => block.type === "timer"
-  ) as TimerBlock[]
-  const averageBlockSeconds =
-    timerBlocks.reduce((acc, block) => acc + block.seconds, 0) /
-    timerBlocks.length
-  const progressBarData = blocks.map((block, index) => ({
-    width: block.type === "timer" ? block.seconds || 0 : averageBlockSeconds,
-    percentDone:
-      currentBlockIndex === index
-        ? !is("running")
-          ? 0
-          : 1 - secondsRemaining / (block.type === "timer" ? block.seconds : 0)
-        : currentBlockIndex > index ? 1 : 0, // prettier-ignore
-  }))
-
   return (
     <SwipeableChild
       header={
@@ -101,6 +83,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
           />
         </>
       }
+      showProgress
       footer={
         <>
           <FooterButton
@@ -154,11 +137,6 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
         gap={12}
         p={8}
       >
-        <SegmentedProgressBar
-          blocks={progressBarData}
-          animate={is("running")}
-        />
-
         {isValid ? (
           <>
             {currentBlock.type === "timer" && (

@@ -1,53 +1,64 @@
-import { Box, Flex, FlexProps } from "@chakra-ui/react"
+import { Box, Flex } from "@chakra-ui/react"
+import { TimerBlock } from "lib/types"
+import { useTimerActor } from "lib/useTimerMachine"
 
-interface Block {
+interface Segment {
   width: number
   percentDone: number
 }
 
-interface Props extends FlexProps {
-  blocks: Block[]
-  animate: boolean
+const SegmentedProgressBar = () => {
+  // BUG: Seems to start too early for the first step and too late for the last step
+
+  const { is, state } = useTimerActor()
+  const { program, currentBlockIndex, secondsRemaining } = state.context
+  if (!program) return null
+
+  const { blocks } = program
+  const animate = is("running")
+
+  const timerBlocks: TimerBlock[] = blocks.filter(
+    block => block.type === "timer"
+  ) as TimerBlock[]
+
+  const averageBlockSeconds =
+    timerBlocks.reduce((acc, block) => acc + block.seconds, 0) /
+    timerBlocks.length
+
+  const progressBarData: Segment[] = blocks.map((block, index) => ({
+    width: block.type === "timer" ? block.seconds || 0 : averageBlockSeconds,
+    percentDone:
+      currentBlockIndex === index
+        ? !is("running")
+          ? 0
+          : 1 - secondsRemaining / (block.type === "timer" ? block.seconds : 0)
+        : currentBlockIndex > index ? 1 : 0, // prettier-ignore
+  }))
+
+  return (
+    <Flex justifyContent="space-between" bg="gray.700" gap={1}>
+      {progressBarData.map((block, index) => (
+        <Box
+          key={index}
+          bg="gray.600"
+          position="relative"
+          flex={block.width}
+          overflow="hidden"
+          h="2px"
+          _before={{
+            content: '""',
+            display: "block",
+            bg: "teal.300",
+            width: "full",
+            transition: animate ? "1s linear" : undefined,
+            transform: `scaleX(${block.percentDone})`,
+            transformOrigin: "left",
+            position: "absolute",
+          }}
+        />
+      ))}
+    </Flex>
+  )
 }
-const SegmentedProgressBar = ({ blocks, animate, ...props }: Props) => (
-  <Flex
-    justifyContent="space-between"
-    bg="gray.700"
-    borderRadius="3xl"
-    gap={2}
-    p={3}
-    {...props}
-  >
-    {blocks.map((block, index) => (
-      <Box
-        key={index}
-        bg="gray.600"
-        position="relative"
-        flex={block.width}
-        overflow="hidden"
-        h={3}
-        _first={{
-          borderTopLeftRadius: "lg",
-          borderBottomLeftRadius: "lg",
-        }}
-        _last={{
-          borderTopRightRadius: "lg",
-          borderBottomRightRadius: "lg",
-        }}
-        _before={{
-          content: '""',
-          display: "block",
-          bg: "teal.300",
-          width: "full",
-          transition: animate ? "1s linear" : undefined,
-          transform: `scaleX(${block.percentDone})`,
-          transformOrigin: "left",
-          height: 4,
-          position: "absolute",
-        }}
-      />
-    ))}
-  </Flex>
-)
 
 export default SegmentedProgressBar

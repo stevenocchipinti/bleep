@@ -5,9 +5,11 @@ import {
   Flex,
   Grid,
   GridItem,
+  shouldForwardProp,
 } from "@chakra-ui/react"
 import { ReactNode } from "react"
 import SwipeableViews from "react-swipeable-views"
+import SegmentedProgressBar from "./SegmentedProgressBar"
 
 const SwipableParent = chakra(SwipeableViews, {
   baseStyle: {
@@ -50,26 +52,34 @@ const Header = ({ children, transparent = false }: HeaderProps) => {
   )
 }
 
-const Footer = ({ children }: { children: ReactNode }) => {
+const Footer = ({
+  children,
+  showProgress,
+}: {
+  children: ReactNode
+  showProgress?: boolean
+}) => {
   return (
-    <Grid
-      templateColumns="1fr 1fr 1fr 1fr"
-      position="sticky"
-      bottom={0}
-      left={0}
-      right={0}
-      justifyContent="center"
-      p={5}
-      gap={4}
-      bg="hsl(220deg 26% 8% / 40%)"
-      shadow="0 4px 30px rgba(0, 0, 0, 0.1)"
-      backdropFilter="blur(5px)"
-      borderTop="1px solid rgba(255, 255, 255, 0.1)"
-      borderTopRadius="xl"
-      sx={{ WebkitTapHighlightColor: "transparent" }}
-    >
-      {children}
-    </Grid>
+    <Flex direction="column">
+      {showProgress && <SegmentedProgressBar />}
+      <Grid
+        templateColumns="1fr 1fr 1fr 1fr"
+        position="sticky"
+        bottom={0}
+        left={0}
+        right={0}
+        justifyContent="center"
+        p={5}
+        gap={4}
+        bg="hsl(220deg 26% 8% / 40%)"
+        backdropFilter="blur(5px)"
+        shadow="0 4px 30px rgba(0, 0, 0, 0.1)"
+        borderTop={showProgress ? "none" : "1px solid rgba(255, 255, 255, 0.1)"}
+        sx={{ WebkitTapHighlightColor: "transparent" }}
+      >
+        {children}
+      </Grid>
+    </Flex>
   )
 }
 
@@ -96,12 +106,14 @@ interface SwipeableChildProps {
   transparentHeader?: ReactNode
   header?: ReactNode
   footer?: ReactNode
+  showProgress?: boolean
 }
 const SwipeableChild = ({
   children,
   transparentHeader,
   header,
   footer,
+  showProgress,
 }: SwipeableChildProps) => (
   <Flex
     direction="column"
@@ -112,7 +124,7 @@ const SwipeableChild = ({
     {header && <Header>{header}</Header>}
     {transparentHeader && <Header transparent>{transparentHeader}</Header>}
     {children}
-    {footer && <Footer>{footer}</Footer>}
+    {footer && <Footer showProgress={showProgress}>{footer}</Footer>}
   </Flex>
 )
 
