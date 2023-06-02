@@ -29,6 +29,8 @@ const Page = () => {
 
   const selectProgramById = (id: string, skip: boolean = false) => {
     send({ type: "SELECT_PROGRAM", id })
+    if (state.context.selectedProgramId === id) return
+
     setSlideIndex(skip ? 2 : 1)
 
     // Set up a history stack for the 3 slides
