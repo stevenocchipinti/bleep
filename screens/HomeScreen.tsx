@@ -32,7 +32,6 @@ const HomeScreen = ({
   openSettingsModal,
   selectProgramByIndex,
 }: HomeScreenProps) => {
-  const [isDragging, setIsDragging] = useState(false)
   const [programIds, setProgramIds] = useState<string[]>([])
 
   const { state, send } = useTimerActor()
@@ -56,9 +55,7 @@ const HomeScreen = ({
     }
   }
 
-  const onDragStart = () => {
-    setIsDragging(true)
-  }
+  const onDragStart = () => {}
 
   return (
     <SwipeableChild
@@ -102,7 +99,6 @@ const HomeScreen = ({
                 text={program.name}
                 selected={selectedProgramIndex === index}
                 onClick={() => selectProgramByIndex(index)}
-                isDragging={isDragging}
                 error={!isValid}
                 innerButtonOnClick={e => {
                   e.stopPropagation()

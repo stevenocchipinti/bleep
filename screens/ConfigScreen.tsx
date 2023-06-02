@@ -81,7 +81,6 @@ const ConfigScreen = ({
   goBack,
   goForward,
 }: ConfigScreenProps) => {
-  const [isDragging, setIsDragging] = useState(false)
   const [currentBlock, setCurrentBlock] = useState<number | null>(null)
 
   // Delete modal
@@ -94,12 +93,9 @@ const ConfigScreen = ({
   if (program === null) return null
   const programValid = ProgramSchema.safeParse(program).success
 
-  const onDragEnd = () => {
-    setIsDragging(false)
-  }
+  const onDragEnd = () => {}
 
   const onDragStart = () => {
-    setIsDragging(true)
     setCurrentBlock(null)
   }
 
@@ -325,7 +321,6 @@ const ConfigScreen = ({
                   onClick={() =>
                     setCurrentBlock(currentBlock === index ? null : index)
                   }
-                  isDragging={isDragging}
                 >
                   <Tabs
                     index={blockTypes.indexOf(block.type)}

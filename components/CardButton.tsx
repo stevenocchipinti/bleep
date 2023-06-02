@@ -26,7 +26,6 @@ interface CardButtonProps {
   innerButtonOnClick?: React.MouseEventHandler<unknown>
   selected?: boolean
   children?: React.ReactNode
-  isDragging?: boolean
   emoji?: string
   style?: any
   isExpanded?: boolean
@@ -41,7 +40,6 @@ const CardButton = ({
   error,
   disabled,
   children,
-  isDragging,
   selected,
   emoji,
   isExpanded,
