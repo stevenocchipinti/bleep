@@ -3,7 +3,7 @@ import { assign as immerAssign } from "@xstate/immer"
 import localforage from "localforage"
 
 import defaultData from "./defaultData"
-import { ProgramSchema } from "./types"
+import { BlockSchema, ProgramSchema } from "./types"
 import { Block, Program } from "./types"
 import { playTone, speak } from "./audio"
 
@@ -442,11 +442,13 @@ const timerMachine = createMachine(
         context.allPrograms[context.currentBlockIndex].blocks[index] = block
       }),
       addBlock: immerAssign(context => {
-        context.allPrograms[context.currentBlockIndex].blocks.push({
-          type: "message",
-          name: "Untitled block",
-          message: "A new block",
-        })
+        context.allPrograms[context.currentBlockIndex].blocks.push(
+          BlockSchema.parse({
+            type: "message",
+            name: "Untitled block",
+            message: "A new block",
+          })
+        )
       }),
       deleteBlock: immerAssign((context, event: DeleteBlockEvent) => {
         context.allPrograms[context.currentBlockIndex].blocks.splice(
@@ -464,7 +466,10 @@ const timerMachine = createMachine(
           if (data) return data
           else throw "No data found"
         }),
-      saveDefaultData: () => localforage.setItem("allPrograms", defaultData),
+      saveDefaultData: () => {
+        console.log("Loading default data")
+        return localforage.setItem("allPrograms", defaultData)
+      },
       startTimer: () => send => {
         const interval = setInterval(() => send("TICK"), 1000)
         return () => clearInterval(interval)
