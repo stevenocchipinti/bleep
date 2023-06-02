@@ -13,11 +13,7 @@ import {
 
 import DndContext from "@/components/DndContext"
 import { DragEndEvent } from "@dnd-kit/core"
-import {
-  arrayMove,
-  SortableContext,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
+import { arrayMove } from "@dnd-kit/sortable"
 
 import { Program, ProgramSchema } from "lib/types"
 import { useTimerActor } from "lib/useTimerMachine"
@@ -25,17 +21,17 @@ import { useEffect, useState } from "react"
 
 interface HomeScreenProps {
   openSettingsModal: () => void
-  selectProgramByIndex: (index: number, skip?: boolean) => void
+  selectProgramById: (id: string, skip?: boolean) => void
 }
 
 const HomeScreen = ({
   openSettingsModal,
-  selectProgramByIndex,
+  selectProgramById,
 }: HomeScreenProps) => {
   const [programIds, setProgramIds] = useState<string[]>([])
 
   const { state, send } = useTimerActor()
-  const { allPrograms, selectedProgramIndex } = state.context
+  const { allPrograms, selectedProgramId } = state.context
 
   useEffect(() => {
     if (allPrograms.length > 0)
@@ -97,12 +93,12 @@ const HomeScreen = ({
                 key={id}
                 id={id}
                 text={program.name}
-                selected={selectedProgramIndex === index}
-                onClick={() => selectProgramByIndex(index)}
+                selected={selectedProgramId === program.id}
+                onClick={() => selectProgramById(program.id)}
                 error={!isValid}
                 innerButtonOnClick={e => {
                   e.stopPropagation()
-                  selectProgramByIndex(index, isValid)
+                  selectProgramById(program.id, isValid)
                 }}
                 emoji={program.emoji}
               />

@@ -27,8 +27,8 @@ const Page = () => {
     return () => { removeEventListener("popstate", handler) }
   }, [])
 
-  const selectProgramByIndex = (index: number, skip: boolean = false) => {
-    send({ type: "SELECT_PROGRAM", index })
+  const selectProgramById = (id: string, skip: boolean = false) => {
+    send({ type: "SELECT_PROGRAM", id })
     setSlideIndex(skip ? 2 : 1)
 
     // Set up a history stack for the 3 slides
@@ -54,7 +54,7 @@ const Page = () => {
         >
           <HomeScreen
             openSettingsModal={onOpen}
-            selectProgramByIndex={selectProgramByIndex}
+            selectProgramById={selectProgramById}
           />
 
           {program !== null ? (

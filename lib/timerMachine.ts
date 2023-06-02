@@ -14,7 +14,7 @@ type PauesEvent = { type: "PAUSE" }
 type TickEvent = { type: "TICK" }
 type LeadTickEvent = { type: "LEAD_TICK" }
 type FinishLeadIn = { type: "FINISH_LEAD_IN" }
-type SelectProgramEvent = { type: "SELECT_PROGRAM"; index: number }
+type SelectProgramEvent = { type: "SELECT_PROGRAM"; id: string }
 type ContinueEvent = { type: "CONTINUE" }
 type NextEvent = { type: "NEXT" }
 type PreviousEvent = { type: "PREVIOUS" }
@@ -50,7 +50,7 @@ type Events =
 
 type Context = {
   allPrograms: Program[]
-  selectedProgramIndex: number | null
+  selectedProgramId: string | null
   currentBlockIndex: number
   secondsRemaining: number
   leadSecondsRemaining: number
@@ -66,15 +66,12 @@ export interface CurrentProgram {
 export const currentProgramFrom = (context: Context): CurrentProgram => {
   const {
     allPrograms,
-    selectedProgramIndex,
+    selectedProgramId,
     currentBlockIndex,
     secondsRemaining,
     leadSecondsRemaining,
   } = context
-  const program =
-    typeof selectedProgramIndex === "number"
-      ? allPrograms[selectedProgramIndex]
-      : null
+  const program = allPrograms.find(p => p.id === selectedProgramId) || null
   const blocks = program ? program.blocks : []
   return {
     program,
@@ -99,7 +96,7 @@ const timerMachine = createMachine(
 
     context: {
       allPrograms: [],
-      selectedProgramIndex: null,
+      selectedProgramId: null,
       currentBlockIndex: 0,
       secondsRemaining: 0,
       leadSecondsRemaining: 0,
@@ -432,7 +429,7 @@ const timerMachine = createMachine(
         speechSynthesis.cancel()
       },
       assignProgram: assign({
-        selectedProgramIndex: (_, event: SelectProgramEvent) => event.index,
+        selectedProgramId: (_, event: SelectProgramEvent) => event.id,
       }),
       assignAllPrograms: assign({
         allPrograms: (_, event: LoadedEvent) => event.data,
