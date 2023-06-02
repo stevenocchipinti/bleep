@@ -178,7 +178,28 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
             </Heading>
 
             {currentBlock.type === "message" && (
-              <Text textAlign="center" flexGrow={1}>
+              <Text
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                textAlign="center"
+                fontStyle="italic"
+                fontSize="xl"
+                bg="blackAlpha.300"
+                p={8}
+                borderRadius="3xl"
+                flexGrow={1}
+                position="relative"
+                _before={{
+                  display: "block",
+                  position: "absolute",
+                  content: "'❞'",
+                  fontSize: "6rem",
+                  opacity: 0.05,
+                  top: "1rem",
+                  left: "2rem",
+                }}
+              >
                 {currentBlock.message}
               </Text>
             )}

@@ -38,7 +38,7 @@ const Header = ({ children, transparent = false }: HeaderProps) => {
       right={0}
       p={3}
       gap={6}
-      bg={transparent ? "transparent" : "hsl(220deg 26% 8% / 40%)"}
+      bg={transparent ? "transparent" : "blackAlpha.300"}
       shadow={transparent ? "transparent" : "0 4px 30px rgba(0, 0, 0, 0.1)"}
       backdropFilter="blur(5px)"
       borderBottom={
@@ -71,7 +71,7 @@ const Footer = ({
         justifyContent="center"
         p={5}
         gap={4}
-        bg="hsl(220deg 26% 8% / 40%)"
+        bg="blackAlpha.300"
         backdropFilter="blur(5px)"
         shadow="0 4px 30px rgba(0, 0, 0, 0.1)"
         borderTop={showProgress ? "none" : "1px solid rgba(255, 255, 255, 0.1)"}
