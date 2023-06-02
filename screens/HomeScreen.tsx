@@ -85,7 +85,7 @@ const HomeScreen = ({
           onDragEnd={onDragEnd}
           items={programIds}
         >
-          {programIds.map((id, index) => {
+          {programIds.map(id => {
             const program: Program = allPrograms.find(p => p.id === id)!
             const isValid = ProgramSchema.safeParse(program).success
             return (

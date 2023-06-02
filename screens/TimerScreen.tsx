@@ -196,8 +196,8 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
                   content: "'❞'",
                   fontSize: "6rem",
                   opacity: 0.05,
-                  top: "1rem",
-                  left: "2rem",
+                  top: 0,
+                  left: "1.25rem",
                 }}
               >
                 {currentBlock.message}
