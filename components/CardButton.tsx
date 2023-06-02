@@ -9,12 +9,15 @@ import {
   IconButton,
   Text,
   Spacer,
-  useDisclosure,
 } from "@chakra-ui/react"
 
 import { ErrorChip, MessageChip, PauseChip, TimerChip } from "@/components/Chip"
 
+import { CSS } from "@dnd-kit/utilities"
+import { useSortable } from "@dnd-kit/sortable"
+
 interface CardButtonProps {
+  id: string
   text: string
   seconds?: number
   reps?: number
@@ -25,16 +28,17 @@ interface CardButtonProps {
   innerButtonOnClick?: React.MouseEventHandler<unknown>
   selected?: boolean
   children?: React.ReactNode
-  isDragging: boolean
+  isDragging?: boolean
   emoji?: string
-  style: any
-  handleProps: any
+  style?: any
+  handleProps?: any
   isExpanded?: boolean
 }
 
 const CardButton = forwardRef<CardButtonProps, "div">(
   (
     {
+      id,
       text,
       seconds,
       reps,
@@ -59,15 +63,25 @@ const CardButton = forwardRef<CardButtonProps, "div">(
       down: "rotate(90deg)",
     }
 
+    const { attributes, listeners, setNodeRef, transform, transition } =
+      useSortable({ id })
+
+    const style = {
+      transform: CSS.Transform.toString(transform),
+      transition,
+    }
+
     return (
       <Card
         transition="0.2s"
         transform={selected ? "scale(1.05)" : undefined}
         opacity={disabled ? 0.7 : 1}
         variant={selected ? "filled" : undefined}
-        ref={ref}
         bg={selected ? "gray.600" : undefined}
+        ref={setNodeRef}
+        style={style}
         {...props}
+        {...attributes}
       >
         <CardHeader onClick={onClick} display="flex" alignItems="center" p={0}>
           <Flex
@@ -76,6 +90,7 @@ const CardButton = forwardRef<CardButtonProps, "div">(
             h="full"
             px={2}
             {...handleProps}
+            {...listeners}
           >
             <DragHandleIcon color={selected ? "gray.500" : "gray.600"} />
           </Flex>
