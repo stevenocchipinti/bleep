@@ -1,7 +1,7 @@
-import type { Program } from "./types"
+import { Program, ProgramSchema } from "./types"
 
 const defaultData: Program[] = [
-  {
+  ProgramSchema.parse({
     id: "foo",
     name: "Foo",
     description: "A simple test program",
@@ -18,8 +18,8 @@ const defaultData: Program[] = [
         message: "Congratulations, you made it!",
       },
     ],
-  },
-  {
+  }),
+  ProgramSchema.parse({
     id: "kaz",
     name: "Knee Ability Zero",
     description: "Knee Ability Zero is a knee rehab program by Ben Patrick",
@@ -35,8 +35,8 @@ const defaultData: Program[] = [
       { type: "timer", name: "L-Sit", seconds: 60 },
       { type: "timer", name: "Couch Stretch", seconds: 60 },
     ],
-  },
-  {
+  }),
+  ProgramSchema.parse({
     id: "yoga",
     name: "Yoga",
     description: "A yoga program that I just made up for the dummy data",
@@ -51,8 +51,8 @@ const defaultData: Program[] = [
       { type: "timer", name: "Cobra", seconds: 5 },
       { type: "timer", name: "Child's Pose", seconds: 5 },
     ],
-  },
-  {
+  }),
+  ProgramSchema.parse({
     id: "athx",
     name: "AthleanX anti-slouch",
     description: "A program to help with slouching by Jeff Cavaliere",
@@ -70,7 +70,7 @@ const defaultData: Program[] = [
       { type: "timer", name: "Wall DL", seconds: 30 },
       { type: "timer", name: "Bridge reach over", seconds: 30 },
     ],
-  },
+  }),
 ]
 
 export default defaultData
