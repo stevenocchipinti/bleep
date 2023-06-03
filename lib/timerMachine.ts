@@ -36,6 +36,19 @@ type MoveProgramEvent = {
   fromIndex: number
   toIndex: number
 }
+type DeleteProgramEvent = { type: "DELETE_PROGRAM"; id: string }
+type AddProgramEvent = { type: "ADD_PROGRAM" }
+type DuplicateProgramEvent = { type: "DUPLICATE_PROGRAM"; id: string }
+type RenameProgramEvent = {
+  type: "RENAME_PROGRAM"
+  id: string
+  name: string
+}
+type UpdateProgramDescriptionEvent = {
+  type: "UPDATE_PROGRAM_DESCRIPTION"
+  id: string
+  description: string
+}
 
 type Events =
   | LoadedEvent
@@ -55,6 +68,11 @@ type Events =
   | MoveBlockEvent
   | UpdateBlockEvent
   | MoveProgramEvent
+  | DeleteProgramEvent
+  | AddProgramEvent
+  | DuplicateProgramEvent
+  | RenameProgramEvent
+  | UpdateProgramDescriptionEvent
 
 type Context = {
   allPrograms: Program[]
@@ -92,7 +110,7 @@ export const currentProgramFrom = (context: Context): CurrentProgram => {
 
 const timerMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5QBcCWBbMAnAdAGwHsBDCVAOygGIICywdyA3Aga3rU10JPKgSYIBjImloBtAAwBdSVMSgADgVipRZeSAAeiALQA2AEwBGHAFYAnHqMBmA3oDs94wA5TAGhABPXUYnmczhIGQfYhtvam9gC+UR4c2PjEpBSU2FgEuAp4IgBmGeg48VxJvPxkzMJqsrIaSipqGtoIOgAsBs44EQbW5r0t5kbOdtYe3s3d9jhtlr6W5s4O0bEgRYkkkJQAsgDyAGoAogD6AAoAStsA4qcAgps1SCB1qqi0jYiRLThGbd0tei3WPSWPSjHwtT7OIwGcxOYGmVxGPQxOIYBLcCCQHAKdJQLBEdAAAlgYDwYEEyA2ABF9gBlfYAGX2AGEAConc5XW73RTKZ6vB5NZwdCQtewtCSmfpivTWIzmUEIREGHB6GWWfrggZOZErVHFdYQLE4vGE4mk8mY2DIAgKBQbGks66nFncx68hoC95+FUGRwSnqi6GmEFeRDOazWHAiiRi0zdUzfRw61bozHYgi4-FEklkimGq02u0QSgAVWOlOuLKOACF6dsmQBpV1PD2gJo6RGmL7dVVtCSqgwWENjH44AwGFqS1xAmXQ5N6tYYw3pzOmnMW-PW20bZvul7qT3jIxd8GImFBdqQ+YKhxdnrjyKqvx6UymeecRdp41Zs25y1boscAASQgUlKAAOX2AANF1pFqPd+TbRAX0mU9ASFJwX37BU438cxwUnaFzB6PxzHfNEki-DMTWzc08xwAtt0NECwLOfZdiA7YSxpXd6n3N4EGsFoOiE5xzHHboRWlHDoRwfDwVw4jzFI8j9SXI1qJ-dd6MYwCWLAShrkpSlDlresmzgh4W34w8IxMOMJIsYNoQlG9ZTMSJTD8YMJDlMjlhTSjl2-Nc6P-QtMX0yhqUZKtTLrRteL5A8kIQUI9BwCNLFI8d7Hw9xQwQGV7M87y9F83pVM-YLNNCv9Nwi5jQIMnYDni8yktbLR3mMTL8PDPKxOcAEWjckqIjKir-JRD9Uxq1daPqnAsAAVzIMheEoY5rm4-ZOps1KjBsEwJyCYrLHvBV7COlVxNfRwxLsJMAoXOaNIW38N2WtaNpSU5aX2WC5CshCUu6orvimEjiNMQEIyFBVw0jaNY3jRMlhmiiDXemjPvo1b1s2yCYP2xDwZ0Hp-G+ZxQjjRNrDEhVfBFOTxwBOMnOOqq3pXXHtMxAnfqoNiOK4njLJ5PiyfbaYo1lDnlOMcwEyZxFPlImFhr8Y9nG5oKca0sLDUFzbSbBpojDyscrAlWZxSsAqxiGT4GeK0J+37Aw9ex3nDaWk2KBwQQCDWtAKAJGgAHcyEoFkgMSiW3Sl83ECO30VXha6bAWIVJyZiQYy+BnBxab5lO+N8Xtm-Xfbqr6A6gIOQ7IMOoAjgho8oM2BLy5Vgnscq2isYSGdV6xJkHVwYTsZX2m99Ta8W+uft4HBrnW5vBF4AkACNCEEFhqFoegBDYQpXprkKl-xlfA-XshN+3vehBYMoKhEfdqkT6zpcQScJCjAmI6Bd+yAlFEzdokY7A2yCGJOUg555UQ+vzY2t9G730fuHZ+B8j50AYOUVg7AL4+yvnjAWaC14bzWlvLB+9X4CEqJ-aQYgjDA0lslASAJlSGAGPJScvg8pMwZgA-segrzgh6LYFoiD5p8yNt9Qmd8qFkBoW3bBh8aB4NPkQ6uJDarX3IYo9ByjVG7zoW-IQH9xDMIMGwpOHDDxtHVgCCMvphI0zFEzSUXY059BjBOeGMiDZ1xvkYyhD9qHb2DqHKOMdGRGUOHHBOdif4p0VJbSMGpwyImPMrUuXjLZmEMGI30WFpFVyxgvUhKCFFC3CZgtu0SW6xMoAAMSAuBICNIAAShx4kmQ6d3Q8MIuwTi8gXSevgXwQMMJlbx-QLwykrpjNSSC5H+wodcSORBnjh2Di3cgK0DJMm2OBOO4ESx7W-qDASg4AGW3whMAYFgJQGAgT0H0gRvjGFVJCXWFTVmyL9svMJGDInh0wLAWARAYC4JPgQs+gU9HIPkQ3ep4K26QuhTACxjDrEyGucnThkw+hQgkGJWwQJ4SqxfGYXoxEXwOGsP2IJi8yHLiICtYkxZ-p0iBvBIlh5mYANhkKVww0Z7CRvHYH0FdfDfH+G0Vl1T5EKE5dyygDonT8pBoKw6uVOgREiL5QYwQpWFSzrdQckR7CPUWMq-R7L8GMCIHgVAEAzEv1LOWSsNYEoWRSTcw8OhJR4QnAsDU5VrrykKpKeywl2gD0cAsowDqUVLSIFC1AUAhZd0JQ41KFMB5mBsI+cqQwjqWxwgCTo8xS69EhPKtN6yvqZpUDm02rCBUFvJr6DoMJx7WG8fMamw53gwijH4UUQ7Ajku6DIzVDJmRsjOJcG4dx81dQtqXQBXlgxCmZQm5wCoOyRCjBGs6CZghDoxrqD8D8CS11gHC51hDz73oII+kKsBcVWLIF-QNeryal1GRORwkQGZQmDCeuUkYk0SkeuSv4t6kVVP0Q-ZABjixDNSuPSYMogjM3Hq4PwIxCqDHw+KK98wGal2sDEZYD8MTwAeEUbtW7dBAkjOJYS-x8JRrlCeiMkZvi2FhpbVU9hx7lJWYuXg7GDrk0MJGUNdyAlAnEiesZKouFtChAPX0QQZEKd-s0f4XYeMRv4zGQT5H7LHgg0JP4EgGbj2bcCvMJm0khonZZvjzno0KnaCYPhQ67IufBCh4haH01fV0pALzAlIaT3HjYGEZLbVkbGICfwBE-gjNfAy9zITwpMWAs1RLh5Zkpeuj0a6-dj2xuZVMYI8wrDKTjK4YrWHanyd1T29sHQEw0ypcYEe-xGtjF4SqYuconAKVht1p1aKmmt3btHSrqVLAngnEy7bDNHCq3aHJBD9XrqNqi7omLLbQl1LBSop+dDNvgy8iYEIT5+iQl8thOzx4TvwlwhGCUwkls1LRfd0xq3YnPaaMREwqoxF+GGnlQw9ghGzJcwD48Moab-NkzzFVGzQXbN2Y02gYcjkw8QOODKCZcLI98hGx2qdiNFIcDDHoMpLuVLWR5wxd2THbyxTCsAVPBK5chJJUUCIllePcrammxhui+EnDJu9POgUlY5VyhL-WOPpMKTGcEEbRSShjNKjKhhvjinDFOSqALqrBJ60wV17rPUHzFxTYaUx2bnjFMXBYN4HAltAU4Fy6FQfyLbdmoWnu6OGvEoiF8JFjDM8Eq4ToYy3FHVhKKbrGGsNi-HsqCNVhHBylhhYUahVehRgczbQY2cjpVQfU+z3FGdOlyg+S1w0ItOTh01IpXBnQhewY0AA */
+    /** @xstate-layout N4IgpgJg5mDOIC5QBcCWBbMAnAdAGwHsBDCVAOygGIICywdyA3Aga3rU10JPKgSYIBjImloBtAAwBdSVMSgADgVipRZeSAAeiALQA2AEwBGHAFYAnHqMBmA3oDs94wA5TAGhABPXUYnmczhIGQfYhtvam9gC+UR4c2PjEpBSU2FgEuAp4IgBmGeg48VxJvPxkzMJqsrIaSipqGtoIOgAsBs44EQbW5r0t5kbOdtYe3s3d9jhtlr6W5s4O0bEgRYkkkJQAsgDyAGoAogD6AAoAStsA4qcAgps1SCB1qqi0jYimEtY45m09RvZGNoSGwtUY+FotAJGAzmJyWPSmVxGPQxOIYBLcCCQHAKdJQLBEdAAAlgYDwYEEyA2ABF9gBlfYAGX2AGEAConc5XW73RTKZ6vB5NHTWPw4ZHmCSmawI0wGaVGMEIZEGHB6PQ9PT9CEDJyolbo4rrCA4vEE4mk8mU7GwZAEBQKDZ0tnXU5s3mPfkNIXvMWGRxSnotOGmPRK5zWL4SFoSewtOXWUyAxz61aY7G4gj4wkkskUqkm232x0QSgAVWO1OubKOACFGdsWQBpD1Pb2gYXI0zi7rqoHq+WWJVtVUGAzxlquPSWWzmVOGtZYk2Z7MWvPWwt2h0bVtel7qH3jIzdiES0Jj5zOIzzJUObs9MeRdV+WXzziLjNmnOW-M2rclnAAEkIHJSgADl9gADXdaRaj3QUO0QBFJlPGVLycBEJDDLx3hhb4IXjGFzB6Pw52WNMkk-LNzVzK0CxwIttxNYDQLOfZdkA7YyzpXd6n3N4EGsSccCE5xzDHbpozjbCxjlfwfghOTiMlXo3wxSjly-Nc6L-YtsRYsBKGualqUOetGxbWCHjbfjD0jEw5QkixQxhKVb2sBzIg+cxQ2BVTyIXdNNOo7913oxiAIMyhaWZGszIbZteIFA9EIQUI9BEzVSLHewfncHCEA1TyIj8XzrzItF3yC00Qu039Nz05iQMMnYDniiykvbLRcJMIMI1ysTnBaIT3OK7yyv8yr1ONGrV1o+qcCwABXMgyF4Shjmubj9k62zUqMGwTHHIIipncSlQBExp3lSJ7DEuwUwCqqNNmmifw3RaVrWlJTnpfYYLkaz4JS7rCsBKYSOI6UNWsS9w0jHBo1jQjE2TJYpqNJdXtCnSTWW1b1og6DdoQ0GRV6cVJ1COVk1h8wlV8aNvjHYa5Wcw61Mxqi5ve+j8e+qg2I4rieKsvk+NJ4VpkRjy2clYwfMVAqDq1RHelhIa-GPZxOY-YKebC7F+fWkmQaaf5-DsXwkz8GMrHysYhkhWGitCLCsIMXXqpXN7Dbxr7eBwQQCBWtAKCJGgAHcyEoNlAMSsXPQls3EAOgxJgRZxLpdy94wZiRY3FWH5RaQFJUBUwvZen2cYW42KCDkOyDDqAI4IaPKFNgTctHWM9GjK3J1hhmbEmeVXFhOwfPaKuZpruqPvrqAcGuVam8EXgiQAI0IQQWGoWh6AENhCkC6utPmxeA4b1eyHXzed6EFgygqER92qRObMlxB4wkRGkwOgXLCMpgwM3aF8OwVgC7tAGOJSuT1ppY3npfPm19l633vuHR+e8D50AYOUVg7Az5zwvrzI2aCV5rxWhvLBu9n4CEqO-aQYgjCA3FslASw1VSGFgQRG2uUGawz-lhPQV4FI9FsC0WeSDSF+0+gTG+VCyA0Nbtg-eNA8HHyIc9EhtUUHkIUegpRKjt50JfkIN+4hmEGDYUnDhh42iQmjJGcIk4s5xgZqYeM4poR9FjOOSMOsEFc31r7XG8iBaULvtQzewdQ5RxjsyYyhw44J1sV-FOyp-hfG1BGZEx4fKl08f8MwhhRHp0wlI4JetsYL1QYYqJmDW5xObgkygAAxQCYFAJ0gABKHCSaZLpXdDywm7OOD40DES+ARGAwwIkvFePlsMeBGManILIf7Bp1xI5EGeOHYOzdyBLUMiybYYE45gTLDtT+wMBLyj-hbX4uUClSgMGAnoap2jAjaMiURgxpHczCXXChGCYnh0wLAWARAYC4KPgQk+FFdEG3CUvRp4LW6QuhTAcxjCrEyFucnThkw+jQgkGJWw05EQjwRGYdWMpQz2FFCiap3tZHhIUEQJapJSy-QZADOCRLDyMz-tKS8rghpT0nLeOwXyK6+EBFqNogLQm1w+py7lToXRuhGftHKnQIiRGBIMYI0qCqXTVHA2691Fgqtqfok0TAiB4FQBAUxT9yyVmrHWBKll0l3MPDoJZzNJxah+P3AE9MCpeIcpOdo9hFj9GBHajZciiBQtQFAAWndCX2NSiKBNZgbBPn7kMA6-wlReK+ANUuvQrwKpTeyha6aVBZpNqwwVeaybpw6LCawTLFnzEBAsStsJEa2wHYEcl3QVWUAZMydknJLg3DuLmrqTRQg4DHPMLCYk7pKodj4SIiMFgxjsEmYIiZ0YGnfHfIk89YBwvwcwRFC470PtxZYsgH9-VCvzaXcZ45HCRFhtCUMSodDXmrQ4KU91yUtAcI2vRd9kAOpzb+rtwoXJF0RImQek5QTKyzmqGMF75iw1LtYWdMV-pHDOMunka69qgwiBlQYk7+1LJGgVSDTNbBeIjDGJlThPasvPnozZ0UKyMnjt6pd3JV0YfXe8RwaogiBCznTQI7zlZJk6MNd2MJEQIeIkhlF9VKC-TArcOjXIV26tBkNbswCs69B+cEGSqc9NxmZUEHyQ1pxUbE8aIyJl5P2aY9-ZUxr8Jamkh8LxEQIO+GdiXfunxBgWATWZ4FG5PVVjivRhThxaR0hZKcQCxw47nIc+bclkwAQymCLMQIFbdMmB84Z-zJmgvLDvlieADwiiduU80QLIbT3htjNeCDLjKb8Y8gmhw-bpG8BG8x4UhgvhLIeQE6c50eMTJI5I4wFT05BBVetqL+hvHiVDdqCNM2Cqqj8FKdUTgAvHRZWstlEm-ZXcyUGsdd3JsIem1GsY7QTAKVZvZT4EJr1IpkX98JEVIAA4EuDce-abCwjJXdEYBUZT+AIiZw1FgZQ5bVeFf8+lmoY8PPM7HjW8fBDupW0UUxgjzCsJKOUrgqd1IMQLBn+aOhJizlS4wQ8tTOCVLAtUxdrxOEUtKQXDqImBxaS3Nu0dReg0sCeccy3Dew0cCPdo3xYMAnToMA6iPiHI-M1fbZxiH50P100D4JgQjPn6FeYEWER7Hit4iOSkYpSTnV5szXijonKNiU3ZACTPeIGIlddUgR5jBksOnQR8zPhh+PBqLOQSfvied-UyJOy9k68OWHE5qeEBjgykmOSQ1QiDC1Ie5U-bxfvahpqFbwWne5ar4HMFCeIVwGxWAJvnzJzQlFMGJEGoe-Hg8p0dCp2PLRi8dHuRGqeVN-LZMZG93gxeNjDKjKhhAQxgjAJyaN7EFAup9iJ1Lq3VqKbyKIaUxWZYRkZi4R0Cp3si1gERNJQ0ID9wkW1M0RcgY-0yZKMDVxI-lpR5ZjwlRYZuwVc5Q4x7cYRgx1cUMHVf9QwMpy4Yw-AhgIgbwCoxI6UpQvEYxypM9dZ30tJBt2FRtINiMlU04PhLw5IIMjstQTtoQE1ztRMYggA */
     id: "timer",
 
     initial: "loading",
@@ -329,6 +347,24 @@ const timerMachine = createMachine(
                 target: "program not selected",
                 actions: "unassignProgram",
               },
+
+              DUPLICATE_PROGRAM: {
+                target: "program selected",
+                internal: true,
+                description: `TODO`,
+              },
+
+              RENAME_PROGRAM: {
+                target: "program selected",
+                description: `TODO`,
+                internal: true,
+              },
+
+              UPDATE_PROGRAM_DESCRIPTION: {
+                target: "program selected",
+                internal: true,
+                description: `TODO`,
+              },
             },
 
             initial: "stopped",
@@ -356,6 +392,18 @@ const timerMachine = createMachine(
             actions: "assignProgram",
             internal: true,
             description: `A program can be selected regardless of being currently selected or unselected`,
+          },
+
+          DELETE_PROGRAM: {
+            target: "loaded",
+            internal: true,
+            description: `TODO`,
+          },
+
+          ADD_PROGRAM: {
+            target: "loaded",
+            internal: true,
+            description: `TODO`,
           },
         },
       },
