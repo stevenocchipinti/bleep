@@ -94,8 +94,7 @@ const ConfigScreen = ({
   if (program === null) return null
   const programValid = ProgramSchema.safeParse(program).success
 
-  const onDragEnd = (e: DragEndEvent) => {
-    const { active, over } = e
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (active?.id && over?.id && active.id !== over?.id) {
       send({
         type: "MOVE_BLOCK",

@@ -22,14 +22,21 @@ const Page = () => {
   // Make the browser back and forward button work for the slides
   // prettier-ignore
   useEffect(() => {
-    const handler = ({state}: {state: any}) => { setSlideIndex(state.slide) }
+    const handler = ({state}: {state: any}) => {
+      if (program && typeof state.slide === "number") setSlideIndex(state.slide)
+    }
     addEventListener("popstate", handler)
     return () => { removeEventListener("popstate", handler) }
-  }, [])
+  }, [program])
 
   const selectProgramById = (id: string, skip: boolean = false) => {
-    send({ type: "SELECT_PROGRAM", id })
-    if (state.context.selectedProgramId === id) return
+    if (state.context.selectedProgramId === id) {
+      send({ type: "DESELECT_PROGRAM" })
+      history.replaceState({ slide: 0 }, "")
+      return
+    } else {
+      send({ type: "SELECT_PROGRAM", id })
+    }
 
     setSlideIndex(skip ? 2 : 1)
 
@@ -51,7 +58,7 @@ const Page = () => {
             history.go(newIndex - oldIndex)
             setSlideIndex(newIndex)
           }}
-          disabled={!is("program selected") || is("running")}
+          disabled={!program || is("running")}
           enableMouseEvents
         >
           <HomeScreen

@@ -15,6 +15,7 @@ type TickEvent = { type: "TICK" }
 type LeadTickEvent = { type: "LEAD_TICK" }
 type FinishLeadIn = { type: "FINISH_LEAD_IN" }
 type SelectProgramEvent = { type: "SELECT_PROGRAM"; id: string }
+type DeselectProgramEvent = { type: "DESELECT_PROGRAM" }
 type ContinueEvent = { type: "CONTINUE" }
 type NextEvent = { type: "NEXT" }
 type PreviousEvent = { type: "PREVIOUS" }
@@ -30,15 +31,16 @@ type UpdateBlockEvent = {
   index: number
   block: Block
 }
-type ReorderProgramsEvent = {
-  type: "REORDER_PROGRAMS"
-  sourceIndex: number
-  destinationIndex: number
+type MoveProgramEvent = {
+  type: "MOVE_PROGRAM"
+  fromIndex: number
+  toIndex: number
 }
 
 type Events =
   | LoadedEvent
   | SelectProgramEvent
+  | DeselectProgramEvent
   | StartEvent
   | ResetEvent
   | PauesEvent
@@ -52,7 +54,7 @@ type Events =
   | DeleteBlockEvent
   | MoveBlockEvent
   | UpdateBlockEvent
-  | ReorderProgramsEvent
+  | MoveProgramEvent
 
 type Context = {
   allPrograms: Program[]
@@ -90,7 +92,7 @@ export const currentProgramFrom = (context: Context): CurrentProgram => {
 
 const timerMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5QBcCWBbMAnAdAGwHsBDCVAOygGIICywdyA3Aga3rU10JPKgSYIBjImloBtAAwBdSVMSgADgVipRZeSAAeiAGwBmHACYALPoCcOgIw6JAVj1mAHDoA0IAJ6JDO2zmPGJS2NDCUdDe2M9WwBfaLcObHxiUgpKbCwCXAU8EQAzTPQcBK5k3n4yZmE1WVkNJRU1DW0EE18wxz0JCT09R0jbSz03TwRLCWMcHy7bSMNLQ0MAdkXHWPiMRIUMqCwidAACMgJkfdgwPDBBZEhKAGUAUQAZe4BhABUAfQAFACUAeQA4j8AIIAWVqSBA9VUqFoTUQtl8xj6iwkiz0OhWPXGw0QxlRfjRxjMEgWXV6QTWIGKOC2BB2e1O50u1wgdyer0+v0BIPB0jqyhhcMhzWxfmsGMGi30wUWuIQ+IkhMWxNJIW6YSpNLpDIOZwuV0gOFgyAICgUN1ub2BPzeEMUgsaIsQK0MOEWITMIUMekGaKGHkQYzMZj8fR6+kMjlsHsMWo2WW2uz1zMNEGNpvNNwAql8ACLAt73D4AIUefxeAGl7VDHbD1M6EABaAK+DE2fohxFe2zy6UTTG2H1DswemOWeOcWlJxn6llGk1mi1smvQp2gZot0lGAIh6U6HROKLysZhd2qzELYzBuNxakJ6f05NMg2sjNLo0ASQgF0oADl7gADTtflITXet4VGWxQy6KxelsDp0Q9Rx5WjGCZnxGwBkcMwHEnTYZxTV8F0zZccG-X9fnuAA1T8-mzW5VzrYUNzxQIcGsaU+hmXpFhDVDoJwOx-GlOxLBwvC721QiX3ndNFyzdMKLAShgTzPNS3LKsmIaCDG0sQS9xVJx8XCeZ5QsSwcFscZnDQ3DFkpKSHx1Z85zTd9FPIn8VLzDki00itq1Ah1dJYrRED0SIjBDSxHMiLpxgDEZLOs2yVR9FUUXwxMn1nVM3ywABXMgyF4SgvmBBj7h0oUG1Y0YJCcIwbDMMZIjaroUMDBBUoPQILDReZHGsHLH11WSPOK0ryp+e4HhAuQwOY+qIoQDpfDivQVV6aMrEiE9xh0SZHFJMJ-H0MI9DG1z8uI9NprK1IAOA2r1zWlsoiMftwn8KNOlcHrBkMUMlmMBCJB0fxTFvdYp1uoi5JwR7yqo2j6MYkLazC1bN1Vb7LEJ3punsXCT2RJUAihxYZkchYoxumT3MKkqnqoN69IaiScCcRwVVCUIOjMPsSUma8aZ6fEh2WRm8sRqbWd4HBBAIEq0AofYaAAdzISg3k-bSsfA8LmmcCZ5nElYachvi5SBxwRsmQJTrsHQHYWGJnPhpmCqNFGKGV1WyHVqBNYIHXKA5k3ECcKzDxjCHobmQGRiCR3RysZxhxG8TZYm5m-cVgPgVKoPBF4fYACNCEEFhqFoegBDYIoXJ9+7kaLqAcBLo4SvLjXq6EFhykqER6xqI2VsgkxQ38MxTI9YIkpToMYyVL0+YPH0DIxWH729uXJpZmbi9LvuK8H2v67oBgKlYdhW8PguHs77uz7IfvQ8v4eBCqcfpDEJYJaoU6rTz0G6UkNMnBkkvOiE8B5jq4UsG1Ewh4eijjzm5X2L8T5dx7mXC+Nc640Bvk3B+B987YI7rgt+vcP6EKHiPIQY9xAAMMMA7GoDGwLAMP4awcxujWwPN1VO-YebjGhu2ZwQ5MF3SRv7PB79P77BVmrbWutnhqQ+PrQ2HDja40QA7JU21xK4XBmYew3R4FRiElhKKfN+zz1kfLY+bNaEEI1qo4O6jKAADFPx-k-LcAAEh8TRGkAlRwMQgVEbofRhFwnMaMYRDDwLPE1CxNsEpdmcUfQuNDgRayIDCTxtB1ZFRUi8P4f59Z-mzDVSeONILiSVHYFUOgFiDn3KkoG-hHB+APMsdqhMeK5OftQtx+Dz4a0wLAWARAYDX0bnfZu0kn5UIUe46ZodZnzJgEwv+rCZCNK4Q1JsIz3QrHsEsZB3g0R21Tg7Ky9jpRjBmN4B2YyqEKCIEVM4bI5oLSiZBMIzyBH8wQksfiPVHJWR9JDHwNk+J8y+e3H5fzLTWltMC-SyDjrhBphbZwUUEIWRCOKEGwQXbWBRV7Ai6z25MCIHgVAEAq5EMoLmAsAUyxBRxWclYoYDxjDuVDDCwsepmJaqdKWyCVTINRUjIgczUBQDZpHE571Nw2AMEESB4luymTJW6Le88fDRiWIeRVHllUqDVeVQBeip6NhbBYSYMYnBWD4uqSwFkaZGCSeiQZHT0RjSOPsBGsAlm32YKsh84bI0HJYWQCeTqmmNnAcdewURrwdGCOJaMJ5EQ4G2n0+eyD3Y+GtW+BSZFlKUFBH8aixZeW6IFOmhq2b3SYm6NtcB898QWSsGlZEfR+GhAxLEO8RwIBwA0MUdtpyPoO18MK0kNgxVzxPIsDiNlIZdgsGDWlcNEjcBSFARdWqERunRCMkk29jIiKDGiIwnQ5UQ26NeYwuSjgnGfpezma1iQ82JJYkMh5MR9HlA4CYGSvSHnEksH01bIAAejs2RCkwrDrshuDLdPUrBWWEhTExgxrwofkqRVDy0O0fQlH4CxKw+bmN3CvBAh5+mIguvicB6JwYUc8nWnyaHonnIMgxmMDsVTQV3A8wxgl7BjH9DwxjAmFEicguc-Qlzoy8duTYZYJ5OnWRwvtGTEtv10typQ9umyvEhzDjrDTjZDxunFhY7aHSoYg23c4QkxJhXmBnmp1+Uz6EDyIc5hqnRKZ3O2hqPoErU6+lgzhCIV1Ca5ys+NLBtnQtKIrvZ9RUW1rmqw4EG5aJoz+CLd0XdV55gIXaSFgpRSSmhxVsHcgFSSvNHExY6Bw5hKdBWEWjoO5CaLyjJiSzJ7rO5fkfluhyjdkLLAL1rwOEBlIslmECIxgTx8xghLcBD63Z7zWTZpG6L-kbcaqOHmzH0QwYdgdmFhNX12C7I5PmI0BNMpZWy7+d2mxWCFd2eYJIJTmSBvc6yGI+IAzHHYATtrVVsxBz4AwlicIhiTk1Psw7HIxf2iGTKYaCARsIvAGjS7mj2H6ZEHVMZ1SmDY2MHd8LkH2FjHYEGU7ohAA */
+    /** @xstate-layout N4IgpgJg5mDOIC5QBcCWBbMAnAdAGwHsBDCVAOygGIICywdyA3Aga3rU10JPKgSYIBjImloBtAAwBdSVMSgADgVipRZeSAAeiALQA2AEwBGHAFYAnHqMBmA3oDs94wA5TAGhABPXUYnmczhIGQfYhtvam9gC+UR4c2PjEpBSU2FgEuAp4IgBmGeg48VxJvPxkzMJqsrIaSipqGtoIOgAsBs44EQbW5r0t5kbOdtYe3s3d9jhtlr6W5s4O0bEgRYkkkJQAsgDyAGoAogD6AAoAStsA4qcAgps1SCB1qqi0jYiRLThGbd0tei3WPSWPSjHwtT7OIwGcxOYGmVxGPQxOIYBLcCCQHAKdJQLBEdAAAlgYDwYEEyA2ABF9gBlfYAGX2AGEAConc5XW73RTKZ6vB5NZwdCQtewtCSmfpivTWIzmUEIREGHB6GWWfrggZOZErVHFdYQLE4vGE4mk8mY2DIAgKBQbGks66nFncx68hoC95+FUGRwSnqi6GmEFeRDOazWHAiiRi0zdUzfRw61bozHYgi4-FEklkimGq02u0QSgAVWOlOuLKOACF6dsmQBpV1PD2gJo6RGmL7dVVtCSqgwWENjH44AwGFqS1xAmXQ5N6tYYw3pzOmnMW-PW20bZvul7qT3jIxd8GImFBdqQ+YKhxdnrjyKqvx6UymeecRdp41Zs25y1boscAASQgUlKAAOX2AANF1pFqPd+TbRAX0mU9ASFJwX37BU438cxwUnaFzB6PxzHfNEki-DMTWzc08xwAtt0NECwLOfZdiA7YSxpXd6n3N4EGsFoOiE5xzHHboRWlHDoRwfDwVw4jzFI8j9SXI1qJ-dd6MYwCWLAShrkpSlDlresmzgh4W34w8IxMOMJIsYNoQlG9ZTMSJTD8YMJDlMjlhTSjl2-Nc6P-QtMX0yhqUZKtTLrRteL5A8kIQUI9BwCNLFI8d7Hw9xQwQGV7M87y9F83pVM-YLNNCv9Nwi5jQIMnYDni8yktbLR3mMTL8PDPKxOcAEWjckqIjKir-JRD9Uxq1daPqnAsAAVzIMheEoY5rm4-ZOps1KjBsEwJyCYrLHvBV7COlVxNfRwxLsJMAoXOaNIW38N2WtaNpSU5aX2WC5CshCUu6orvimEjiNMQEIyFBVw0jaNY3jRMlhmiiDXemjPvo1b1s2yCYP2xDwZ0Hp-G+ZxQjjRNrDEhVfBFOTxwBOMnOOqq3pXXHtMxAnfqoNiOK4njLJ5PiyfbaYo1lDnlOMcwEyZxFPlImFhr8Y9nG5oKca0sLDUFzbSbBpojDyscrAlWZxSsAqxiGT4GeK0J+37Aw9ex3nDaWk2KBwQQCDWtAKAJGgAHcyEoFkgMSiW3Sl83ECO30VXha6bAWIVJyZiQYy+BnBxab5lO+N8Xtm-Xfbqr6A6gIOQ7IMOoAjgho8oM2BLy5Vgnscq2isYSGdV6xJkHVwYTsZX2m99Ta8W+uft4HBrnW5vBF4AkACNCEEFhqFoegBDYQpXprkKl-xlfA-XshN+3vehBYMoKhEfdqkT6zpcQScJCjAmI6Bd+yAlFEzdokY7A2yCGJOUg555UQ+vzY2t9G730fuHZ+B8j50AYOUVg7AL4+yvnjAWaC14bzWlvLB+9X4CEqJ-aQYgjDA0lslASAJlSGAGPJScvg8pMwZgA-segrzgh6LYFoiD5p8yNt9Qmd8qFkBoW3bBh8aB4NPkQ6uJDarX3IYo9ByjVG7zoW-IQH9xDMIMGwpOHDDxtHVgCCMvphI0zFEzSUXY059BjBOeGMiDZ1xvkYyhD9qHb2DqHKOMdGRGUOHHBOdif4p0VJbSMGpwyImPMrUuXjLZmEMGI30WFpFVyxgvUhKCFFC3CZgtu0SW6xMoAAMSAuBICNIAAShx4kmQ6d3Q8MIuwTi8gXSevgXwQMMJlbx-QLwykrpjNSSC5H+wodcSORBnjh2Di3cgK0DJMm2OBOO4ESx7W-qDASg4AGW3whMAYFgJQGAgT0H0gRvjGFVJCXWFTVmyL9svMJGDInh0wLAWARAYC4JPgQs+gU9HIPkQ3ep4K26QuhTACxjDrEyGucnThkw+hQgkGJWwQJ4SqxfGYXoxEXwOGsP2IJi8yHLiICtYkxZ-p0iBvBIlh5mYANhkKVww0Z7CRvHYH0FdfDfH+G0Vl1T5EKE5dyygDonT8pBoKw6uVOgREiL5QYwQpWFSzrdQckR7CPUWMq-R7L8GMCIHgVAEAzEv1LOWSsNYEoWRSTcw8OhJR4QnAsDU5VrrykKpKeywl2gD0cAsowDqUVLSIFC1AUAhZd0JQ41KFMB5mBsI+cqQwjqWxwgCTo8xS69EhPKtN6yvqZpUDm02rCBUFvJr6DoMJx7WG8fMamw53gwijH4UUQ7Ajku6DIzVDJmRsjOJcG4dx81dQtqXQBXlgxCmZQm5wCoOyRCjBGs6CZghDoxrqD8D8CS11gHC51hDz73oII+kKsBcVWLIF-QNeryal1GRORwkQGZQmDCeuUkYk0SkeuSv4t6kVVP0Q-ZABjixDNSuPSYMogjM3Hq4PwIxCqDHw+KK98wGal2sDEZYD8MTwAeEUbtW7dBAkjOJYS-x8JRrlCeiMkZvi2FhpbVU9hx7lJWYuXg7GDrk0MJGUNdyAlAnEiesZKouFtChAPX0QQZEKd-s0f4XYeMRv4zGQT5H7LHgg0JP4EgGbj2bcCvMJm0khonZZvjzno0KnaCYPhQ67IufBCh4haH01fV0pALzAlIaT3HjYGEZLbVkbGICfwBE-gjNfAy9zITwpMWAs1RLh5Zkpeuj0a6-dj2xuZVMYI8wrDKTjK4YrWHanyd1T29sHQEw0ypcYEe-xGtjF4SqYuconAKVht1p1aKmmt3btHSrqVLAngnEy7bDNHCq3aHJBD9XrqNqi7omLLbQl1LBSop+dDNvgy8iYEIT5+iQl8thOzx4TvwlwhGCUwkls1LRfd0xq3YnPaaMREwqoxF+GGnlQw9ghGzJcwD48Moab-NkzzFVGzQXbN2Y02gYcjkw8QOODKCZcLI98hGx2qdiNFIcDDHoMpLuVLWR5wxd2THbyxTCsAVPBK5chJJUUCIllePcrammxhui+EnDJu9POgUlY5VyhL-WOPpMKTGcEEbRSShjNKjKhhvjinDFOSqALqrBJ60wV17rPUHzFxTYaUx2bnjFMXBYN4HAltAU4Fy6FQfyLbdmoWnu6OGvEoiF8JFjDM8Eq4ToYy3FHVhKKbrGGsNi-HsqCNVhHBylhhYUahVehRgczbQY2cjpVQfU+z3FGdOlyg+S1w0ItOTh01IpXBnQhewY0AA */
     id: "timer",
 
     initial: "loading",
@@ -114,7 +116,7 @@ const timerMachine = createMachine(
           src: "loadData",
 
           onDone: {
-            target: "program not selected",
+            target: "loaded",
             actions: "assignAllPrograms",
           },
 
@@ -122,222 +124,240 @@ const timerMachine = createMachine(
         },
       },
 
-      "program not selected": {
-        on: {
-          SELECT_PROGRAM: {
-            target: "program selected",
-            actions: "assignProgram",
-          },
-        },
-      },
-
-      "program selected": {
+      loaded: {
         states: {
-          stopped: {
-            on: {
-              START: "running",
-              UPDATE_BLOCK: "assigning",
-            },
-
-            entry: ["resetTimer", "stopTalking"],
-
+          "program selected": {
             states: {
-              Idle: {
+              stopped: {
                 on: {
+                  START: "running",
+                  UPDATE_BLOCK: "assigning",
+                },
+
+                entry: ["resetTimer", "stopTalking"],
+
+                states: {
+                  Idle: {
+                    on: {
+                      NEXT: {
+                        target: "Idle",
+                        cond: "nextBlockAvailable",
+                        actions: "nextBlock",
+                        internal: true,
+                      },
+
+                      PREVIOUS: {
+                        target: "Idle",
+                        cond: "previousBlockAvailable",
+                        actions: "previousBlock",
+                        internal: true,
+                      },
+
+                      ADD_BLOCK: {
+                        target: "Idle",
+                        actions: ["addBlock", "persistAllPrograms"],
+                        internal: true,
+                      },
+
+                      DELETE_BLOCK: {
+                        target: "Idle",
+                        internal: true,
+                        actions: ["deleteBlock", "persistAllPrograms"],
+                      },
+
+                      MOVE_BLOCK: {
+                        target: "Idle",
+                        internal: true,
+                        actions: ["moveBlock", "persistAllPrograms"],
+                      },
+                    },
+
+                    description: `Stopped, but valid and ready to start`,
+                  },
+                },
+
+                initial: "Idle",
+                always: {
+                  target: "invalid block",
+                  cond: "isInvalid",
+                },
+              },
+
+              running: {
+                on: {
+                  PAUSE: {
+                    target: "paused",
+                  },
+
+                  RESET: {
+                    target: "stopped",
+                  },
+
                   NEXT: {
-                    target: "Idle",
+                    target: "running",
+                    internal: true,
                     cond: "nextBlockAvailable",
                     actions: "nextBlock",
-                    internal: true,
                   },
 
                   PREVIOUS: {
-                    target: "Idle",
+                    target: "running",
+                    internal: true,
                     cond: "previousBlockAvailable",
                     actions: "previousBlock",
-                    internal: true,
-                  },
-
-                  ADD_BLOCK: {
-                    target: "Idle",
-                    actions: ["addBlock", "persistProgram"],
-                    internal: true,
-                  },
-
-                  DELETE_BLOCK: {
-                    target: "Idle",
-                    internal: true,
-                    actions: ["deleteBlock", "persistProgram"],
-                  },
-
-                  MOVE_BLOCK: {
-                    target: "Idle",
-                    internal: true,
-                    actions: ["moveBlock", "persistProgram"],
                   },
                 },
 
-                description: `Stopped, but valid and ready to start`,
-              },
-            },
-
-            initial: "Idle",
-            always: {
-              target: "invalid block",
-              cond: "isInvalid",
-            },
-          },
-
-          running: {
-            on: {
-              PAUSE: {
-                target: "paused",
-              },
-
-              RESET: {
-                target: "stopped",
-              },
-
-              NEXT: {
-                target: "running",
-                internal: true,
-                cond: "nextBlockAvailable",
-                actions: "nextBlock",
-              },
-
-              PREVIOUS: {
-                target: "running",
-                internal: true,
-                cond: "previousBlockAvailable",
-                actions: "previousBlock",
-              },
-            },
-
-            states: {
-              "counting down": {
-                invoke: {
-                  src: "startTimer",
-                },
-
-                on: {
-                  TICK: [
-                    {
-                      target: "counting down",
-                      internal: true,
-                      actions: ["decrementTimer", "beep"],
+                states: {
+                  "counting down": {
+                    invoke: {
+                      src: "startTimer",
                     },
-                  ],
+
+                    on: {
+                      TICK: [
+                        {
+                          target: "counting down",
+                          internal: true,
+                          actions: ["decrementTimer", "beep"],
+                        },
+                      ],
+                    },
+
+                    always: {
+                      target: "Announcing block",
+                      cond: "blockFinished",
+                      actions: "nextBlock",
+                    },
+                  },
+
+                  "Announcing block": {
+                    invoke: {
+                      src: "announceBlock",
+
+                      onDone: [
+                        {
+                          target: "Announcing countdown",
+                          cond: "isTimerBlock",
+                        },
+                        {
+                          target: "Awaiting continue",
+                          cond: "isPauseBlock",
+                        },
+                        {
+                          target: "Announcing message",
+                          cond: "isMessageBlock",
+                        },
+                      ],
+                    },
+
+                    exit: "stopTalking",
+                  },
+
+                  "Announcing countdown": {
+                    invoke: {
+                      src: "announceCountdown",
+                    },
+
+                    exit: "stopTalking",
+
+                    on: {
+                      LEAD_TICK: {
+                        target: "Announcing countdown",
+                        internal: true,
+                      },
+
+                      FINISH_LEAD_IN: "counting down",
+                    },
+                  },
+
+                  "Awaiting continue": {
+                    on: {
+                      CONTINUE: {
+                        target: "Announcing block",
+                        actions: "nextBlock",
+                      },
+                    },
+                  },
+
+                  "Announcing message": {
+                    invoke: {
+                      src: "announceMessage",
+                      onDone: {
+                        target: "Announcing block",
+                        actions: "nextBlock",
+                      },
+                    },
+                  },
                 },
 
+                initial: "Announcing block",
                 always: {
-                  target: "Announcing block",
-                  cond: "blockFinished",
-                  actions: "nextBlock",
+                  target: "stopped",
+                  cond: "timerFinished",
                 },
               },
 
-              "Announcing block": {
-                invoke: {
-                  src: "announceBlock",
-
-                  onDone: [
-                    {
-                      target: "Announcing countdown",
-                      cond: "isTimerBlock",
-                    },
-                    {
-                      target: "Awaiting continue",
-                      cond: "isPauseBlock",
-                    },
-                    {
-                      target: "Announcing message",
-                      cond: "isMessageBlock",
-                    },
-                  ],
-                },
-
-                exit: "stopTalking",
-              },
-
-              "Announcing countdown": {
-                invoke: {
-                  src: "announceCountdown",
-                },
-
-                exit: "stopTalking",
-
+              paused: {
                 on: {
-                  LEAD_TICK: {
-                    target: "Announcing countdown",
-                    internal: true,
-                  },
-
-                  FINISH_LEAD_IN: "counting down",
+                  RESET: "stopped",
+                  START: "running",
                 },
               },
 
-              "Awaiting continue": {
+              "invalid block": {
                 on: {
-                  CONTINUE: {
-                    target: "Announcing block",
-                    actions: "nextBlock",
-                  },
+                  UPDATE_BLOCK: "assigning",
                 },
               },
 
-              "Announcing message": {
-                invoke: {
-                  src: "announceMessage",
-                  onDone: {
-                    target: "Announcing block",
-                    actions: "nextBlock",
+              assigning: {
+                entry: ["updateBlock", "persistAllPrograms"],
+
+                always: [
+                  {
+                    target: "invalid block",
+                    cond: "isInvalid",
                   },
-                },
+                  "stopped",
+                ],
               },
             },
 
-            initial: "Announcing block",
+            on: {
+              DESELECT_PROGRAM: {
+                target: "program not selected",
+                actions: "unassignProgram",
+              },
+            },
+
+            initial: "stopped",
+          },
+
+          "program not selected": {
             always: {
-              target: "stopped",
-              cond: "timerFinished",
+              target: "program selected",
+              cond: "hasProgramSelected",
             },
-          },
-
-          paused: {
-            on: {
-              RESET: "stopped",
-              START: "running",
-            },
-          },
-
-          "invalid block": {
-            on: {
-              UPDATE_BLOCK: "assigning",
-            },
-          },
-
-          assigning: {
-            entry: ["updateBlock", "persistProgram"],
-
-            always: [
-              {
-                target: "invalid block",
-                cond: "isInvalid",
-              },
-              "stopped",
-            ],
           },
         },
+
+        initial: "program not selected",
 
         on: {
+          MOVE_PROGRAM: {
+            target: "loaded",
+            internal: true,
+            actions: ["moveProgram", "persistAllPrograms"],
+          },
+
           SELECT_PROGRAM: {
-            target: "program selected",
-            internal: false,
+            target: "loaded",
             actions: "assignProgram",
+            internal: true,
+            description: `A program can be selected regardless of being currently selected or unselected`,
           },
         },
-
-        initial: "stopped",
       },
 
       "no programs": {
@@ -353,6 +373,8 @@ const timerMachine = createMachine(
   },
   {
     guards: {
+      hasProgramSelected: ({ selectedProgramId }): boolean =>
+        !!selectedProgramId,
       timerFinished: (context): boolean => {
         const { program, blocks, secondsRemaining, currentBlockIndex } =
           currentProgramFrom(context)
@@ -444,13 +466,18 @@ const timerMachine = createMachine(
 
       // Program actions
       assignProgram: assign({
-        selectedProgramId: ({ selectedProgramId }, event: SelectProgramEvent) =>
-          selectedProgramId === event.id ? null : event.id,
+        selectedProgramId: (_context, { id }: SelectProgramEvent) => id,
       }),
+      unassignProgram: assign({ selectedProgramId: null }),
       assignAllPrograms: assign({
         allPrograms: (_, event: LoadedEvent) => event.data,
       }),
-      persistProgram: context =>
+      moveProgram: immerAssign(
+        ({ allPrograms }, { fromIndex, toIndex }: MoveProgramEvent) => {
+          allPrograms.splice(toIndex, 0, allPrograms.splice(fromIndex, 1)[0])
+        }
+      ),
+      persistAllPrograms: context =>
         localforage.setItem("allPrograms", context.allPrograms),
 
       // Block actions

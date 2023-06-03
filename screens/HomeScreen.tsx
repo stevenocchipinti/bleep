@@ -13,7 +13,6 @@ import {
 
 import DndContext from "@/components/DndContext"
 import { DragEndEvent } from "@dnd-kit/core"
-import { arrayMove } from "@dnd-kit/sortable"
 
 import { Program, ProgramSchema } from "lib/types"
 import { useTimerActor } from "lib/useTimerMachine"
@@ -38,15 +37,12 @@ const HomeScreen = ({
       setProgramIds(allPrograms.map(program => program.id))
   }, [allPrograms])
 
-  function onDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (active?.id && over?.id && active.id !== over?.id) {
-      setProgramIds(programIds => {
-        const oldIndex = programIds.indexOf(active.id.toString())
-        const newIndex = programIds.indexOf(over.id.toString())
-
-        return arrayMove(programIds, oldIndex, newIndex)
+      send({
+        type: "MOVE_PROGRAM",
+        fromIndex: allPrograms.findIndex(program => program.id === active.id),
+        toIndex: allPrograms.findIndex(program => program.id === over.id),
       })
     }
   }
