@@ -56,6 +56,7 @@ import {
   PauseBlockSchema,
   MessageBlockSchema,
 } from "lib/types"
+import { DragEndEvent } from "@dnd-kit/core"
 
 const OptionalIndicator = () => (
   <Text color="gray.400" fontSize="xs" ml={2} as="span">
@@ -93,7 +94,16 @@ const ConfigScreen = ({
   if (program === null) return null
   const programValid = ProgramSchema.safeParse(program).success
 
-  const onDragEnd = () => {}
+  const onDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e
+    if (active?.id && over?.id && active.id !== over?.id) {
+      send({
+        type: "MOVE_BLOCK",
+        fromIndex: program.blocks.findIndex(block => block.id === active.id),
+        toIndex: program.blocks.findIndex(block => block.id === over.id),
+      })
+    }
+  }
 
   const onDragStart = () => {
     setCurrentBlock(null)

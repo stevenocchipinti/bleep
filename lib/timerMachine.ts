@@ -20,6 +20,11 @@ type NextEvent = { type: "NEXT" }
 type PreviousEvent = { type: "PREVIOUS" }
 type AddBlockEvent = { type: "ADD_BLOCK" }
 type DeleteBlockEvent = { type: "DELETE_BLOCK"; index: number }
+type MoveBlockEvent = {
+  type: "MOVE_BLOCK"
+  fromIndex: number
+  toIndex: number
+}
 type UpdateBlockEvent = {
   type: "UPDATE_BLOCK"
   index: number
@@ -45,6 +50,7 @@ type Events =
   | PreviousEvent
   | AddBlockEvent
   | DeleteBlockEvent
+  | MoveBlockEvent
   | UpdateBlockEvent
   | ReorderProgramsEvent
 
@@ -84,7 +90,7 @@ export const currentProgramFrom = (context: Context): CurrentProgram => {
 
 const timerMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5QBcCWBbMAnAdAGwHsBDCVAOygGIICywdyA3Aga3rU10JPKgSYIBjImloBtAAwBdSVMSgADgVipRZeSAAeiAGwBmHACYALPoCcOgIw6JAVj1mAHDoA0IAJ6JDO2zmPGJS2NDCUdDe2M9WwBfaLcObHxiUgpKbCwCXAU8EQAzTPQcBK5k3n4yZmE1WVkNJRU1DW0EE18wxz0JCT09R0jbSz03TwRLCWMcHy7bSMNLQ0MAdkXHWPiMRIUMqCwidAACMgJkfdgwPDBBZEhKAGUAUQAZe4BhABUAfQAFACUAeQA4j8AIIAWVqSBA9VUqFoTUQtl8xj6iwkiz0OhWPXGw0QxlRfjRxjMEgWXV6QTWIGKOC2BB2e1O50u1wgdyer0+v0BIPB0jqyhhcMhzWxfmsGMGi30wUWuIQ+IkhMWxNJIW6YSpNLpDIOZwuV0gOFgyAICgUN1ub2BPzeEMUgsaIsQK0MOEWITMIUMekGaKGHkQYzMZj8fR6+kMjlsHsMWo2WW2uz1zMNEGNpvNNwAql8ACLAt73D4AIUefxeAGl7VDHbD1M6EABaAK+DE2fohxFe2zy6UTTG2H1DswemOWeOcWlJxn6llGk1mi1smvQp2gZot0lGAIh6U6HROKLysZhd2qzELYzBuNxakJ6f05NMg2sjNLo0ASQgF0oADl7gADTtflITXet4VGWxQy6KxelsDp0Q9Rx5WjGCZnxGwBkcMwHEnTYZxTV8F0zZccG-X9fnuAA1T8-mzW5VzrYUNzxQIcGsaU+hmXpFhDVDoJwOx-GlOxLBwvC721QiX3ndNFyzdMKLAShgTzPNS3LKsmIaCDG0sQS9xVJx8XCeZ5QsSwcFscZnDQ3DFkpKSHx1Z85zTd9FPIn8VLzDki00itq1Ah1dJYrRED0SIjBDSxHMiLpxgDEZLOs2yVR9FUUXwxMn1nVM3ywABXMgyF4SgvmBBj7h0oUG1Y0YJCcIwbDMMZIjaroUMDBBUoPQILDReZHGsHLH11WSPOK0ryp+e4HhAuQwOY+qIoQDpfDivQVV6aMrEiE9xh0SZHFJMJ-H0MI9DG1z8uI9NprK1IAOA2r1zWlsoiMftwn8KNOlcHrBkMUMlmMBCJB0fxTFvdYp1uoi5JwR7yqo2j6MYkLazC1bN1Vb7LEJ3punsXCT2RJUAihxYZkchYoxumT3MKkqnqoN69IaiScCcRwVVCUIOjMPsSUma8aZ6fEh2WRm8sRqbWd4HBBAIEq0AofYaAAdzISg3k-bSsfA8LmmcCZ5nElYachvi5SBxwRsmQJTrsHQHYWGJnPhpmCqNFGKGV1WyHVqBNYIHXKA5k3ECcKzDxjCHobmQGRiCR3RysZxhxG8TZYm5m-cVgPgVKoPBF4fYACNCEEFhqFoegBDYIoXJ9+7kaLqAcBLo4SvLjXq6EFhykqER6xqI2VsgkxQ38MxTI9YIkpToMYyVL0+YPH0DIxWH729uXJpZmbi9LvuK8H2v67oBgKlYdhW8PguHs77uz7IfvQ8v4eBCqcfpDEJYJaoU6rTz0G6UkNMnBkkvOiE8B5jq4UsG1Ewh4eijjzm5X2L8T5dx7mXC+Nc640Bvk3B+B987YI7rgt+vcP6EKHiPIQY9xAAMMMA7GoDGwLAMP4awcxujWwPN1VO-YebjGhu2ZwQ5MF3SRv7PB79P77BVmrbWutnhqQ+PrQ2HDja40QA7JU21xK4XBmYew3R4FRiElhKKfN+zz1kfLY+bNaEEI1qo4O6jKAADFPx-k-LcAAEh8TRGkAlRwMQgVEbofRhFwnMaMYRDDwLPE1CxNsEpdmcUfQuNDgRayIDCTxtB1ZFRUi8P4f59Z-mzDVSeONILiSVHYFUOgFiDn3KkoG-hHB+APMsdqhMeK5OftQtx+Dz4a0wLAWARAYDX0bnfZu0kn5UIUe46ZodZnzJgEwv+rCZCNK4Q1JsIz3QrHsEsZB3g0R21Tg7Ky9jpRjBmN4B2YyqEKCIEVM4bI5oLSiZBMIzyBH8wQksfiPVHJWR9JDHwNk+J8y+e3H5fzLTWltMC-SyDjrhBphbZwUUEIWRCOKEGwQXbWBRV7Ai6z25MCIHgVAEAq5EMoLmAsAUyxBRxWclYoYDxjDuVDDCwsepmJaqdKWyCVTINRUjIgczUBQDZpHE571Nw2AMEESB4luymTJW6Le88fDRiWIeRVHllUqDVeVQBeip6NhbBYSYMYnBWD4uqSwFkaZGCSeiQZHT0RjSOPsBGsAlm32YKsh84bI0HJYWQCeTqmmNnAcdewURrwdGCOJaMJ5EQ4G2n0+eyD3Y+FiHeI4EA4AaGKAKdNZyHa+GFaSGwYq54nkWBxGy3REk22sODMa3AUhQCbactaQ53S+gMiSbexkRFBjREYTocqIbdGvMYXJRwTjP0nVqvEoZ54WM6CGQ8mI+jygcBMDJXpDziSWD6a1rJD2cw+ohSYVgO2Q3Bt2nqVgrLCREp2-QvpX0kQ-BAd90dmwSj8BYlYfNzG7hXggQ8-TEQXTuY5HCe81mUPbgpMiylYPRPOQZRDMYHYqmgruB5hjBL2DGP6HhSHIM4LZuRyC5z9CXOjOAxyD77knk6dZHCCEhzzFaJxiZSsvEhzDjrHjjZDxunFme6U3hggStEc4QkxJhXmBnnJzZUz6EDyIaphqnRKZ3O2hqPoemgy+jvZJ+x29CarDpblIj8jX4WeUYp9RNm1rmu-YEG5aJoz+CLd0PtV55gIXaWZwLRSSmhxVsHcgFSwvNCoxY6Bw5hKdBWEWjoO5CaLyjJiHdvnxpYPbuZpRFddkLLAPlrwOEBlIslmECIxgTx8xghLcBi63YEcfv5jy6L-ldcaqOHmKH0S3odkNmFhM112C7HhlYE4GsIzyemJlLK2XfwW02KwQruzzBJBKcyQN7nWQxHxAGY47Bydtaq7jy1m0fR8AYSxOEQxJyan2Kw7o-SQyCCGTKYaCARsIvAP7U7mj2H6ZEHVMZ1SmHQ2MXt8LkH2FjHYEG1bohAA */
+    /** @xstate-layout N4IgpgJg5mDOIC5QBcCWBbMAnAdAGwHsBDCVAOygGIICywdyA3Aga3rU10JPKgSYIBjImloBtAAwBdSVMSgADgVipRZeSAAeiAGwBmHACYALPoCcOgIw6JAVj1mAHDoA0IAJ6JDO2zmPGJS2NDCUdDe2M9WwBfaLcObHxiUgpKbCwCXAU8EQAzTPQcBK5k3n4yZmE1WVkNJRU1DW0EE18wxz0JCT09R0jbSz03TwRLCWMcHy7bSMNLQ0MAdkXHWPiMRIUMqCwidAACMgJkfdgwPDBBZEhKAGUAUQAZe4BhABUAfQAFACUAeQA4j8AIIAWVqSBA9VUqFoTUQtl8xj6iwkiz0OhWPXGw0QxlRfjRxjMEgWXV6QTWIGKOC2BB2e1O50u1wgdyer0+v0BIPB0jqyhhcMhzWxfmsGMGi30wUWuIQ+IkhMWxNJIW6YSpNLpDIOZwuV0gOFgyAICgUN1ub2BPzeEMUgsaIsQK0MOEWITMIUMekGaKGHkQYzMZj8fR6+kMjlsHsMWo2WW2uz1zMNEGNpvNNwAql8ACLAt73D4AIUefxeAGl7VDHbD1M6EABaAK+DE2fohxFe2zy6UTTG2H1DswemOWeOcWlJxn6llGk1mi1smvQp2gZot0lGAIh6U6HROKLysZhd2qzELYzBuNxakJ6f05NMg2sjNLo0ASQgF0oADl7gADTtflITXet4VGWxQy6KxelsDp0Q9Rx5WjGCZnxGwBkcMwHEnTYZxTV8F0zZccG-X9fnuAA1T8-mzW5VzrYUNzxQIcGsaU+hmXpFhDVDoJwOx-GlOxLBwvC721QiX3ndNFyzdMKLAShgTzPNS3LKsmIaCDG0sQS9xVJx8XCeZ5QsSwcFscZnDQ3DFkpKSHx1Z85zTd9FPIn8VLzDki00itq1Ah1dJYrRED0SIjBDSxHMiLpxgDEZLOs2yVR9FUUXwxMn1nVM3ywABXMgyF4SgvmBBj7h0oUG1Y0YJCcIwbDMMZIjaroUMDBBUoPQILDReZHGsHLH11WSPOK0ryp+e4HhAuQwOY+qIoQDpfDivQVV6aMrEiE9xh0SZHFJMJ-H0MI9DG1z8uI9NprK1IAOA2r1zWlsoiMftwn8KNOlcHrBkMUMlmMBCJB0fxTFvdYp1uoi5JwR7yqo2j6MYkLazC1bN1Vb7LEJ3punsXCT2RJUAihxYZkchYoxumT3MKkqnqoN69IaiScCcRwVVCUIOjMPsSUma8aZ6fEh2WRm8sRqbWd4HBBAIEq0AofYaAAdzISg3k-bSsfA8LmmcCZ5nElYachvi5SBxwRsmQJTrsHQHYWGJnPhpmCqNFGKGV1WyHVqBNYIHXKA5k3ECcKzDxjCHobmQGRiCR3RysZxhxG8TZYm5m-cVgPgVKoPBF4fYACNCEEFhqFoegBDYIoXJ9+7kaLqAcBLo4SvLjXq6EFhykqER6xqI2VsgkxQ38MxTI9YIkpToMYyVL0+YPH0DIxWH729uXJpZmbi9LvuK8H2v67oBgKlYdhW8PguHs77uz7IfvQ8v4eBCqcfpDEJYJaoU6rTz0G6UkNMnBkkvOiE8B5jq4UsG1Ewh4eijjzm5X2L8T5dx7mXC+Nc640Bvk3B+B987YI7rgt+vcP6EKHiPIQY9xAAMMMA7GoDGwLAMP4awcxujWwPN1VO-YebjGhu2ZwQ5MF3SRv7PB79P77BVmrbWutnhqQ+PrQ2HDja40QA7JU21xK4XBmYew3R4FRiElhKKfN+zz1kfLY+bNaEEI1qo4O6jKAADFPx-k-LcAAEh8TRGkAlRwMQgVEbofRhFwnMaMYRDDwLPE1CxNsEpdmcUfQuNDgRayIDCTxtB1ZFRUi8P4f59Z-mzDVSeONILiSVHYFUOgFiDn3KkoG-hHB+APMsdqhMeK5OftQtx+Dz4a0wLAWARAYDX0bnfZu0kn5UIUe46ZodZnzJgEwv+rCZCNK4Q1JsIz3QrHsEsZB3g0R21Tg7Ky9jpRjBmN4B2YyqEKCIEVM4bI5oLSiZBMIzyBH8wQksfiPVHJWR9JDHwNk+J8y+e3H5fzLTWltMC-SyDjrhBphbZwUUEIWRCOKEGwQXbWBRV7Ai6z25MCIHgVAEAq5EMoLmAsAUyxBRxWclYoYDxjDuVDDCwsepmJaqdKWyCVTINRUjIgczUBQDZpHE571Nw2AMEESB4luymTJW6Le88fDRiWIeRVHllUqDVeVQBeip6NhbBYSYMYnBWD4uqSwFkaZGCSeiQZHT0RjSOPsBGsAlm32YKsh84bI0HJYWQCeTqmmNnAcdewURrwdGCOJaMJ5EQ4G2n0+eyD3Y+GtW+BSZFlKUFBH8aixZeW6IFOmhq2b3SYm6NtcB898QWSsGlZEfR+GhAxLEO8RwIBwA0MUdtpyPoO18MK0kNgxVzxPIsDiNlIZdgsGDWlcNEjcBSFARdWqERunRCMkk29jIiKDGiIwnQ5UQ26NeYwuSjgnGfpezma1iQ82JJYkMh5MR9HlA4CYGSvSHnEksH01bIAAejs2RCkwrDrshuDLdPUrBWWEhTExgxrwofkqRVDy0O0fQlH4CxKw+bmN3CvBAh5+mIguvicB6JwYUc8nWnyaHonnIMgxmMDsVTQV3A8wxgl7BjH9DwxjAmFEicguc-Qlzoy8duTYZYJ5OnWRwvtGTEtv10typQ9umyvEhzDjrDTjZDxunFhY7aHSoYg23c4QkxJhXmBnmp1+Uz6EDyIc5hqnRKZ3O2hqPoErU6+lgzhCIV1Ca5ys+NLBtnQtKIrvZ9RUW1rmqw4EG5aJoz+CLd0XdV55gIXaSFgpRSSmhxVsHcgFSSvNHExY6Bw5hKdBWEWjoO5CaLyjJiSzJ7rO5fkfluhyjdkLLAL1rwOEBlIslmECIxgTx8xghLcBD63Z7zWTZpG6L-kbcaqOHmzH0QwYdgdmFhNX12C7I5PmI0BNMpZWy7+d2mxWCFd2eYJIJTmSBvc6yGI+IAzHHYATtrVVsxBz4AwlicIhiTk1Psw7HIxf2iGTKYaCARsIvAGjS7mj2H6ZEHVMZ1SmDY2MHd8LkH2FjHYEGU7ohAA */
     id: "timer",
 
     initial: "loading",
@@ -162,6 +168,12 @@ const timerMachine = createMachine(
                     target: "Idle",
                     internal: true,
                     actions: ["deleteBlock", "persistProgram"],
+                  },
+
+                  MOVE_BLOCK: {
+                    target: "Idle",
+                    internal: true,
+                    actions: ["moveBlock", "persistProgram"],
                   },
                 },
 
@@ -391,6 +403,7 @@ const timerMachine = createMachine(
     },
 
     actions: {
+      // Timer actions
       decrementTimer: assign({
         secondsRemaining: ({ secondsRemaining }) => secondsRemaining - 1,
       }),
@@ -428,6 +441,8 @@ const timerMachine = createMachine(
       stopTalking: () => {
         speechSynthesis.cancel()
       },
+
+      // Program actions
       assignProgram: assign({
         selectedProgramId: ({ selectedProgramId }, event: SelectProgramEvent) =>
           selectedProgramId === event.id ? null : event.id,
@@ -435,12 +450,17 @@ const timerMachine = createMachine(
       assignAllPrograms: assign({
         allPrograms: (_, event: LoadedEvent) => event.data,
       }),
-      updateBlock: immerAssign((context, event: UpdateBlockEvent) => {
-        const { index, block } = event
-        context.allPrograms[context.currentBlockIndex].blocks[index] = block
-      }),
+      persistProgram: context =>
+        localforage.setItem("allPrograms", context.allPrograms),
+
+      // Block actions
+      updateBlock: immerAssign(
+        (context, { index, block }: UpdateBlockEvent) => {
+          currentProgramFrom(context).blocks[index] = block
+        }
+      ),
       addBlock: immerAssign(context => {
-        context.allPrograms[context.currentBlockIndex].blocks.push(
+        currentProgramFrom(context).blocks.push(
           BlockSchema.parse({
             type: "message",
             name: "Untitled block",
@@ -449,13 +469,18 @@ const timerMachine = createMachine(
         )
       }),
       deleteBlock: immerAssign((context, event: DeleteBlockEvent) => {
-        context.allPrograms[context.currentBlockIndex].blocks.splice(
-          event.index,
-          1
-        )
+        currentProgramFrom(context).blocks.splice(event.index, 1)
       }),
-      persistProgram: context =>
-        localforage.setItem("allPrograms", context.allPrograms),
+      moveBlock: immerAssign(
+        (context, { fromIndex, toIndex }: MoveBlockEvent) => {
+          const program = currentProgramFrom(context)
+          program.blocks.splice(
+            toIndex,
+            0,
+            program.blocks.splice(fromIndex, 1)[0]
+          )
+        }
+      ),
     },
 
     services: {
