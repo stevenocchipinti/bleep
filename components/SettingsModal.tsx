@@ -18,12 +18,31 @@ import {
   Button,
   ModalFooter,
   ModalProps,
+  FormErrorMessage,
 } from "@chakra-ui/react"
 import { useVoices } from "lib/audio"
+import { useTimerActor } from "lib/useTimerMachine"
+import { useEffect, useState } from "react"
 
 type SettingsModalProps = Omit<ModalProps, "children">
 const SettingsModal = ({ isOpen, onClose, ...props }: SettingsModalProps) => {
   const voices = useVoices()
+
+  const { state, send } = useTimerActor()
+  const [data, setData] = useState("")
+
+  let isValidJson = true
+  try {
+    JSON.parse(data)
+  } catch (e) {
+    isValidJson = false
+  }
+
+  // TODO: Fix hover styles for the buttons
+
+  useEffect(() => {
+    setData(JSON.stringify(state.context.allPrograms))
+  }, [state.context.allPrograms, isOpen])
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} {...props}>
@@ -50,7 +69,11 @@ const SettingsModal = ({ isOpen, onClose, ...props }: SettingsModalProps) => {
                 <FormLabel hidden>Voice</FormLabel>
                 <Select placeholder="Select voice">
                   {voices.map((voice: SpeechSynthesisVoice) => (
-                    <option key={voice.voiceURI} value={voice.voiceURI}>
+                    <option
+                      key={voice.voiceURI}
+                      value={voice.voiceURI}
+                      selected={voice.default}
+                    >
                       {voice.name} - {voice.lang} {voice.localService || "*"}
                     </option>
                   ))}
@@ -59,13 +82,34 @@ const SettingsModal = ({ isOpen, onClose, ...props }: SettingsModalProps) => {
             </VStack>
 
             <Flex direction="column" gap={4} w="full">
-              <FormLabel>Data</FormLabel>
-              <Textarea placeholder="The app data goes here" />
+              <FormControl isInvalid={!isValidJson}>
+                <FormLabel>Data</FormLabel>
+                <Textarea
+                  value={data}
+                  onChange={e => setData(e.target.value)}
+                />
+                <FormErrorMessage>Invalid JSON</FormErrorMessage>
+              </FormControl>
               <Flex gap={4}>
-                <Button colorScheme="red" leftIcon={<DeleteIcon />}>
+                <Button
+                  colorScheme="red"
+                  leftIcon={<DeleteIcon />}
+                  onClick={() => {
+                    console.log("Not implemented yet")
+                    // TODO: Confirmation dialog
+                    // send({ type: "SET_ALL_PROGRAMS", allPrograms: [] })
+                  }}
+                >
                   Clear data
                 </Button>
-                <Button isDisabled flex={1}>
+                <Button
+                  isDisabled={!isValidJson}
+                  flex={1}
+                  onClick={() => {
+                    console.log("Not implemented yet")
+                    // send({ type: "SET_ALL_PROGRAMS", allPrograms: ... })
+                  }}
+                >
                   Import new data
                 </Button>
               </Flex>
