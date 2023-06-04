@@ -10,7 +10,6 @@ import {
 } from "@chakra-ui/icons"
 import {
   IconButton,
-  Heading,
   Menu,
   MenuButton,
   MenuList,
@@ -39,6 +38,7 @@ import {
   EditableInput,
   EditablePreview,
   EditableTextarea,
+  FormErrorMessage,
 } from "@chakra-ui/react"
 
 import DndContext from "@/components/DndContext"
@@ -57,6 +57,7 @@ import {
   TimerBlockSchema,
   PauseBlockSchema,
   MessageBlockSchema,
+  ProgramSchema,
 } from "lib/types"
 import { DragEndEvent } from "@dnd-kit/core"
 
@@ -98,6 +99,11 @@ const ConfigScreen = ({
   const { program, blocks } = currentProgramFrom(state.context)
 
   if (program === null) return null
+
+  const programParseResults = ProgramSchema.safeParse(program)
+  const programErrors = programParseResults.success
+    ? {}
+    : programParseResults.error.formErrors.fieldErrors
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (active?.id && over?.id && active.id !== over?.id) {
@@ -180,6 +186,7 @@ const ConfigScreen = ({
                 p={0}
                 lineHeight={1.3}
                 as="h1"
+                bg={program.name ? undefined : "rgba(254, 178, 178, 0.16)"}
               />
               <EditableInput
                 fontSize="3xl"
@@ -279,6 +286,10 @@ const ConfigScreen = ({
           >
             {program.blocks.map((block, index) => {
               const blockTypes = ["timer", "pause", "message"] as const
+              const blockParseResults = BlockSchema.safeParse(block)
+              const errors = blockParseResults.success
+                ? {}
+                : blockParseResults.error.formErrors.fieldErrors
 
               const onTypeChange = (typeIndex: number) => {
                 const newBlocks: {
@@ -288,16 +299,16 @@ const ConfigScreen = ({
                 } = {
                   timer: TimerBlockSchema.parse({
                     type: "timer",
-                    name: block.name,
+                    name: block.name || "New timer block",
                     seconds: 30,
                   }),
                   pause: PauseBlockSchema.parse({
                     type: "pause",
-                    name: block.name,
+                    name: block.name || "New pause block",
                   }),
                   message: MessageBlockSchema.parse({
                     type: "message",
-                    name: block.name,
+                    name: block.name || "New message block",
                     message: "A message goes here",
                   }),
                 }
@@ -383,7 +394,7 @@ const ConfigScreen = ({
                   seconds={block.type === "timer" ? block.seconds : undefined}
                   reps={block.type === "pause" ? block?.reps || 0 : undefined}
                   message={block.type === "message"}
-                  error={!BlockSchema.safeParse(block).success}
+                  error={Object.keys(errors).length > 0}
                   disabled={block.disabled}
                   isExpanded={currentBlock === index}
                   onClick={() =>
@@ -408,7 +419,10 @@ const ConfigScreen = ({
                     </TabList>
                     <TabPanels>
                       <FlexTabPanel>
-                        <FormControl isDisabled={block.disabled}>
+                        <FormControl
+                          isDisabled={block.disabled}
+                          isInvalid={!!errors?.name}
+                        >
                           <FormLabel>Name</FormLabel>
                           <Input
                             value={block.name}
@@ -416,8 +430,14 @@ const ConfigScreen = ({
                             variant="filled"
                             onChange={onNameChange}
                           />
+                          <FormErrorMessage>
+                            {errors?.name?.join(" and ")}
+                          </FormErrorMessage>
                         </FormControl>
-                        <FormControl isDisabled={block.disabled}>
+                        <FormControl
+                          isDisabled={block.disabled}
+                          isInvalid={!!errors?.seconds}
+                        >
                           <FormLabel>Duration</FormLabel>
                           <DurationInput
                             totalSeconds={
@@ -425,11 +445,17 @@ const ConfigScreen = ({
                             }
                             onChange={onSecondsChange}
                           />
+                          <FormErrorMessage>
+                            {errors?.seconds?.join(" and ")}
+                          </FormErrorMessage>
                         </FormControl>
                       </FlexTabPanel>
 
                       <FlexTabPanel>
-                        <FormControl isDisabled={block.disabled}>
+                        <FormControl
+                          isDisabled={block.disabled}
+                          isInvalid={!!errors?.name}
+                        >
                           <FormLabel>Name</FormLabel>
                           <Input
                             value={block.name}
@@ -437,8 +463,14 @@ const ConfigScreen = ({
                             variant="filled"
                             onChange={onNameChange}
                           />
+                          <FormErrorMessage>
+                            {errors?.name?.join(" and ")}
+                          </FormErrorMessage>
                         </FormControl>
-                        <FormControl isDisabled={block.disabled}>
+                        <FormControl
+                          isDisabled={block.disabled}
+                          isInvalid={!!errors?.reps}
+                        >
                           <FormLabel optionalIndicator={<OptionalIndicator />}>
                             Reps
                           </FormLabel>
@@ -451,11 +483,17 @@ const ConfigScreen = ({
                             variant="filled"
                             onChange={onRepsChange}
                           />
+                          <FormErrorMessage>
+                            {errors?.reps?.join(" and ")}
+                          </FormErrorMessage>
                         </FormControl>
                       </FlexTabPanel>
 
                       <FlexTabPanel>
-                        <FormControl>
+                        <FormControl
+                          isDisabled={block.disabled}
+                          isInvalid={!!errors?.name}
+                        >
                           <FormLabel>Name</FormLabel>
                           <Input
                             value={block.name}
@@ -463,8 +501,14 @@ const ConfigScreen = ({
                             variant="filled"
                             onChange={onNameChange}
                           />
+                          <FormErrorMessage>
+                            {errors?.name?.join(" and ")}
+                          </FormErrorMessage>
                         </FormControl>
-                        <FormControl>
+                        <FormControl
+                          isDisabled={block.disabled}
+                          isInvalid={!!errors?.message}
+                        >
                           <FormLabel>Message</FormLabel>
                           <Textarea
                             value={
@@ -474,6 +518,9 @@ const ConfigScreen = ({
                             placeholder="Message"
                             onChange={onMessageChange}
                           />
+                          <FormErrorMessage>
+                            {errors?.message?.join(" and ")}
+                          </FormErrorMessage>
                         </FormControl>
                       </FlexTabPanel>
                       <Flex gap={4} justifyContent="space-between" mt={2}>

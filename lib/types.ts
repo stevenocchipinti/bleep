@@ -10,7 +10,7 @@ const generateId = (length: number) => {
 
 const commonBlockProperties = {
   id: z.string().default(() => generateId(6)),
-  name: z.string().min(1),
+  name: z.string().nonempty(),
   disabled: z.boolean().default(false).optional(),
 }
 
@@ -29,7 +29,7 @@ export const PauseBlockSchema = z.object({
 export const MessageBlockSchema = z.object({
   ...commonBlockProperties,
   type: z.literal("message"),
-  message: z.string().min(1),
+  message: z.string().nonempty(),
 })
 
 export const BlockSchema = z.discriminatedUnion("type", [
@@ -40,7 +40,7 @@ export const BlockSchema = z.discriminatedUnion("type", [
 
 export const ProgramSchema = z.object({
   id: z.string().default(() => generateId(6)),
-  name: z.string().min(1),
+  name: z.string().nonempty(),
   description: z.string().default(""),
   emoji: z.string().default("🆕"),
   blocks: z
