@@ -40,7 +40,7 @@ export const BlockSchema = z.discriminatedUnion("type", [
 
 export const ProgramSchema = z.object({
   id: z.string().default(() => generateId(6)),
-  name: z.string(),
+  name: z.string().min(1),
   description: z.string().default(""),
   emoji: z.string().default("🆕"),
   blocks: z

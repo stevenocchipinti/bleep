@@ -35,6 +35,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogOverlay,
+  Editable,
+  EditableInput,
+  EditablePreview,
 } from "@chakra-ui/react"
 
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
@@ -168,9 +171,27 @@ const ConfigScreen = ({
               onClick={goBack}
               fontSize="xl"
             />
-            <Heading fontWeight="thin" textAlign="center" as="h1">
-              {program.name}
-            </Heading>
+            <Editable value={program.name} flex={1}>
+              <EditablePreview
+                fontSize="3xl"
+                fontWeight="thin"
+                textAlign="center"
+                minH="full"
+                minW="full"
+                p={0}
+                lineHeight={1.3}
+                as="h1"
+              />
+              <EditableInput
+                fontSize="3xl"
+                fontWeight="thin"
+                textAlign="center"
+                required
+                onChange={e =>
+                  send({ type: "RENAME_PROGRAM", name: e.target.value })
+                }
+              />
+            </Editable>
             <Menu>
               <MenuButton
                 as={IconButton}
