@@ -22,6 +22,7 @@ const Page = () => {
   // Make the browser back and forward button work for the slides
   // prettier-ignore
   useEffect(() => {
+    if (!program) setSlideIndex(0)
     const handler = ({state}: {state: any}) => {
       if (program && typeof state.slide === "number") setSlideIndex(state.slide)
     }

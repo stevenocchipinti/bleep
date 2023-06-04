@@ -27,16 +27,12 @@ const HomeScreen = ({
   openSettingsModal,
   selectProgramById,
 }: HomeScreenProps) => {
-  const [programIds, setProgramIds] = useState<string[]>([])
   const [hasNewProgram, setHasNewProgram] = useState(false)
 
   const { state, send } = useTimerActor()
   const { allPrograms, selectedProgramId } = state.context
 
-  useEffect(() => {
-    if (allPrograms.length > 0)
-      setProgramIds(allPrograms.map(program => program.id))
-  }, [allPrograms])
+  const programIds = allPrograms.map(program => program.id)
 
   useEffect(() => {
     if (hasNewProgram) {

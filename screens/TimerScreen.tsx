@@ -4,7 +4,7 @@ import { SwipeableChild, FooterButton } from "components/SwipeableView"
 import { ArrowBackIcon, LockIcon, UnlockIcon } from "@chakra-ui/icons"
 import { IconButton, Heading, Text, Flex, Button } from "@chakra-ui/react"
 
-import { ProgramSchema } from "lib/types"
+import { Block, ProgramSchema } from "lib/types"
 import useWakeLock from "lib/useWakeLock"
 import { useTimerActor } from "lib/useTimerMachine"
 import {
@@ -46,10 +46,12 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
   const { currentBlockIndex, secondsRemaining } = state.context
   const blocks = program.blocks.filter(b => !b.disabled)
 
-  const currentBlock = blocks[currentBlockIndex]
+  const currentBlock: Block | null =
+    blocks.length > 0 ? blocks[currentBlockIndex] : null
 
   // Used for the circular progress bar
   const currentBlockPercent = (n: number) => {
+    if (!currentBlock) return 0
     if (currentBlock.type !== "timer") return 0
     const currentBlockSeconds = currentBlock.seconds
     if (blocks.length === 0) return 0
@@ -137,7 +139,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
         gap={12}
         p={8}
       >
-        {isValid ? (
+        {currentBlock && isValid ? (
           <>
             {currentBlock.type === "timer" && (
               <CircularProgressBar

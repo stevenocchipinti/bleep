@@ -85,7 +85,11 @@ const ConfigScreen = ({
   const [currentBlock, setCurrentBlock] = useState<number | null>(null)
 
   // Delete modal
-  const [deleteIndex, setDeleteIndex] = useState<number | null>(null)
+  type ThingToDelete =
+    | { type: "block"; index: number }
+    | { type: "program" }
+    | null
+  const [thingToDelete, setThingToDelete] = useState<ThingToDelete>(null)
   const cancelRef = React.useRef<any>()
 
   const { state, send } = useTimerActor()
@@ -111,37 +115,41 @@ const ConfigScreen = ({
   return (
     <>
       <AlertDialog
-        isOpen={typeof deleteIndex === "number"}
+        isOpen={!!thingToDelete}
         leastDestructiveRef={cancelRef}
-        onClose={() => setDeleteIndex(null)}
+        onClose={() => setThingToDelete(null)}
         isCentered
       >
         <AlertDialogOverlay>
           <AlertDialogContent mx={4}>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Delete block
+              Delete {thingToDelete?.type}
             </AlertDialogHeader>
 
             <AlertDialogBody>
-              Are you sure you want to delete{" "}
+              Are you sure you want to delete the {thingToDelete?.type}:{" "}
               <Text as="strong">
-                {typeof deleteIndex === "number"
-                  ? blocks[deleteIndex].name
-                  : "..."}
+                {thingToDelete && thingToDelete.type === "block"
+                  ? blocks[thingToDelete.index].name
+                  : program.name}
               </Text>
               ?
             </AlertDialogBody>
 
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={() => setDeleteIndex(null)}>
+              <Button ref={cancelRef} onClick={() => setThingToDelete(null)}>
                 Cancel
               </Button>
               <Button
                 colorScheme="red"
                 onClick={() => {
-                  if (typeof deleteIndex === "number")
-                    send({ type: "DELETE_BLOCK", index: deleteIndex })
-                  setDeleteIndex(null)
+                  if (thingToDelete === null) return
+                  else if (thingToDelete.type === "block")
+                    send({ type: "DELETE_BLOCK", index: thingToDelete.index })
+                  else if (thingToDelete?.type === "program")
+                    send({ type: "DELETE_PROGRAM" })
+
+                  setThingToDelete(null)
                 }}
                 ml={3}
               >
@@ -173,7 +181,12 @@ const ConfigScreen = ({
               />
               <MenuList>
                 <MenuGroup>
-                  <MenuItem icon={<DeleteIcon />}>Delete</MenuItem>
+                  <MenuItem
+                    icon={<DeleteIcon />}
+                    onClick={() => setThingToDelete({ type: "program" })}
+                  >
+                    Delete
+                  </MenuItem>
                   <MenuItem icon={<LinkIcon />}>Share</MenuItem>
                   <MenuItem icon={<CopyIcon />}>Duplicate</MenuItem>
                 </MenuGroup>
@@ -193,7 +206,6 @@ const ConfigScreen = ({
             span={4}
             onClick={goForward}
             rightIcon={<ArrowForwardIcon />}
-            isDisabled={!programValid}
           >
             Go
           </FooterButton>
@@ -422,7 +434,9 @@ const ConfigScreen = ({
                           variant="outline"
                           aria-label="Delete block"
                           icon={<DeleteIcon />}
-                          onClick={() => setDeleteIndex(index)}
+                          onClick={() =>
+                            setThingToDelete({ type: "block", index })
+                          }
                         />
                         <FormControl
                           display="flex"
