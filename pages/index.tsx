@@ -22,7 +22,6 @@ const Page = () => {
   // Make the browser back and forward button work for the slides
   // prettier-ignore
   useEffect(() => {
-    if (!program) setSlideIndex(0)
     const handler = ({state}: {state: any}) => {
       if (program && typeof state.slide === "number") setSlideIndex(state.slide)
     }
@@ -30,15 +29,20 @@ const Page = () => {
     return () => { removeEventListener("popstate", handler) }
   }, [program])
 
+  // When a program is deleted, go back to the home screen
+  // This might make the history stack a bit broken
+  useEffect(() => {
+    if (!program) setSlideIndex(0)
+  }, [program])
+
   const selectProgramById = (id: string, skip: boolean = false) => {
     if (state.context.selectedProgramId === id) {
       send({ type: "DESELECT_PROGRAM" })
       history.replaceState({ slide: 0 }, "")
       return
-    } else {
-      send({ type: "SELECT_PROGRAM", id })
     }
 
+    send({ type: "SELECT_PROGRAM", id })
     setSlideIndex(skip ? 2 : 1)
 
     // Set up a history stack for the 3 slides

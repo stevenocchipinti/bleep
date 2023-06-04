@@ -52,8 +52,6 @@ const HomeScreen = ({
     }
   }
 
-  const onDragStart = () => {}
-
   return (
     <SwipeableChild
       transparentHeader={
@@ -81,11 +79,7 @@ const HomeScreen = ({
       </Heading>
 
       <VStack spacing={4} alignItems="stretch" p={6}>
-        <DndContext
-          onDragStart={onDragStart}
-          onDragEnd={onDragEnd}
-          items={programIds}
-        >
+        <DndContext onDragEnd={onDragEnd} items={programIds}>
           {programIds.map(id => {
             const program: Program = allPrograms.find(p => p.id === id)!
             const isValid = ProgramSchema.safeParse(program).success

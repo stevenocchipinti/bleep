@@ -96,7 +96,6 @@ const ConfigScreen = ({
   const { program, blocks } = currentProgramFrom(state.context)
 
   if (program === null) return null
-  const programValid = ProgramSchema.safeParse(program).success
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (active?.id && over?.id && active.id !== over?.id) {
@@ -182,13 +181,23 @@ const ConfigScreen = ({
               <MenuList>
                 <MenuGroup>
                   <MenuItem
+                    icon={<LinkIcon />}
+                    onClick={() => console.log("Not implemented yet")}
+                  >
+                    Share
+                  </MenuItem>
+                  <MenuItem
+                    icon={<CopyIcon />}
+                    onClick={() => send({ type: "DUPLICATE_PROGRAM" })}
+                  >
+                    Duplicate
+                  </MenuItem>
+                  <MenuItem
                     icon={<DeleteIcon />}
                     onClick={() => setThingToDelete({ type: "program" })}
                   >
                     Delete
                   </MenuItem>
-                  <MenuItem icon={<LinkIcon />}>Share</MenuItem>
-                  <MenuItem icon={<CopyIcon />}>Duplicate</MenuItem>
                 </MenuGroup>
                 <MenuDivider />
                 <MenuGroup>
