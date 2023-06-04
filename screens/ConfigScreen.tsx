@@ -38,9 +38,9 @@ import {
   Editable,
   EditableInput,
   EditablePreview,
+  EditableTextarea,
 } from "@chakra-ui/react"
 
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import DndContext from "@/components/DndContext"
 
 import CardButton from "@/components/CardButton"
@@ -51,7 +51,6 @@ import { useTimerActor } from "lib/useTimerMachine"
 import { currentProgramFrom } from "lib/timerMachine"
 import {
   BlockSchema,
-  ProgramSchema,
   TimerBlock,
   PauseBlock,
   MessageBlock,
@@ -241,18 +240,36 @@ const ConfigScreen = ({
           </FooterButton>
         }
       >
-        <Text
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          flexGrow={1}
-          textAlign="center"
-          fontSize="xl"
-          p={4}
-          pb={8}
-        >
-          {program.description}
-        </Text>
+        <Editable value={program.description} display="flex" flex={1}>
+          <EditablePreview
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            flexGrow={1}
+            textAlign="center"
+            fontSize="xl"
+            p={4}
+            pb={8}
+          />
+          <EditableTextarea
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            flexGrow={1}
+            textAlign="center"
+            fontSize="xl"
+            m={4}
+            p={4}
+            pb={8}
+            required
+            onChange={e =>
+              send({
+                type: "UPDATE_PROGRAM_DESCRIPTION",
+                description: e.target.value,
+              })
+            }
+          />
+        </Editable>
 
         <Flex direction="column" gap={4} p={4} pb={0}>
           <DndContext
