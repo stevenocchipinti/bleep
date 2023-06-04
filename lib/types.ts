@@ -41,9 +41,12 @@ export const BlockSchema = z.discriminatedUnion("type", [
 export const ProgramSchema = z.object({
   id: z.string().default(() => generateId(6)),
   name: z.string(),
-  description: z.string(),
-  emoji: z.string(),
-  blocks: z.array(BlockSchema).refine(arr => arr.some(e => !e.disabled)),
+  description: z.string().default(""),
+  emoji: z.string().default("🆕"),
+  blocks: z
+    .array(BlockSchema)
+    .default([])
+    .refine(arr => (arr.length === 0 ? true : arr.some(e => !e.disabled))),
 })
 
 export type TimerBlock = z.infer<typeof TimerBlockSchema>

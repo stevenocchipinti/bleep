@@ -28,6 +28,7 @@ const HomeScreen = ({
   selectProgramById,
 }: HomeScreenProps) => {
   const [programIds, setProgramIds] = useState<string[]>([])
+  const [hasNewProgram, setHasNewProgram] = useState(false)
 
   const { state, send } = useTimerActor()
   const { allPrograms, selectedProgramId } = state.context
@@ -36,6 +37,14 @@ const HomeScreen = ({
     if (allPrograms.length > 0)
       setProgramIds(allPrograms.map(program => program.id))
   }, [allPrograms])
+
+  useEffect(() => {
+    if (hasNewProgram) {
+      setHasNewProgram(false)
+      selectProgramById(allPrograms[allPrograms.length - 1].id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasNewProgram])
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (active?.id && over?.id && active.id !== over?.id) {
@@ -104,17 +113,8 @@ const HomeScreen = ({
         <Button
           variant="outline"
           onClick={() => {
-            // TODO: Implement adding new programs
-            // setPrograms(programs => [
-            //   ...programs,
-            //   {
-            //     id: `program-${programs.length}`,
-            //     name: "New Program",
-            //     description: "",
-            //     emoji: "👋",
-            //     blocks: [],
-            //   },
-            // ])
+            send({ type: "NEW_PROGRAM" })
+            setHasNewProgram(true)
           }}
         >
           New program
