@@ -102,8 +102,12 @@ type Context = {
 
 // Helpers
 
-const speakerFrom = (context: Context) => (text: string) =>
-  speakFn(text, context.settings.voiceURI || undefined)
+const speakerFrom =
+  ({ settings }: Context) =>
+  (text: string) =>
+    settings.soundEnabled
+      ? speakFn(text, settings.voiceURI || undefined)
+      : Promise.resolve()
 
 export interface CurrentProgram {
   program: Program | null
@@ -541,7 +545,8 @@ const timerMachine = createMachine(
       decrementTimer: assign({
         secondsRemaining: ({ secondsRemaining }) => secondsRemaining - 1,
       }),
-      beep: ({ secondsRemaining }) => {
+      beep: ({ settings, secondsRemaining }) => {
+        if (!settings.soundEnabled) return
         if (secondsRemaining === 3) playTone(440, 0.3)
         if (secondsRemaining === 2) playTone(440, 0.3)
         if (secondsRemaining === 1) playTone(440, 0.3)
