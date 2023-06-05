@@ -30,6 +30,7 @@ const SettingsModal = ({ isOpen, onClose, ...props }: SettingsModalProps) => {
 
   const { state, send } = useTimerActor()
   const [data, setData] = useState("")
+  const { settings } = state.context
 
   let isValidJson = true
   try {
@@ -51,35 +52,38 @@ const SettingsModal = ({ isOpen, onClose, ...props }: SettingsModalProps) => {
         <ModalHeader>Settings</ModalHeader>
         <ModalCloseButton />
         <ModalBody pb={6}>
-          <VStack spacing={8} divider={<Divider />}>
+          <VStack spacing={8}>
             <FormControl as={HStack} justifyContent="space-between">
               <FormLabel htmlFor="sound">Sound</FormLabel>
-              <Switch size="lg" id="sound" defaultChecked />
+              <Switch
+                size="lg"
+                id="sound"
+                isChecked={settings.soundEnabled}
+                onChange={e =>
+                  send({
+                    type: "SET_SOUND_ENABLED",
+                    soundEnabled: e.target.checked,
+                  })
+                }
+              />
             </FormControl>
 
-            <VStack spacing={4} w="full">
-              <FormControl as={HStack} justifyContent="space-between">
-                <FormLabel htmlFor="voice-recognition">
-                  Voice recognition
-                </FormLabel>
-                <Switch size="lg" id="voice-recognition" defaultChecked />
-              </FormControl>
-
-              <FormControl>
-                <FormLabel hidden>Voice</FormLabel>
-                <Select placeholder="Select voice">
-                  {voices.map((voice: SpeechSynthesisVoice) => (
-                    <option
-                      key={voice.voiceURI}
-                      value={voice.voiceURI}
-                      selected={voice.default}
-                    >
-                      {voice.name} - {voice.lang} {voice.localService || "*"}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
-            </VStack>
+            <FormControl>
+              <FormLabel>Voice</FormLabel>
+              <Select
+                placeholder="Select voice"
+                value={settings.voiceURI || undefined}
+                onChange={e =>
+                  send({ type: "SET_VOICE", voiceURI: e.target.value })
+                }
+              >
+                {voices.map((voice: SpeechSynthesisVoice) => (
+                  <option key={voice.voiceURI} value={voice.voiceURI}>
+                    {voice.name} - {voice.lang} {voice.localService || "*"}
+                  </option>
+                ))}
+              </Select>
+            </FormControl>
 
             <Flex direction="column" gap={4} w="full">
               <FormControl isInvalid={!isValidJson}>
@@ -87,6 +91,8 @@ const SettingsModal = ({ isOpen, onClose, ...props }: SettingsModalProps) => {
                 <Textarea
                   value={data}
                   onChange={e => setData(e.target.value)}
+                  fontFamily="monospace"
+                  fontSize="sm"
                 />
                 <FormErrorMessage>Invalid JSON</FormErrorMessage>
               </FormControl>

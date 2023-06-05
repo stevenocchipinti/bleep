@@ -49,8 +49,14 @@ export const ProgramSchema = z.object({
     .refine(arr => (arr.length === 0 ? true : arr.some(e => !e.disabled))),
 })
 
+export const SettingsSchema = z.object({
+  voiceURI: z.string().nullable().default(null),
+  soundEnabled: z.boolean().default(true),
+})
+
 export type TimerBlock = z.infer<typeof TimerBlockSchema>
 export type PauseBlock = z.infer<typeof PauseBlockSchema>
 export type MessageBlock = z.infer<typeof MessageBlockSchema>
 export type Block = z.infer<typeof BlockSchema>
 export type Program = z.infer<typeof ProgramSchema>
+export type Settings = z.infer<typeof SettingsSchema>
