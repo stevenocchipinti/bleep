@@ -5,7 +5,7 @@ import localforage from "localforage"
 import defaultData from "./defaultData"
 import { BlockSchema, ProgramSchema, SettingsSchema } from "./types"
 import type { Block, Program, Settings } from "./types"
-import { playTone, speak } from "./audio"
+import { playTone, speak as speakFn } from "./audio"
 
 // Program events
 type AllProgramsLoadedEvent = { type: "LOADED"; data: Program[] }
@@ -99,6 +99,11 @@ type Context = {
   secondsRemaining: number
   leadSecondsRemaining: number
 }
+
+// Helpers
+
+const speakerFrom = (context: Context) => (text: string) =>
+  speakFn(text, context.settings.voiceURI || undefined)
 
 export interface CurrentProgram {
   program: Program | null
@@ -711,6 +716,7 @@ const timerMachine = createMachine(
       },
       announceBlock: context => () => {
         const { blocks, currentBlockIndex } = currentProgramFrom(context)
+        const speak = speakerFrom(context)
         const block = blocks[currentBlockIndex]
         if (block?.type === "timer")
           return speak(`${block.name} for ${block.seconds} seconds`)
@@ -719,18 +725,18 @@ const timerMachine = createMachine(
         else if (block?.type === "pause") return speak(block.name)
         else return Promise.resolve()
       },
-      announceCountdown:
-        ({ leadSecondsRemaining }) =>
-        send => {
-          speak("Starting in")
-          const interval = setInterval(() => {
-            if (leadSecondsRemaining === 0) send("FINISH_LEAD_IN")
-            else speak(`${leadSecondsRemaining--}`)
-          }, 1000)
-          return () => clearInterval(interval)
-        },
+      announceCountdown: context => send => {
+        const speak = speakerFrom(context)
+        speak("Starting in")
+        const interval = setInterval(() => {
+          if (context.leadSecondsRemaining === 0) send("FINISH_LEAD_IN")
+          else speak(`${context.leadSecondsRemaining--}`)
+        }, 1000)
+        return () => clearInterval(interval)
+      },
       announceMessage: context => () => {
         const { blocks, currentBlockIndex } = currentProgramFrom(context)
+        const speak = speakerFrom(context)
         const block = blocks[currentBlockIndex]
         if (block?.type === "message") return speak(block.message)
         else return Promise.resolve()

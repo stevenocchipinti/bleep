@@ -25,14 +25,18 @@ function playTone(frequency: number, duration: number): void {
   )
 }
 
-const speak = (text: string) =>
-  new Promise((resolve, reject) => {
+const speak = (text: string, voiceURI?: string) =>
+  new Promise(resolve => {
+    const allVoices = speechSynthesis.getVoices()
+    const defaultVoice = allVoices.find(v => v.default) as SpeechSynthesisVoice
+
     const utterance = new SpeechSynthesisUtterance(text)
-    // TODO: Get this from configuration state
-    utterance.voice =
-      speechSynthesis.getVoices().find(voice => voice.default) ||
-      speechSynthesis.getVoices()[0]
-    // utterance.onerror = () => reject("Error speaking")
+    const voice = voiceURI
+      ? allVoices.find(v => v.voiceURI === voiceURI) || defaultVoice
+      : defaultVoice
+
+    utterance.voice = voice
+
     utterance.onend = resolve
     speechSynthesis.speak(utterance)
   })
