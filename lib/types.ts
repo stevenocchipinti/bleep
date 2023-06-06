@@ -38,16 +38,20 @@ export const BlockSchema = z.discriminatedUnion("type", [
   MessageBlockSchema,
 ])
 
-export const ProgramSchema = z.object({
-  id: z.string().default(() => generateId(6)),
-  name: z.string().nonempty(),
-  description: z.string().default(""),
-  emoji: z.string().default("🆕"),
-  blocks: z
-    .array(BlockSchema)
-    .default([])
-    .refine(arr => (arr.length === 0 ? true : arr.some(e => !e.disabled))),
-})
+export const ProgramSchema = z
+  .object({
+    id: z.string().default(() => generateId(6)),
+    name: z.string().nonempty(),
+    description: z.string().default(""),
+    emoji: z.string().default("🆕"),
+    blocks: z
+      .array(BlockSchema)
+      .default([])
+      .refine(arr => (arr.length === 0 ? true : arr.some(e => !e.disabled))),
+  })
+  .strict()
+
+export const AllProgramsSchema = z.array(ProgramSchema)
 
 export const SettingsSchema = z.object({
   voiceURI: z.string().nullable().default(null),
@@ -59,4 +63,5 @@ export type PauseBlock = z.infer<typeof PauseBlockSchema>
 export type MessageBlock = z.infer<typeof MessageBlockSchema>
 export type Block = z.infer<typeof BlockSchema>
 export type Program = z.infer<typeof ProgramSchema>
+export type AllPrograms = z.infer<typeof AllProgramsSchema>
 export type Settings = z.infer<typeof SettingsSchema>

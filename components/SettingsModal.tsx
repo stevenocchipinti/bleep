@@ -7,39 +7,54 @@ import {
   ModalCloseButton,
   ModalBody,
   VStack,
-  Divider,
   FormControl,
   HStack,
   FormLabel,
   Switch,
   Select,
-  Flex,
   Textarea,
+  Text,
   Button,
   ModalFooter,
   ModalProps,
   FormErrorMessage,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
+  Alert,
+  AlertIcon,
+  AlertTitle,
 } from "@chakra-ui/react"
 import { useVoices } from "lib/audio"
+import { AllPrograms, AllProgramsSchema } from "lib/types"
 import { useTimerActor } from "lib/useTimerMachine"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 type SettingsModalProps = Omit<ModalProps, "children">
 const SettingsModal = ({ isOpen, onClose, ...props }: SettingsModalProps) => {
   const voices = useVoices()
+  const [data, setData] = useState("[]")
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const cancelRef = useRef<any>()
 
   const { state, send } = useTimerActor()
-  const [data, setData] = useState("")
   const { settings } = state.context
 
-  let isValidJson = true
-  try {
-    JSON.parse(data)
-  } catch (e) {
-    isValidJson = false
-  }
+  let allPrograms: AllPrograms = []
+  let isValid = false
 
-  // TODO: Fix hover styles for the buttons
+  try {
+    const parsed = AllProgramsSchema.safeParse(JSON.parse(data))
+    if (parsed.success) {
+      allPrograms = parsed.data
+      isValid = true
+    }
+  } catch (e) {
+    // invalid
+  }
 
   useEffect(() => {
     setData(JSON.stringify(state.context.allPrograms))
@@ -47,6 +62,49 @@ const SettingsModal = ({ isOpen, onClose, ...props }: SettingsModalProps) => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} {...props}>
+      <AlertDialog
+        isOpen={confirmDelete}
+        leastDestructiveRef={cancelRef}
+        onClose={() => setConfirmDelete(false)}
+        isCentered
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent mx={4}>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Restore default data
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              <Alert status="error">
+                <AlertIcon />
+                <AlertTitle>All current data will be lost!</AlertTitle>
+              </Alert>
+              <Text mt={4}>
+                Are you sure you want to replace the current data with the
+                default data?
+              </Text>
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={() => setConfirmDelete(false)}>
+                Cancel
+              </Button>
+              <Button
+                colorScheme="red"
+                onClick={() => {
+                  send({ type: "RESET_ALL_PROGRAMS" })
+                  setConfirmDelete(false)
+                  onClose()
+                }}
+                ml={3}
+              >
+                Restore default data
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Settings</ModalHeader>
@@ -85,41 +143,36 @@ const SettingsModal = ({ isOpen, onClose, ...props }: SettingsModalProps) => {
               </Select>
             </FormControl>
 
-            <Flex direction="column" gap={4} w="full">
-              <FormControl isInvalid={!isValidJson}>
-                <FormLabel>Data</FormLabel>
-                <Textarea
-                  value={data}
-                  onChange={e => setData(e.target.value)}
-                  fontFamily="monospace"
-                  fontSize="sm"
-                />
-                <FormErrorMessage>Invalid JSON</FormErrorMessage>
-              </FormControl>
-              <Flex gap={4}>
-                <Button
-                  colorScheme="red"
-                  leftIcon={<DeleteIcon />}
-                  onClick={() => {
-                    console.log("Not implemented yet")
-                    // TODO: Confirmation dialog
-                    // send({ type: "SET_ALL_PROGRAMS", allPrograms: [] })
-                  }}
-                >
-                  Clear data
-                </Button>
-                <Button
-                  isDisabled={!isValidJson}
-                  flex={1}
-                  onClick={() => {
-                    console.log("Not implemented yet")
-                    // send({ type: "SET_ALL_PROGRAMS", allPrograms: ... })
-                  }}
-                >
-                  Import new data
-                </Button>
-              </Flex>
-            </Flex>
+            <FormControl isInvalid={!isValid}>
+              <FormLabel>Data</FormLabel>
+              <Textarea
+                value={data}
+                onChange={e => setData(e.target.value)}
+                fontFamily="monospace"
+                fontSize="sm"
+              />
+              <FormErrorMessage>Invalid data</FormErrorMessage>
+              <Button
+                mt={4}
+                w="full"
+                isDisabled={!isValid}
+                flex={1}
+                onClick={() => {
+                  send({ type: "SET_ALL_PROGRAMS", allPrograms })
+                }}
+              >
+                Import data
+              </Button>
+            </FormControl>
+
+            <Button
+              colorScheme="red"
+              leftIcon={<DeleteIcon />}
+              w="full"
+              onClick={() => setConfirmDelete(true)}
+            >
+              Restore default data
+            </Button>
           </VStack>
         </ModalBody>
 
