@@ -62,7 +62,9 @@ export const theme = extendTheme({
         }),
         solid: (props: StyleFunctionProps) => ({
           "@media(hover: none)": {
-            _hover: { bg: "transparent" },
+            _hover: {
+              bg: defaultButtonStyles.variants?.solid(props).bg,
+            },
             _active: {
               bg: defaultButtonStyles.variants?.solid(props)._hover.bg,
             },
@@ -70,7 +72,9 @@ export const theme = extendTheme({
         }),
         outline: (props: StyleFunctionProps) => ({
           "@media(hover: none)": {
-            _hover: { bg: "transparent" },
+            _hover: {
+              bg: defaultButtonStyles.variants?.outline(props).bg,
+            },
             _active: {
               bg: defaultButtonStyles.variants?.outline(props)._hover.bg,
             },
@@ -78,7 +82,9 @@ export const theme = extendTheme({
         }),
         ghost: (props: StyleFunctionProps) => ({
           "@media(hover: none)": {
-            _hover: { bg: "transparent" },
+            _hover: {
+              bg: defaultButtonStyles.variants?.ghost(props).bg,
+            },
             _active: {
               bg: defaultButtonStyles.variants?.ghost(props)._hover.bg,
             },
@@ -90,7 +96,9 @@ export const theme = extendTheme({
       variants: {
         solid: (props: StyleFunctionProps) => ({
           "@media(hover: none)": {
-            _hover: { bg: "transparent" },
+            _hover: {
+              bg: defaultButtonStyles.variants?.solid(props).bg,
+            },
             _active: {
               bg: defaultButtonStyles.variants?.solid(props)._hover.bg,
             },
@@ -98,7 +106,9 @@ export const theme = extendTheme({
         }),
         outline: (props: StyleFunctionProps) => ({
           "@media(hover: none)": {
-            _hover: { bg: "transparent" },
+            _hover: {
+              bg: defaultButtonStyles.variants?.outline(props).bg,
+            },
             _active: {
               bg: defaultButtonStyles.variants?.outline(props)._hover.bg,
             },
@@ -106,7 +116,9 @@ export const theme = extendTheme({
         }),
         ghost: (props: StyleFunctionProps) => ({
           "@media(hover: none)": {
-            _hover: { bg: "transparent" },
+            _hover: {
+              bg: defaultButtonStyles.variants?.ghost(props).bg,
+            },
             _active: {
               bg: defaultButtonStyles.variants?.ghost(props)._hover.bg,
             },
