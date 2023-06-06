@@ -10,7 +10,7 @@ import {
 import { TimerProvider } from "lib/useTimerMachine"
 
 import "@fontsource/dancing-script"
-import "@fontsource/commissioner"
+import "@fontsource/noto-sans"
 
 const defaultButtonStyles = defaultTheme.components.Button
 
@@ -30,8 +30,8 @@ export const theme = extendTheme({
     },
   },
   fonts: {
-    heading: "'Commissioner', sans-serif",
-    body: "'Commissioner', sans-serif",
+    heading: "'Noto sans', sans-serif",
+    body: "'Noto sans', sans-serif",
   },
 
   // Sticky hover fix for all buttons
