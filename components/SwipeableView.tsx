@@ -5,7 +5,6 @@ import {
   Flex,
   Grid,
   GridItem,
-  shouldForwardProp,
 } from "@chakra-ui/react"
 import { ReactNode } from "react"
 import SwipeableViews from "react-swipeable-views"

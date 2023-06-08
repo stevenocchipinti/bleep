@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import {
   ArrowBackIcon,
   HamburgerIcon,
@@ -40,15 +40,6 @@ import {
   EditableTextarea,
   FormErrorMessage,
 } from "@chakra-ui/react"
-
-import DndContext from "@/components/DndContext"
-
-import CardButton from "@/components/CardButton"
-import { ChipTab } from "@/components/Chip"
-import { DurationInput } from "@/components/DurationInput"
-import { SwipeableChild, FooterButton } from "@/components/SwipeableView"
-import { useTimerActor } from "lib/useTimerMachine"
-import { currentProgramFrom } from "lib/timerMachine"
 import {
   BlockSchema,
   TimerBlock,
@@ -60,6 +51,18 @@ import {
   ProgramSchema,
 } from "lib/types"
 import { DragEndEvent } from "@dnd-kit/core"
+import lzString from "lz-string"
+import QRCode from "react-qr-code"
+
+import DndContext from "@/components/DndContext"
+
+import CardButton from "@/components/CardButton"
+import { ChipTab } from "@/components/Chip"
+import { DurationInput } from "@/components/DurationInput"
+import { SwipeableChild, FooterButton } from "@/components/SwipeableView"
+import { useTimerActor } from "lib/useTimerMachine"
+import { currentProgramFrom } from "lib/timerMachine"
+import { ShareIcon } from "@/components/icons"
 
 const OptionalIndicator = () => (
   <Text color="gray.400" fontSize="xs" ml={2} as="span">
@@ -93,17 +96,39 @@ const ConfigScreen = ({
     | { type: "program" }
     | null
   const [thingToDelete, setThingToDelete] = useState<ThingToDelete>(null)
-  const cancelRef = React.useRef<any>()
+  const deleteCancelRef = React.useRef<any>()
 
+  // Program
   const { state, send } = useTimerActor()
   const { program, blocks } = currentProgramFrom(state.context)
+  const isValid = ProgramSchema.safeParse(program).success
+
+  // Sharing
+  interface ShareData {
+    title: string
+    text: string
+    url: string
+  }
+  const [shareData, setShareData] = useState<ShareData | null>(null)
+  const [shareModalIsOpen, setShareModalIsOpen] = useState(false)
+  const [canUseShareAPI, setCanUseShareAPI] = useState(false)
+  const shareCancelRef = React.useRef<any>()
+  useEffect(() => {
+    setCanUseShareAPI(!!window.navigator?.share)
+
+    if (isValid)
+      setShareData({
+        title: program?.name || "",
+        text: program?.description || "",
+        url: [
+          window.location.origin,
+          "/import?data=",
+          lzString.compressToEncodedURIComponent(JSON.stringify(program)),
+        ].join(""),
+      })
+  }, [isValid, program])
 
   if (program === null) return null
-
-  const programParseResults = ProgramSchema.safeParse(program)
-  const programErrors = programParseResults.success
-    ? {}
-    : programParseResults.error.formErrors.fieldErrors
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (active?.id && over?.id && active.id !== over?.id) {
@@ -122,8 +147,59 @@ const ConfigScreen = ({
   return (
     <>
       <AlertDialog
+        isOpen={shareModalIsOpen}
+        leastDestructiveRef={shareCancelRef}
+        onClose={() => setShareModalIsOpen(false)}
+        isCentered
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent mx={4}>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Share {shareData?.title}
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              {shareData?.url && (
+                <Flex direction="column" gap={4}>
+                  <Text>{shareData?.text}</Text>
+                  <QRCode
+                    style={{ width: "100%", height: "100%" }}
+                    bgColor="transparent"
+                    fgColor="currentColor"
+                    value={shareData.url}
+                  />
+                  <Input readOnly value={shareData.url} />
+                </Flex>
+              )}
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button
+                ref={shareCancelRef}
+                onClick={() => setShareModalIsOpen(false)}
+              >
+                Close
+              </Button>
+              <Button
+                colorScheme="teal"
+                display={canUseShareAPI ? "flex" : "none"}
+                onClick={() => {
+                  if (shareData && canUseShareAPI) {
+                    navigator.share(shareData).catch(console.error)
+                  }
+                }}
+                ml={3}
+                leftIcon={<ShareIcon width={5} height={5} />}
+              >
+                Share
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+      <AlertDialog
         isOpen={!!thingToDelete}
-        leastDestructiveRef={cancelRef}
+        leastDestructiveRef={deleteCancelRef}
         onClose={() => setThingToDelete(null)}
         isCentered
       >
@@ -144,7 +220,10 @@ const ConfigScreen = ({
             </AlertDialogBody>
 
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={() => setThingToDelete(null)}>
+              <Button
+                ref={deleteCancelRef}
+                onClick={() => setThingToDelete(null)}
+              >
                 Cancel
               </Button>
               <Button
@@ -209,7 +288,8 @@ const ConfigScreen = ({
                 <MenuGroup>
                   <MenuItem
                     icon={<LinkIcon />}
-                    onClick={() => console.log("Not implemented yet")}
+                    isDisabled={!isValid}
+                    onClick={() => setShareModalIsOpen(true)}
                   >
                     Share
                   </MenuItem>
