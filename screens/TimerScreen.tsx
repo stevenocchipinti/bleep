@@ -151,14 +151,20 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
 
             {currentBlock.type === "pause" && (
               <Button
+                onClick={() => send("CONTINUE")}
                 isDisabled={!state.can({ type: "CONTINUE" })}
+                variant="unstyled"
                 borderRadius="50%"
                 mx="auto"
                 h="300px"
                 w="300px"
                 fontSize="3xl"
-                variant="brand"
-                onClick={() => send("CONTINUE")}
+                borderWidth={4}
+                borderColor="teal.200"
+                bgColor="teal.900"
+                _active={{
+                  bgColor: "teal.600",
+                }}
               >
                 Continue
               </Button>
