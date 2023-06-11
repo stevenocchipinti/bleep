@@ -95,7 +95,6 @@ const HomeScreen = ({
                   e.stopPropagation()
                   selectProgramById(program.id, isValid)
                 }}
-                emoji={program.emoji}
               />
             )
           })}

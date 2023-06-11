@@ -3,9 +3,8 @@ import { Program, ProgramSchema } from "./types"
 const defaultData: Program[] = [
   ProgramSchema.parse({
     id: "foo",
-    name: "Foo",
+    name: "💥 Foo",
     description: "A simple test program",
-    emoji: "💥",
     blocks: [
       { type: "message", name: "Welcome", message: "Welcome to the test" },
       { type: "timer", name: "Warmup", seconds: 10 },
@@ -21,9 +20,8 @@ const defaultData: Program[] = [
   }),
   ProgramSchema.parse({
     id: "kaz",
-    name: "Knee Ability Zero",
+    name: "🦵 Knee Ability Zero",
     description: "Knee Ability Zero is a knee rehab program by Ben Patrick",
-    emoji: "🦵",
     blocks: [
       { type: "pause", name: "Tibialis Raise", reps: 25 },
       { type: "pause", name: "FHL Calf Raise", reps: 25 },
@@ -38,9 +36,8 @@ const defaultData: Program[] = [
   }),
   ProgramSchema.parse({
     id: "yoga",
-    name: "Yoga",
+    name: "🧘 Yoga",
     description: "A yoga program that I just made up for the dummy data",
-    emoji: "🧘",
     blocks: [
       {
         type: "timer",
@@ -54,9 +51,8 @@ const defaultData: Program[] = [
   }),
   ProgramSchema.parse({
     id: "athx",
-    name: "AthleanX anti-slouch",
+    name: "🏋️ AthleanX anti-slouch",
     description: "A program to help with slouching by Jeff Cavaliere",
-    emoji: "🏋️",
     blocks: [
       { type: "timer", name: "Supermans", seconds: 30 },
       { type: "timer", name: "Glute march", seconds: 30 },

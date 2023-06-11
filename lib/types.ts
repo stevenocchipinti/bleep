@@ -38,18 +38,15 @@ export const BlockSchema = z.discriminatedUnion("type", [
   MessageBlockSchema,
 ])
 
-export const ProgramSchema = z
-  .object({
-    id: z.string().default(() => generateId(6)),
-    name: z.string().nonempty(),
-    description: z.string().default(""),
-    emoji: z.string().default("🆕"),
-    blocks: z
-      .array(BlockSchema)
-      .default([])
-      .refine(arr => (arr.length === 0 ? true : arr.some(e => !e.disabled))),
-  })
-  .strict()
+export const ProgramSchema = z.object({
+  id: z.string().default(() => generateId(6)),
+  name: z.string().nonempty(),
+  description: z.string().default(""),
+  blocks: z
+    .array(BlockSchema)
+    .default([])
+    .refine(arr => (arr.length === 0 ? true : arr.some(e => !e.disabled))),
+})
 
 export const AllProgramsSchema = z.array(ProgramSchema)
 

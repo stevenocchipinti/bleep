@@ -26,7 +26,6 @@ interface CardButtonProps {
   innerButtonOnClick?: React.MouseEventHandler<unknown>
   selected?: boolean
   children?: React.ReactNode
-  emoji?: string
   style?: any
   isExpanded?: boolean
 }
@@ -41,7 +40,6 @@ const CardButton = ({
   disabled,
   children,
   selected,
-  emoji,
   isExpanded,
   onClick,
   innerButtonOnClick,
@@ -99,7 +97,6 @@ const CardButton = ({
         )}
 
         <Text my={3} fontSize="lg" fontWeight={selected ? "bold" : "normal"}>
-          {emoji && `${emoji} `}
           {text}
         </Text>
 
