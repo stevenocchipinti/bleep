@@ -59,14 +59,10 @@ const Footer = ({
   showProgress?: boolean
 }) => {
   return (
-    <Flex direction="column">
+    <Flex direction="column" position="sticky" bottom={0} left={0} right={0}>
       {showProgress && <SegmentedProgressBar />}
       <Grid
         templateColumns="1fr 1fr 1fr 1fr"
-        position="sticky"
-        bottom={0}
-        left={0}
-        right={0}
         justifyContent="center"
         p={5}
         gap={4}
