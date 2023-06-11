@@ -1,6 +1,7 @@
 {
   "name": "Bleep",
   "short_name": "Bleep",
+  "description": "Create custom workout timers that can countdown, speak and wait for you to finish your set.",
   "start_url": "/",
   "icons": [
     {
@@ -24,6 +25,43 @@
       "src": "/android-chrome-mono-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-home.png",
+      "sizes": "1080x2340",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "The home screen"
+    },
+    {
+      "src": "/screenshot-config.png",
+      "sizes": "1080x2340",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "The configuration screen"
+    },
+    {
+      "src": "/screenshot-message.png",
+      "sizes": "1080x2340",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "A message in the program"
+    },
+    {
+      "src": "/screenshot-timer.png",
+      "sizes": "1080x2340",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "A countdown timer in the program"
+    },
+    {
+      "src": "/screenshot-pause.png",
+      "sizes": "1080x2340",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "A pause in the program"
     }
   ],
   "theme_color": "#161A24",
