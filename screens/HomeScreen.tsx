@@ -75,7 +75,9 @@ const HomeScreen = ({
       </Flex>
 
       <Heading as="h2" textAlign="center" px={8} size="xl">
-        Choose your program
+        {allPrograms.length > 0
+          ? "Choose your program"
+          : "Create your first program below"}
       </Heading>
 
       <VStack spacing={4} alignItems="stretch" p={6}>
