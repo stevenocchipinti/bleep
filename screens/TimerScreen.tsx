@@ -43,22 +43,11 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
   if (!program) return null
   const isValid = ProgramSchema.safeParse(program).success
 
-  const { currentBlockIndex, secondsRemaining } = state.context
+  const { currentBlockIndex } = state.context
   const blocks = program.blocks.filter(b => !b.disabled)
 
   const currentBlock: Block | null =
     blocks.length > 0 ? blocks[currentBlockIndex] : null
-
-  // Used for the circular progress bar
-  const currentBlockPercent = (n: number) => {
-    if (!currentBlock) return 0
-    if (currentBlock.type !== "timer") return 0
-    const currentBlockSeconds = currentBlock.seconds
-    if (blocks.length === 0) return 0
-    return ((secondsRemaining + n) / currentBlockSeconds) * 100
-  }
-  const from = is("counting down") ? currentBlockPercent(0) : 100
-  const to = is("counting down") ? currentBlockPercent(-1) : 100
 
   return (
     <SwipeableChild
@@ -141,13 +130,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
       >
         {currentBlock && isValid ? (
           <>
-            {currentBlock.type === "timer" && (
-              <CircularProgressBar
-                from={from}
-                to={to}
-                text={`${secondsRemaining}` || "00:00"}
-              ></CircularProgressBar>
-            )}
+            {currentBlock.type === "timer" && <CircularProgressBar />}
 
             {currentBlock.type === "pause" && (
               <Button

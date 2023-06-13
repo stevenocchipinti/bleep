@@ -1,26 +1,20 @@
 import { useTheme } from "@chakra-ui/react"
-import { useState, useEffect } from "react"
+
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar"
 import "react-circular-progressbar/dist/styles.css"
 
-interface Props {
-  from: number
-  to: number
-  text: string
-}
-const CircularProgressBar = ({ from, to, text }: Props) => {
-  const [animate, setAnimate] = useState(false)
-  const [targetValue, setTargetValue] = useState(from)
+import { useTimerActor } from "lib/useTimerMachine"
+import { currentProgramFrom } from "lib/timerMachine"
+import { useProgress } from "./useProgress"
+
+const CircularProgressBar = () => {
+  const { state } = useTimerActor()
+  const { program } = currentProgramFrom(state.context)
+  const { isAnimating, targetPercentage, text } = useProgress()
+
   const theme = useTheme()
 
-  useEffect(() => {
-    setAnimate(false)
-    setTargetValue(from)
-    setTimeout(() => {
-      setAnimate(true)
-      setTargetValue(to)
-    }, 10)
-  }, [from, to])
+  if (!program) return null
 
   return (
     <div>
@@ -34,13 +28,13 @@ const CircularProgressBar = ({ from, to, text }: Props) => {
       </svg>
 
       <CircularProgressbar
-        value={targetValue}
+        value={targetPercentage}
         text={text}
         circleRatio={0.75}
         styles={buildStyles({
           rotation: 1 / 2 + 1 / 8,
           trailColor: theme.colors.gray[700],
-          pathTransition: animate ? "1s linear" : "none",
+          pathTransition: isAnimating ? "1s linear" : "none",
           pathColor: "url(#circular-progress-bar-gradient)",
           textColor: "currentColor",
         })}

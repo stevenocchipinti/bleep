@@ -1,0 +1,49 @@
+import { useState, useEffect } from "react"
+import { useTimerActor } from "lib/useTimerMachine"
+import { currentProgramFrom } from "lib/timerMachine"
+import { Block } from "lib/types"
+
+export const useProgress = () => {
+  const { is, state } = useTimerActor()
+  const { program } = currentProgramFrom(state.context)
+
+  const { currentBlockIndex, secondsRemaining } = state.context
+  const blocks = program?.blocks.filter(b => !b.disabled) ?? []
+
+  const currentBlock: Block | null =
+    blocks.length > 0 ? blocks[currentBlockIndex] : null
+
+  const currentBlockPercent = (n: number) => {
+    if (!currentBlock) return 0
+    if (currentBlock.type !== "timer") return 0
+    const currentBlockSeconds = currentBlock.seconds
+    if (blocks.length === 0) return 0
+    return ((secondsRemaining + n) / currentBlockSeconds) * 100
+  }
+
+  const from = currentBlockPercent(0)
+  const to = is("counting down") ? currentBlockPercent(-1) : from
+
+  const [isAnimating, setIsAnimating] = useState(false)
+  const [targetPercentage, setTargetPercentage] = useState(from)
+
+  useEffect(() => {
+    setIsAnimating(false)
+    setTargetPercentage(from)
+    setTimeout(() => {
+      setIsAnimating(true)
+      setTargetPercentage(to)
+    }, 10)
+  }, [from, to])
+
+  const pad = (s: number) => String(s).padStart(2, "0")
+  const minutes = pad(Math.floor(secondsRemaining / 60))
+  const seconds = pad(secondsRemaining % 60)
+  const text = `${minutes}:${seconds}`
+
+  return {
+    isAnimating,
+    targetPercentage,
+    text,
+  }
+}
