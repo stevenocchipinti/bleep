@@ -8,6 +8,12 @@ const defaultData: Program[] = [
     blocks: [
       { type: "message", name: "Welcome", message: "Welcome to the test" },
       { type: "timer", name: "Warmup", seconds: 10 },
+      {
+        type: "timer",
+        name: "No lead time",
+        seconds: 10,
+        leadSeconds: 0,
+      },
       { type: "pause", name: "A pause" },
       { type: "pause", name: "A pause with reps", reps: 25 },
       { type: "timer", name: "Cool down", seconds: 5 },

@@ -3,9 +3,15 @@ import { assign as immerAssign } from "@xstate/immer"
 import localforage from "localforage"
 
 import defaultData from "./defaultData"
-import { BlockSchema, ProgramSchema, SettingsSchema } from "./types"
+import {
+  AllProgramsSchema,
+  BlockSchema,
+  ProgramSchema,
+  SettingsSchema,
+} from "./types"
 import type { Block, Program, Settings } from "./types"
 import { playTone, speak as speakFn } from "./audio"
+import { current } from "immer"
 
 // Program events
 type AllProgramsLoadedEvent = { type: "PROGRAMS_LOADED"; data: Program[] }
@@ -115,6 +121,7 @@ export interface CurrentProgram {
   program: Program | null
   blocks: Block[]
   currentBlockIndex: number
+  currentBlock: Block
   secondsRemaining: number
   leadSecondsRemaining: number
 }
@@ -128,10 +135,12 @@ export const currentProgramFrom = (context: Context): CurrentProgram => {
   } = context
   const program = allPrograms.find(p => p.id === selectedProgramId) || null
   const blocks = program ? program.blocks : []
+  const currentBlock = blocks[currentBlockIndex]
   return {
     program,
     blocks,
     currentBlockIndex,
+    currentBlock,
     secondsRemaining,
     leadSecondsRemaining,
   }
@@ -139,7 +148,7 @@ export const currentProgramFrom = (context: Context): CurrentProgram => {
 
 const timerMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5QEMAOqB0AXAlgWzACcMAbAe2QhwDsoBiCM6sDGgNzIGsW1NcDi5SjSgJ2ZAMbJcTANoAGALoLFiUKjKwcM6mpAAPRAHYATBiNGALAE4TANgCM86wFYAHC5NGANCACeiF6WGNYOYSbWliY2DnYeAL7xvrzY+ESkFFS0dESEZMSoJNIAZvl4GCn86UJZouJSOioqehpaOnqGCADMThjylnbWXS5dll1uJvJuvgEIDi7yIdbLy-1GtiZeicnoqQIZlJB0ALIA8gBqAKIA+gAKAEqnAOL3AILHzUggrdo4TB2BLqRPqWKy2OIOIxueYzQKWFwhaFQzxuNx2KxGOzbECVNKCTJHADKlwAMpcAMIAFTujxe70+6k0v3+X06YTsCKcXW5HgmnhcdlhCBMkIw8OsmNMdkGlnmbmxuP2NSOADlLgB1GnPN4fJQtJntVmBJyLSJGJxudZDKxC6II6xIjwmVHoyzypI43ZVfGHCAYVB5KCEZB4AAEsDAJDAEiwRwAIpdiWSqVq6brVF8fobQJ0ulCQptZUMous4pYhTYjBhNi53A4vF1pZEugqvXiDhBIP7A8GwxGozGu7AsGR0ETKa97pSGd8DX9dEa5s5FrEOU4HG4BvILEKwpa+iYXPN4dFBhZW3x28q-QGyEGQ+HI9HY37h6PUEcHpdzgBJU4AVUJGcs3nAFukbDB3DsN1zQ3S0bX8RBoQcDAJmGExRjscZnGsC89mqAkbx7B9+2fIcRzHCA6DVAANac9UzOcWRzRBBjcatoOhVEwlrQVEIQZDUIwzxMPGBw8O9Dsu1ve8+yfQdXwoj8-R-CAozoV44zja4ACESVOckAGlgKYhcWO6FxrD6M95C6CJD0bPjZnrcYxWiaERJFTwJKvQjuzvXtHwHF8MDfSiMFU9SEzJSkbj0gzjIYxk2lAxdMPMOJrCmaIsphfiHDGLoMEbeR6wcHogXkLCfKVPyZMC0iFNCpSu0isATguOL9KMkyUuYgxEHQjKwgcFZ0XrIwXF3bkERcLdJrcCV5AWIwaoI31-NkoKyMU99WrU9r7kuFV3huB5tXpJLZz6syBvAxYxjiSbnA5FwjCq3cRis2tljmyxloWZY1p9TsiICkj5JCsLlIig66H-W441eWLUx1a4E0Jcl7h-W5KT-FVeuZW7Oi8dj2QFVw7MmSEfHy6x0WKgUpmlAY4hMYGpLBrbGqhlqVLhuMEZJH9yWRs7aR1QnszuuzFkbewRPehZSt3SaioK0IN36Eajw569NoayHyL2-motJS4UfOtMpdS8zuSK0IjFGCxoKwjldw8KtJnRB1ypFSE9bq4i5OC43wra+HEbF3TusSjNkqJsDRgROzhglf6ok8fpd1d8wvCcAZLVBbdA42+qIdD3bwtgZA2BEBgmBYcRuAqNtarL4Ptqa6Gh1rkQxGoDgGnnJorpA-rOk8YJa3cHlXDcPMTF3esrNCB03CqkVuTsdmPUVdbQYNiudowQgAFdqGoevbleQDLhtifEAK+sMDiIEN+g5aHFViJX8egUN6uADnvNuB9pKdx5l2c+l965HWJPReO11E6LnCHYEIUxJqHgdP0Sw5Z8qgiKhhLoUxZQ2EWi2EBl526H3LiHE+0Cr7ZC-L+ACQEx6mTAvMUqqFMSjWhDvaUUIhSCTQjYI8QIqbiUofhEG4DwZ0Kagw+utEEH6hupw7iIRZRQjGBhUheDZgiL0UAiRmwpE7CoWArmhtK6nwvow+gD9iZPxNOYKeoIsLyEPCrfB8xUJHk8M6WyEoCqlxoRAo2folG0AwBIMgF9cC0FDIwAA7tQOgeMersPUYuaIzhX6rAKkeJ2RTPqxGKmiEJc1xjDEsGEuR3NIl2JgTEuJCSRDJLIGkugTiwLeOCHYZwUQWZvUWruNYxU3QFRsNEVB9TrHH0UfYkQGBXiX3idQCQHSABG5AJCcAbswVgg8uA8FAbIhZCiQrRKgKs9ZF8tlJN2ZITgA8h7SBHkoXpKDAF9DesQwZ0J35ORccsSCcQ5pVQsErLE0jJL61oV3a5yyYlrOoBsx5UBQzPP2YcpuJyW77wuUfK5UCUW3LRRinZezXn1A+XIL5DhEHj2cXMdYKEsJzQ3LwxwO9pq9GTjYJsk16zugsTIzmJKkVkpaRS+5mzqUvLxccjghLzmSsRZAqJ5K7nooeYq-ZbzJD0uoE0EwzKOEoKhEVforguXDGWu7fBYxILIRGPYWIOV5lSq1c0hxuqqVJLadQLAqT0lkk0tcTJcc1HIPMtEF170WaHghLEAxT8U0FjROVBe6wLAuG9ZqppNyA36qDRs0NXT0kADEfwqh-ISAAEtcCN2k63fPjYeBEpVxSQktI2aw01ohZsWqzeQXjcJwt8h3eR0rtWytWSk5Avxy0hpoGfdq5JTgqjxiqf899slxruvMLKf8IihBZhMAYy8jx-NGkeCIo0vG73FfCoOs7fUlspWWrFBBYA1xgMq5uZzLHEqLbYr98rMWhj-QBsARrh4MuUIe6WbJakcRnqMIZXgl75VsosTEQSyxYSsOYz0oGNURNsagZAZ8IxUTgRbDtx6tbVlsnNSmC9C4e2HRhWy71NxeCqrC1907wkfqaTRuj45JyqMYjk8y8wNzFSWhEeEy1Qi4ecqYKy0FGwAOcMUwtnd0VYDnT0lDttj0jEgnxguXgrBui06xbhAoFizydpnVaU79jotDLQ2AQGCUgYlX5gLCGTWjwtQpmWvR+iDGGKMcYkxph03YsrEUHhiETHsHhCMWBElQFgB2eujAjnAdbpgfLhXis1H7nSxoXzLOPwQP9IqqIsoTFFREWy6aEAAFo2K2fNMiHe8I5p5bAAVkQtXMj11yPkf0RQsClEIOUFI1WZsldoBFxryHotHs6GuREatyqymdPCIU-WuKQVGlYdEr1YgFukZt2gs3fR0Hgdcc4pwRYHoO6h1ibpzB5iwpaZmgxnMDdBFWHRo0ZlvQsAMSb023uc0+xba4hIAIqm0sdV4elLhxmY50TcVYhmSPPZuK7MPzCbnh7YRHk0Uc1fR4x6krwSQklRu8NhAOrOdExBxXkOFIT9FGDTgUxULDLSy5sUwLOtvXgxxzrnPPjh89jYDpc9NiqQm5UMB717+L9dpzoyY6xQTlTO4rtHNc65JNe0VoLqqQtO+K-bjp7vdufP21rgXiB3AIkmoMo8aJGx5quxuFCmIgSne3D2ih4r3cYD8+7l3pzKuhSm6ztPOeZs+6QyT1izoMAbmdLLWspgvBXZl2KWU4wFhBCqmRjb+e0eEDgO3rFAWM9qqq934rnenf+eDrAQvpqmv85a4tEHTt7ATC8VCcqV3JgIkAVlTW25XBAxe4P0Kfckm97K-i13WeU+e6P2PifUX-ctdWGX0akwIhliPFH6EGU48jCcO9AqSfyMSoIpUYnxSb0bUSXB0TF5zCjADKOxTDDAciy62ilRmAliOD0yI6FzGYSbUa0ZgHMJ-iARQHW7BAbwuhiQTAeS7idbVjuCx5DALBujugejoqdjwBfC8B36sr9aHhl5WBeBDAbiDKxAfQm7LBFRHgOiWRhBjCQgvoAHehcF9JmB8imBVRAoOhAh9aeCvybD0zNhOzmjSjPaibUIiBKGLjvRCRvTewaHU74Irh6GZQ7ylibDzIWHmQTAHjvQAqjC2A2BdAVj5KmACgmimDz6YjYGNKVweHHrELeH4ZYQzIBFCimDBCpwiRDALweB1I+ZWI+pNI9wQCxFsj5hL6JF+E5SBH8SRDBBFioiWSNhhDrBRE2InxFGwxRglGBD2AJG+HJFDDLxVRl5sSGEShfS5GmH5HgbtF8wH4O5QDdEICx5l706uD9ALzbi0zOQFwhB8JWh6L9qtGLLIqypLHlTDEKy1hYaRA4ZCjNgcQOaLT0wDCxDHGkrzr+rBqFadJpJLGFici+yOCZb1jSi7iyjpbIQpq2Dbit7qpAE4H0I6rfoKpPI0rnFojr5NgjDcjLQIHjKyiMxBJ-SQg7zvFzp+orIonQbfFhr-H+z162QOYQjODLy-wFQCK4Ih7mjyFEqUaIlLILqvBLorpYpxJrrUAbrnEChoLjFeKeCDKbxTT5TZaoTwhkKPQJYiYKFiYNJtGCn+rUkdKwbIAwDSm9BQhJFdagiyjgnKZ1gno7yhG5Z5FgbAFNSgGQDnHnZihODFLZR1g8bBB8bbyb5Pb-58kIlbSmZzrSlmBBJQjvRGHLCQhChZxsYiiuBiKogcxhZj5LG1jsTjoWD2BYQ9DurgmOEv6LQuH0xuF76o5Fb-HsRmLvRRDbjSEiggoDZZRoKlSaGgm4JrC25FbbaLHyaHaDSnp5iYT9D2ASj2BXZIioTPFhA8izKTEAEp7XhLG4JmB2qggcalijRXazzVgKyNjcjvRAIjke6H5Yru5LEPb+LbjqbupjCpazD9bJyurogWBohEKWgmFbn7556NnsEJza6WhoIuToihkYROpfnLkdaazrmkK3mnxd6Nmj7yIQVILa5C6tlzkdmaZQ7fkDDoKOBQiLQjALQYWX4975kTna4WhoJjBjBOw1I5HdnkWzRojQoAU8jM6JDxBAA */
+    /** @xstate-layout N4IgpgJg5mDOIC5QEMAOqB0AXAlgWzACcMAbAe2QhwDsoBiCM6sDGgNzIGsW1NcDi5SjSgJ2ZAMbJcTANoAGALoLFiUKjKwcM6mpAAPRAHYATBiNGALAE4TANgCM86wFYAHC5NGANCACeiF6WGNYOYSbWliY2DnYeAL7xvrzY+ESkFFS0dESEZMSoJNIAZvl4GCn86UJZouJSOioqehpaOnqGCADMThjylnbWXS5dll1uJvJuvgEIDi7yIdbLy-1GtiZeicnoqQIZlJB0ALIA8gBqAKIA+gAKAEqnAOL3AILHzUggrdo4TB2BLqRPqWKy2OIOIxueYzQKWFwhaFQzxuNx2KxGOzbECVNKCTJHADKlwAMpcAMIAFTujxe70+6k0v3+X06YTsCKcXW5HgmnhcdlhCBMkIw8OsmNMdkGlnmbmxuP2NSOADlLgB1GnPN4fJQtJntVmBJyLSJGJxudZDKxC6II6xIjwmVHoyzypI43ZVfGHCAYVB5KCEZB4AAEsDAJDAEiwRwAIpdiWSqVq6brVF8fobQJ0ulCQptZUMous4pYhTYjBhNi53A4vF1pZEugqvXiDhBIP7A8GwxGozGu7AsGR0ETKa97pSGd8DX9dEa5s5FrEOU4HG4BvILEKwpa+iYXPN4dFBhZW3x28q-QGyEGQ+HI9HY37h6PUEcHpdzgBJU4AVUJGcs3nAFukbDB3DsN1zQ3S0bX8RBoQcDAJmGExRjscZnGsC89mqAkbx7B9+2fIcRzHCA6DVAANac9UzOcWRzRBBjcatoOhVEwlrQVEIQZDUIwzxMPGBw8O9Dsu1ve8+yfQdXwoj8-R-CAozoV44zja4ACESVOckAGlgKYhcWO6FxrD6M95C6CJD0bPjZnrcYxWiaERJFTwJKvQjuzvXtHwHF8MDfSiMFU9SEzJSkbj0gzjIYxk2lAxdMPMOJrCmaIsphfiHDGLoMEbeR6wcHogXkLCfKVPyZMC0iFNCpSu0isATguOL9KMkyUuYgxEHQjKwgcFZ0XrIwXF3bkERcLdJrcCV5AWIwaoI31-NkoKyMU99WrU9r7kuFV3huB5tXpJLZz6syBvAxYxjiSbnA5FwjCq3cRis2tljmyxloWZY1p9TsiICkj5JCsLlIig66H-W441eWLUx1a4E0Jcl7h-W5KT-FVeuZW7Oi8dj2QFVw7MmSEfHy6x0WKgUpmlAY4hMYGpLBrbGqhlqVLhuMEZJH9yWRs7aR1QnszuuzFkbewRPehZSt3SaioK0IN36Eajw569NoayHyL2-motJS4UfOtMpdS8zuSK2x61cCw7MtDxdw8Ky7HsCI2bszE9bq4i5OC43wra+HEbF3TusSjNkqJsDRgROzhglf6ok8fpd2guxzC8JwBktUFt0Djb6oh0PdvC2BkDYEQGCYFhxG4Co21q8vg+2proaHOuRDEagOAaecmiukD+s6TxglrdweVcNw8xMXcnZCUbUSqkVuW9svQYNyudowQgAFdqGoBvbleQDLhtyfEAK+sMDiIFAaw+QIlp5yLDzkYH8cVEMLlV3tJLuPMuwnzPg3I6xJ6Lx2uonRc4Q85ZUtPyB0-RLDlnyqCIqGEuhTFlDYRaLYPSKnWnvCuIdD4QPPtkL8v4AJAXHqZMC8xSqoUxOvWI9h0TTH4oJNCNgjxAipuJUh7dyEgPBlQpqNCG60VgfqG6rDuIhFlFCMYGFCFYNmAIrRrhypDE2GInYl4O4UNAUbP0cjsi32JvfE05hp6gjfoeFW2D5ioSPJ4Z0tkJQFWAVzQ2Vcj6n1oVADAEgyCn1wLQUMjAADu1A6B4x6sw5Ri5nRxAPOaeEbpNwA1VhKMUbhbIP1KbKFwgT94yJCjYiJUSYkiHiWQJJdA7FJ2yqhRwb135oisF0XctkqwTAws4I8783rulMfhEGUjuZWNCZA2gGBXhn2idQCQzSABG5AJCcEbswVgQ8uA8AkXMoJB9ZFhJEKs9Zp8tlxN2ZITgg9h7SFHkoDpmSNx5zspgjCXgphTF3JsIq-1jxmnpvWaplDu51JuSstZ1ANmPKgKGZ5+zDnNxOa3MhFyanwvAYiiJyLUU7L2a8+oHy5BfIcHAie9jhSTDMKVCU6FLKA2mvYasWVQhom5JiKIsLLEhPqXclFDyKUvOxccjgeLzmc0JWA6xJKJXkqeZSt5kgaXUCaCYBlLCflDDFIKt2z1Ri7ketZdEQLp6jRFdIolqrlmkvuZs6VWLGBHJbmcsxkjLm1OJa69VUrNUvO1SPWlyguiGoyeZTYtlipYTdJWPM+Cpr5Tmnnd6-LlhAjRIvR1CyxVqrJWG9FjTqBYESck1JcclEIITS6SCUwHRRHydyK1tYn52GcFo-BwwSEzMkvrOFKqlnhNDR6uJVaa2tOSd8hNWEzDlS8hvd+lZPrAlBG6ZOy1F5FvEf6gl47FniteAk5AvxZ1MFicfdq5JTgqjxiqf8N90lNruqNVwGBRpRFGvLOan8HFjA4qNewHgjCCuLcE6hZb3VotDAQWAtcYCyt9W3E9Sqz2lpDeWmd6KUNobAJG3VY841frZAtVCsQoRhG3BrJy9935mAlKTaIe4pjTM9Nhsdor4P4fuUh4cyBCCxPRTQDDuK-WzJwwJ65QnJUiawGJiToYaBkcaF8z90sSbe2+tuFlDpbDf2mqKZa9NayglKVBWDVyQqoGQMfCMVFoEWyXd+rWT8vDCLyVYBwHtQRCUMbKQVCweP4vk06idTmXPjknIoxi8bv1HirI2RskIM7YR0ffb+kEeiyn-mhIBx65P8Zi4suLrnqKXDop5tkoxgiDEhI4SIfSwi2jKX+mI5U+0DCLvZoNN5nM1foX+QCDX76FdQm2vtvS9zMbmLYZrHJnQdvKlESLiqKtbRRVgZ17TdO21S0VESpV+heCsG6Ze-E+0oQFAsOe0HM6rTK5JFFoZKGwGk-K2TH2yBfeDrALTnzlDHbvt0Xo-RBhDrGBMEFdN2LKxFB4fBoysRlYjFgCTsAOwN29Tiv7WHQpgBxyIPHNQB7Uu0+DyjenED-SKqiFBIpnQRFsrlhAABaNikEC7Im9vCOaeFse4-x9kXI+R-RFCwKUQg5QUhi4pxLuoJyo16p0-Tk7nQ1yIjVpt+sm5M2zG51xSCo0rDolerEKpWOyfi+vHQGB1xzinBFh+7XkPOLmDzFhS0zNBi3dN6CKsGj-22DehYAYouHcq6dy7wkAEVTaWOq8PSlw4xTYEsF5wmi2fLE3EKbnofzCbgj4eCwk1Y-k9oJTwidB3PUleCSEkqN3hMK90yzEHFeQ4UhP0S1-ES8CmKhYA9IxNimBr47hvLuW9t6tjqTvjaGdLnpsVSEG51iNiFUtkvFgy9RG3Gacqm2Z8q9rvXOJyu6+-dOST2-UA8dX+aU-kHNOwfZ-cAiSa83fm74SjF4bgoSYhAgG7bilRjAX514YCfbv734KqYDv5wGA7v6g7RrZ7exkwTCLyTC1imBeDF7j5ihhYeDvxWBVQmK8ak617P5HxwBx5xLfaIGyYoGECMF0FA7SIf7q7kZa6r465IRWTQbQaQYsr0aDLD74GzarCawn6WS4T250Ev79zMHA6sGP5MH0Gv7qE8EYGa506CGQ6rB-oQbvz0zG6BbD4gEZTgG-yQEFQkIegoqdjwBfC8DGFMrc6Hh-pWBeBDC-KlR9r775oW4Si1ilJIj2DAxeFgSbBCRvSTAQgFpAhc6eA+a+yYKEIQjbZ8aZAiBxGLjvSJGmBVTQgFpc4FQribCWH0wBHezszva+S+hFHmQTA5K2RVSjArZDAVjOD5wEHogiSEJDbOptHfr4KdH4Ipq9FSGzCmDBCpw2BCKLRjBKEjotEWKVYhK9wQATHUbsQUFdGzE5TzGICRDBBFioKQhojLCY6bHmLzJwY9x8ywxRgHGBA8rHEzE9FnErxVR-psSiERFpFjETp7GhRqFQCfEIBgF-rl6uD9CLzbggZzCFxrwOhWhaKWjDo0GjpBw7GCbhKwmxDLDWR2TsaxClT2BChDAIighXZQhZRuhTDgnnpqpzrNK1qwn2CYLJochFyLSlTnFzBPSQSLQbhUxgGbjsl4ZToEZIaYqcC8lApiggHQh9KHh8LOS2Rnbez0byCMb0xvaPEBrKoclKYaqVobLzpJK8mODqwpqTBTALCxBWqAnQr4IliWhxBynEm3KXrXrqZRLVo0APqkn+IFalSWS8LvR5jcrBDrD9qRBHgeT+mKYKmIbNLEbIAwCkkYgUkfwij3a0keKLDrDhA9B9qjABLNFPGBrOqTqBnCZv6qbibNI0AOmeLLDzCWSYJVQngrybh-oSicSuARFNFmmnoKaOajaQCkmyhmCyjLQD58jQhBYjJbyRDlR5i6z1nmlwr7bjHJZUb3wZG+JQjvTmiDChBolZzVjvyjRzQLx5FyafbfawmRF9Cok8LcjzB2Qel-q1GZQGn1FTk0Hv68nsTGLvTH6TShAlnF5ZR5xsqTRG5lgx7KGz7CC0CwmVRj6YSXZnhlmm5IioSLSaw8icaWAwH0HXiwkAohDWaTSVjQrWDF5zzVgKwZZ5jjLUFK7aGqHX7opQWnlr7W5eLbjwjLT-LjDF7JwSnogWBoh4KoJ0V47wFCWwm+nAW77by2CNgm6IBm6igs5UXjA0UaUMFP7cGyTuEJxr496wWXbbiWT1jB4mXpQoW3GLQjALTWW6HoqfniVCFLhoimpjDQbjDjDZoKXwhKVV6qU8jV6JDxBAA */
     id: "app",
 
     schema: {
@@ -309,6 +318,8 @@ const timerMachine = createMachine(
                           cond: "blockFinished",
                           actions: "nextBlock",
                         },
+
+                        exit: "stopTalking",
                       },
 
                       "Announcing block": {
@@ -317,8 +328,8 @@ const timerMachine = createMachine(
 
                           onDone: [
                             {
-                              target: "Announcing countdown",
-                              cond: "isTimerBlock",
+                              target: "Annoucing starting in",
+                              cond: "isTimerBlockWithLeadIn",
                             },
                             {
                               target: "Awaiting continue",
@@ -328,6 +339,10 @@ const timerMachine = createMachine(
                               target: "Announcing message",
                               cond: "isMessageBlock",
                             },
+                            {
+                              target: "counting down",
+                              cond: "isTimerBlock",
+                            },
                           ],
                         },
 
@@ -335,19 +350,30 @@ const timerMachine = createMachine(
                       },
 
                       "Announcing countdown": {
-                        invoke: {
-                          src: "announceCountdown",
-                        },
+                        invoke: [
+                          {
+                            src: "startTimer",
+                          },
+                        ],
 
                         exit: "stopTalking",
 
                         on: {
-                          LEAD_TICK: {
+                          TICK: {
                             target: "Announcing countdown",
                             internal: true,
+                            actions: [
+                              "decrementLeadTimer",
+                              "announceCountdown",
+                            ],
                           },
+                        },
 
-                          FINISH_LEAD_IN: "counting down",
+                        entry: "announceCountdown",
+
+                        always: {
+                          target: "counting down",
+                          cond: "leadCountdownFinished",
                         },
                       },
 
@@ -367,6 +393,13 @@ const timerMachine = createMachine(
                             target: "Announcing block",
                             actions: "nextBlock",
                           },
+                        },
+                      },
+
+                      "Annoucing starting in": {
+                        invoke: {
+                          src: "announceStartingIn",
+                          onDone: "Announcing countdown",
                         },
                       },
                     },
@@ -546,20 +579,27 @@ const timerMachine = createMachine(
           currentBlockIndex <= blocks.length
         )
       },
+      leadCountdownFinished: context =>
+        currentProgramFrom(context).leadSecondsRemaining <= 0,
+      isTimerBlockWithLeadIn: context => {
+        const { program, currentBlock } = currentProgramFrom(context)
+        return (
+          !!program &&
+          currentBlock.type === "timer" &&
+          currentBlock.leadSeconds > 0
+        )
+      },
       isTimerBlock: context => {
-        const { program, blocks, currentBlockIndex } =
-          currentProgramFrom(context)
-        return !!program && blocks[currentBlockIndex].type === "timer"
+        const { program, currentBlock } = currentProgramFrom(context)
+        return !!program && currentBlock.type === "timer"
       },
       isPauseBlock: context => {
-        const { program, blocks, currentBlockIndex } =
-          currentProgramFrom(context)
-        return !!program && blocks[currentBlockIndex].type === "pause"
+        const { program, currentBlock } = currentProgramFrom(context)
+        return !!program && currentBlock.type === "pause"
       },
       isMessageBlock: context => {
-        const { program, blocks, currentBlockIndex } =
-          currentProgramFrom(context)
-        return !!program && blocks[currentBlockIndex].type === "message"
+        const { program, currentBlock } = currentProgramFrom(context)
+        return !!program && currentBlock.type === "message"
       },
       previousBlockAvailable: context => {
         const { program, blocks, currentBlockIndex } =
@@ -582,6 +622,10 @@ const timerMachine = createMachine(
       decrementTimer: assign({
         secondsRemaining: ({ secondsRemaining }) => secondsRemaining - 1,
       }),
+      decrementLeadTimer: assign({
+        leadSecondsRemaining: ({ leadSecondsRemaining }) =>
+          leadSecondsRemaining - 1,
+      }),
       beep: ({ settings, secondsRemaining }) => {
         if (!settings.soundEnabled) return
         if (secondsRemaining === 3) playTone(440, 0.3)
@@ -589,8 +633,17 @@ const timerMachine = createMachine(
         if (secondsRemaining === 1) playTone(440, 0.3)
         if (secondsRemaining === 0) playTone(880, 0.8)
       },
+      announceCountdown: context => {
+        const speak = speakerFrom(context)
+        speak(`${context.leadSecondsRemaining}`)
+      },
       nextBlock: assign({
         currentBlockIndex: ({ currentBlockIndex }) => currentBlockIndex + 1,
+        leadSecondsRemaining: context => {
+          const { blocks, currentBlockIndex } = currentProgramFrom(context)
+          const block = blocks[currentBlockIndex + 1]
+          return block?.type === "timer" ? block.leadSeconds : 0
+        },
         secondsRemaining: context => {
           const { blocks, currentBlockIndex } = currentProgramFrom(context)
           const block = blocks[currentBlockIndex + 1]
@@ -599,6 +652,11 @@ const timerMachine = createMachine(
       }),
       previousBlock: assign({
         currentBlockIndex: ({ currentBlockIndex }) => currentBlockIndex - 1,
+        leadSecondsRemaining: context => {
+          const { blocks, currentBlockIndex } = currentProgramFrom(context)
+          const block = blocks[currentBlockIndex - 1]
+          return block?.type === "timer" ? block.leadSeconds : 0
+        },
         secondsRemaining: context => {
           const { blocks, currentBlockIndex } = currentProgramFrom(context)
           const block = blocks[currentBlockIndex - 1]
@@ -606,8 +664,12 @@ const timerMachine = createMachine(
         },
       }),
       resetTimer: assign({
-        leadSecondsRemaining: 3,
         currentBlockIndex: 0,
+        leadSecondsRemaining: context => {
+          const { blocks } = currentProgramFrom(context)
+          const block = blocks[0]
+          return block?.type === "timer" ? block.leadSeconds : 0
+        },
         secondsRemaining: context => {
           const { blocks } = currentProgramFrom(context)
           const block = blocks[0]
@@ -708,7 +770,8 @@ const timerMachine = createMachine(
 
       // Settings actions
       setAllPrograms: assign({
-        allPrograms: (_, { allPrograms }: SetAllProgramsEvent) => allPrograms,
+        allPrograms: (_, { allPrograms }: SetAllProgramsEvent) =>
+          AllProgramsSchema.parse(allPrograms),
       }),
       setAllSettings: assign({
         settings: (_, event: AllSettingsLoadedEvent) => event.data,
@@ -725,7 +788,7 @@ const timerMachine = createMachine(
       // Data
       loadData: () =>
         localforage.getItem("allPrograms").then(data => {
-          if (data) return data
+          if (data) return AllProgramsSchema.parse(data)
           else throw "No data found"
         }),
       saveDefaultData: () => {
@@ -757,9 +820,8 @@ const timerMachine = createMachine(
         return () => clearInterval(interval)
       },
       announceBlock: context => () => {
-        const { blocks, currentBlockIndex } = currentProgramFrom(context)
+        const { currentBlock: block } = currentProgramFrom(context)
         const speak = speakerFrom(context)
-        const block = blocks[currentBlockIndex]
         if (block?.type === "timer")
           return speak(`${block.name} for ${block.seconds} seconds`)
         else if (block?.type === "pause" && block?.reps && block.reps > 0)
@@ -767,20 +829,14 @@ const timerMachine = createMachine(
         else if (block?.type === "pause") return speak(block.name)
         else return Promise.resolve()
       },
-      announceCountdown: context => send => {
+      announceStartingIn: context => () => {
         const speak = speakerFrom(context)
-        speak("Starting in")
-        const interval = setInterval(() => {
-          if (context.leadSecondsRemaining === 0) send("FINISH_LEAD_IN")
-          else speak(`${context.leadSecondsRemaining--}`)
-        }, 1000)
-        return () => clearInterval(interval)
+        return speak("Starting in")
       },
       announceMessage: context => () => {
-        const { blocks, currentBlockIndex } = currentProgramFrom(context)
+        const { currentBlock } = currentProgramFrom(context)
         const speak = speakerFrom(context)
-        const block = blocks[currentBlockIndex]
-        if (block?.type === "message") return speak(block.message)
+        if (currentBlock?.type === "message") return speak(currentBlock.message)
         else return Promise.resolve()
       },
     },

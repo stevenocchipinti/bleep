@@ -18,6 +18,7 @@ export const TimerBlockSchema = z.object({
   ...commonBlockProperties,
   type: z.literal("timer"),
   seconds: z.number().positive().min(1),
+  leadSeconds: z.number().nonnegative().default(3),
 })
 
 export const PauseBlockSchema = z.object({

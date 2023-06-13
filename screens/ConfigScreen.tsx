@@ -409,6 +409,22 @@ const ConfigScreen = ({
                   })
               }
 
+              const onLeadSecondsChange = (newLeadSeconds: number) => {
+                if (
+                  block.type === "timer" &&
+                  newLeadSeconds !== block.leadSeconds
+                )
+                  send({
+                    type: "UPDATE_BLOCK",
+                    index,
+                    block: {
+                      ...block,
+                      type: "timer",
+                      leadSeconds: newLeadSeconds,
+                    },
+                  })
+              }
+
               const onSecondsChange = (newSeconds: number) => {
                 if (block.type === "timer" && newSeconds !== block.seconds)
                   send({
@@ -512,6 +528,21 @@ const ConfigScreen = ({
                           />
                           <FormErrorMessage>
                             {errors?.name?.join(" and ")}
+                          </FormErrorMessage>
+                        </FormControl>
+                        <FormControl
+                          isDisabled={block.disabled}
+                          isInvalid={!!errors?.seconds}
+                        >
+                          <FormLabel>Lead time</FormLabel>
+                          <DurationInput
+                            totalSeconds={
+                              block.type === "timer" ? block.leadSeconds : 0
+                            }
+                            onChange={onLeadSecondsChange}
+                          />
+                          <FormErrorMessage>
+                            {errors?.leadSeconds?.join(" and ")}
                           </FormErrorMessage>
                         </FormControl>
                         <FormControl
