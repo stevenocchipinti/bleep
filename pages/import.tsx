@@ -35,7 +35,7 @@ const Import = () => {
           )
 
           localforage.setItem("allPrograms", newPrograms).then(() => {
-            window.location.replace(`/?new=${newProgram.id}`)
+            window.location.replace("/")
           })
         })
       } catch {
