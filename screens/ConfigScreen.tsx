@@ -53,6 +53,7 @@ import {
 import { DragEndEvent } from "@dnd-kit/core"
 import lzString from "lz-string"
 import QRCode from "react-qr-code"
+import { useDebouncedCallback } from "use-debounce"
 
 import DndContext from "@/components/DndContext"
 
@@ -127,6 +128,10 @@ const ConfigScreen = ({
         ].join(""),
       })
   }, [isValid, program])
+
+  const debouncedSend = useDebouncedCallback(message => {
+    send(message)
+  }, 100)
 
   if (program === null) return null
 
@@ -255,7 +260,7 @@ const ConfigScreen = ({
               onClick={goBack}
               fontSize="xl"
             />
-            <Editable value={program.name} flex={1}>
+            <Editable defaultValue={program.name} flex={1}>
               <EditablePreview
                 fontSize="3xl"
                 fontWeight="thin"
@@ -273,7 +278,10 @@ const ConfigScreen = ({
                 textAlign="center"
                 required
                 onChange={e =>
-                  send({ type: "RENAME_PROGRAM", name: e.target.value })
+                  debouncedSend({
+                    type: "RENAME_PROGRAM",
+                    name: e.target.value,
+                  })
                 }
               />
             </Editable>
@@ -327,7 +335,7 @@ const ConfigScreen = ({
           </FooterButton>
         }
       >
-        <Editable value={program.description} display="flex" flex={1}>
+        <Editable defaultValue={program.description} display="flex" flex={1}>
           <EditablePreview
             display="flex"
             alignItems="center"
@@ -350,7 +358,7 @@ const ConfigScreen = ({
             pb={8}
             required
             onChange={e =>
-              send({
+              debouncedSend({
                 type: "UPDATE_PROGRAM_DESCRIPTION",
                 description: e.target.value,
               })
@@ -402,7 +410,7 @@ const ConfigScreen = ({
               const onNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const name = e.target.value
                 if (block.name !== name)
-                  send({
+                  debouncedSend({
                     type: "UPDATE_BLOCK",
                     index,
                     block: { ...block, name },
@@ -441,7 +449,7 @@ const ConfigScreen = ({
               const onRepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const reps = parseInt(e.target.value) || undefined
                 if (block.type === "pause" && reps !== block.reps)
-                  send({
+                  debouncedSend({
                     type: "UPDATE_BLOCK",
                     index,
                     block: {
@@ -457,7 +465,7 @@ const ConfigScreen = ({
               ) => {
                 const message = e.target.value
                 if (block.type === "message" && message !== block.message)
-                  send({
+                  debouncedSend({
                     type: "UPDATE_BLOCK",
                     index,
                     block: {
@@ -521,7 +529,7 @@ const ConfigScreen = ({
                         >
                           <FormLabel>Name</FormLabel>
                           <Input
-                            value={block.name}
+                            defaultValue={block.name}
                             placeholder="Name"
                             variant="filled"
                             onChange={onNameChange}
@@ -569,7 +577,7 @@ const ConfigScreen = ({
                         >
                           <FormLabel>Name</FormLabel>
                           <Input
-                            value={block.name}
+                            defaultValue={block.name}
                             placeholder="Name"
                             variant="filled"
                             onChange={onNameChange}
@@ -586,7 +594,7 @@ const ConfigScreen = ({
                             Reps
                           </FormLabel>
                           <Input
-                            value={
+                            defaultValue={
                               block.type === "pause" ? block.reps || "" : ""
                             }
                             type="number"
@@ -607,7 +615,7 @@ const ConfigScreen = ({
                         >
                           <FormLabel>Name</FormLabel>
                           <Input
-                            value={block.name}
+                            defaultValue={block.name}
                             placeholder="Name"
                             variant="filled"
                             onChange={onNameChange}
@@ -622,7 +630,7 @@ const ConfigScreen = ({
                         >
                           <FormLabel>Message</FormLabel>
                           <Textarea
-                            value={
+                            defaultValue={
                               block.type === "message" ? block.message : ""
                             }
                             variant="filled"
