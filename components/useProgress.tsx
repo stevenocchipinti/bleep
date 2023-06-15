@@ -18,21 +18,21 @@ export const useProgress = () => {
     if (currentBlock.type !== "timer") return 0
     const currentBlockSeconds = currentBlock.seconds
     if (blocks.length === 0) return 0
-    return ((secondsRemaining + n) / currentBlockSeconds) * 100
+    return (secondsRemaining + n) / currentBlockSeconds
   }
 
   const from = currentBlockPercent(0)
   const to = is("counting down") ? currentBlockPercent(-1) : from
 
   const [isAnimating, setIsAnimating] = useState(false)
-  const [targetPercentage, setTargetPercentage] = useState(from)
+  const [targetPercentageLeft, setTargetPercentageLeft] = useState(from)
 
   useEffect(() => {
     setIsAnimating(false)
-    setTargetPercentage(from)
+    setTargetPercentageLeft(from)
     setTimeout(() => {
       setIsAnimating(true)
-      setTargetPercentage(to)
+      setTargetPercentageLeft(to)
     }, 10)
   }, [from, to])
 
@@ -43,7 +43,7 @@ export const useProgress = () => {
 
   return {
     isAnimating,
-    targetPercentage,
+    targetPercentageLeft,
     text,
   }
 }

@@ -10,7 +10,7 @@ import { useProgress } from "./useProgress"
 const CircularProgressBar = () => {
   const { state } = useTimerActor()
   const { program } = currentProgramFrom(state.context)
-  const { isAnimating, targetPercentage, text } = useProgress()
+  const { isAnimating, targetPercentageLeft, text } = useProgress()
 
   const theme = useTheme()
 
@@ -28,7 +28,7 @@ const CircularProgressBar = () => {
       </svg>
 
       <CircularProgressbar
-        value={targetPercentage}
+        value={targetPercentageLeft * 100}
         text={text}
         circleRatio={0.75}
         styles={buildStyles({

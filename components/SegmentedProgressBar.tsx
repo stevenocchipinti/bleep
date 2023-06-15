@@ -2,6 +2,7 @@ import { Box, Flex } from "@chakra-ui/react"
 import { TimerBlock } from "lib/types"
 import { useTimerActor } from "lib/useTimerMachine"
 import { currentProgramFrom } from "lib/timerMachine"
+import { useProgress } from "./useProgress"
 
 interface Segment {
   width: number
@@ -9,18 +10,15 @@ interface Segment {
 }
 
 const SegmentedProgressBar = () => {
-  // BUG: Seems to start too early for the first step and too late for the last step
+  const { state } = useTimerActor()
+  const { program, currentBlockIndex } = currentProgramFrom(state.context)
+  const { isAnimating, targetPercentageLeft } = useProgress()
 
-  const { is, state } = useTimerActor()
-  const { program, currentBlockIndex, secondsRemaining } = currentProgramFrom(
-    state.context
-  )
   if (!program) return null
 
   const { blocks } = program
-  const animate = is("running")
 
-  const timerBlocks: TimerBlock[] = blocks.filter(
+  const timerBlocks = blocks.filter(
     block => block.type === "timer"
   ) as TimerBlock[]
 
@@ -28,15 +26,19 @@ const SegmentedProgressBar = () => {
     timerBlocks.reduce((acc, block) => acc + block.seconds, 0) /
     timerBlocks.length
 
-  const progressBarData: Segment[] = blocks.map((block, index) => ({
-    width: block.type === "timer" ? block.seconds || 0 : averageBlockSeconds,
-    percentDone:
-      currentBlockIndex === index
-        ? !is("running")
-          ? 0
-          : 1 - secondsRemaining / (block.type === "timer" ? block.seconds : 0)
-        : currentBlockIndex > index ? 1 : 0, // prettier-ignore
-  }))
+  const progressBarData: Segment[] = blocks.map((block, index) => {
+    let percentDone = 0
+    if (currentBlockIndex === index) {
+      percentDone = block.type === "timer" ? 1 - targetPercentageLeft : 0
+    } else {
+      percentDone = currentBlockIndex > index ? 1 : 0
+    }
+
+    return {
+      width: block.type === "timer" ? block.seconds || 0 : averageBlockSeconds,
+      percentDone,
+    }
+  })
 
   return (
     <Flex justifyContent="space-between" bg="gray.700" gap={1}>
@@ -53,7 +55,7 @@ const SegmentedProgressBar = () => {
             display: "block",
             bg: "teal.300",
             width: "full",
-            transition: animate ? "1s linear" : undefined,
+            transition: isAnimating ? "1s linear" : undefined,
             transform: `scaleX(${block.percentDone})`,
             transformOrigin: "left",
             height: "100%",
