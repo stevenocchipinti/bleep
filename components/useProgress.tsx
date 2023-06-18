@@ -37,9 +37,9 @@ export const useProgress = () => {
   }, [from, to])
 
   const pad = (s: number) => String(s).padStart(2, "0")
-  const minutes = pad(Math.floor(secondsRemaining / 60))
-  const seconds = pad(secondsRemaining % 60)
-  const text = `${minutes}:${seconds}`
+  const minutes = Math.floor(secondsRemaining / 60)
+  const seconds = secondsRemaining % 60
+  const text = minutes > 0 ? `${pad(minutes)}:${pad(seconds)}` : pad(seconds)
 
   return {
     isAnimating,
