@@ -16,6 +16,7 @@ import {
   MenuGroup,
   MenuItem,
   MenuDivider,
+  Grid,
   Flex,
   Text,
   Button,
@@ -538,36 +539,38 @@ const ConfigScreen = ({
                             {errors?.name?.join(" and ")}
                           </FormErrorMessage>
                         </FormControl>
-                        <FormControl
-                          isDisabled={block.disabled}
-                          isInvalid={!!errors?.seconds}
-                        >
-                          <FormLabel>Lead time</FormLabel>
-                          <DurationInput
-                            totalSeconds={
-                              block.type === "timer" ? block.leadSeconds : 0
-                            }
-                            onChange={onLeadSecondsChange}
-                          />
-                          <FormErrorMessage>
-                            {errors?.leadSeconds?.join(" and ")}
-                          </FormErrorMessage>
-                        </FormControl>
-                        <FormControl
-                          isDisabled={block.disabled}
-                          isInvalid={!!errors?.seconds}
-                        >
-                          <FormLabel>Duration</FormLabel>
-                          <DurationInput
-                            totalSeconds={
-                              block.type === "timer" ? block.seconds : 0
-                            }
-                            onChange={onSecondsChange}
-                          />
-                          <FormErrorMessage>
-                            {errors?.seconds?.join(" and ")}
-                          </FormErrorMessage>
-                        </FormControl>
+                        <Grid templateColumns="1fr 1fr" gap={6}>
+                          <FormControl
+                            isDisabled={block.disabled}
+                            isInvalid={!!errors?.seconds}
+                          >
+                            <FormLabel>Lead time</FormLabel>
+                            <DurationInput
+                              totalSeconds={
+                                block.type === "timer" ? block.leadSeconds : 0
+                              }
+                              onChange={onLeadSecondsChange}
+                            />
+                            <FormErrorMessage>
+                              {errors?.leadSeconds?.join(" and ")}
+                            </FormErrorMessage>
+                          </FormControl>
+                          <FormControl
+                            isDisabled={block.disabled}
+                            isInvalid={!!errors?.seconds}
+                          >
+                            <FormLabel>Duration</FormLabel>
+                            <DurationInput
+                              totalSeconds={
+                                block.type === "timer" ? block.seconds : 0
+                              }
+                              onChange={onSecondsChange}
+                            />
+                            <FormErrorMessage>
+                              {errors?.seconds?.join(" and ")}
+                            </FormErrorMessage>
+                          </FormControl>
+                        </Grid>
                       </FlexTabPanel>
 
                       <FlexTabPanel>

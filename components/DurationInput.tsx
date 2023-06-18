@@ -27,12 +27,11 @@ export const DurationInput = ({
   }
 
   return (
-    <Flex gap={2} alignItems="center">
+    <Flex alignItems="center" bg="whiteAlpha.50" borderRadius="md">
       <NumberInput
         min={0}
         placeholder="Minutes"
-        variant="filled"
-        textAlign="right"
+        variant="unstyled"
         onChange={valueString => {
           const m = parseInt(valueString) || 0
           setMinutes(m)
@@ -40,16 +39,14 @@ export const DurationInput = ({
         }}
         value={minutesFrom(totalSeconds)}
       >
-        <NumberInputField />
+        <NumberInputField py={2} pl={4} pr={0} textAlign="right" />
       </NumberInput>
-      <Text fontSize="2xl" as="span">
-        :
-      </Text>
+      <Text as="span">:</Text>
       <NumberInput
         max={59}
         min={0}
         placeholder="Seconds"
-        variant="filled"
+        variant="unstyled"
         onChange={valueString => {
           const s = parseInt(valueString) || 0
           setSeconds(s)
@@ -57,7 +54,7 @@ export const DurationInput = ({
         }}
         value={secondsFrom(totalSeconds)}
       >
-        <NumberInputField />
+        <NumberInputField py={2} pl={0} pr={4} />
       </NumberInput>
     </Flex>
   )
