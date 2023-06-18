@@ -16,6 +16,9 @@ import {
   ExclamationIcon,
 } from "components/icons"
 import { currentProgramFrom } from "lib/timerMachine"
+import { motion } from "framer-motion"
+
+const Body = motion(Flex)
 
 interface TimerScreenProps {
   goBack: () => void
@@ -121,7 +124,11 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
         </>
       }
     >
-      <Flex
+      <Body
+        key={currentBlock?.id}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
         direction="column"
         justifyContent="space-evenly"
         flex={1}
@@ -198,7 +205,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
         ) : (
           <ExclamationIcon stroke="red.200" />
         )}
-      </Flex>
+      </Body>
     </SwipeableChild>
   )
 }
