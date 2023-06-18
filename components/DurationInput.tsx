@@ -1,5 +1,19 @@
 import React, { useState } from "react"
-import { Flex, Text, NumberInput, NumberInputField } from "@chakra-ui/react"
+import {
+  Flex,
+  Text,
+  NumberInput,
+  NumberInputField,
+  Grid,
+  Box,
+} from "@chakra-ui/react"
+
+// BUG: This component has an input delay and cannot be typed into quickly!
+// The input is not currently debounced but probably needs to be.
+// This is a controlled component and the state updates are delayed by the
+// validation, writing to local storage and/or transitioning the state machine.
+// See commit f7728ee for how this was fixed for the other components, this one
+// was just a bit trickier.
 
 export interface DurationInputProps {
   totalSeconds: number
@@ -27,8 +41,26 @@ export const DurationInput = ({
   }
 
   return (
-    <Flex alignItems="center" bg="whiteAlpha.50" borderRadius="md">
+    <Grid
+      templateColumns="1fr 1fr"
+      alignItems="center"
+      bg="whiteAlpha.50"
+      border="2px solid"
+      borderColor="transparent"
+      borderRadius="md"
+      transition="var(--chakra-transition-duration-normal)"
+      _focusWithin={{
+        bg: "transparent",
+        border: "2px solid",
+        borderColor: "blue.300",
+      }}
+    >
       <NumberInput
+        as="label"
+        display="flex"
+        alignItems="center"
+        justifyContent="space-around"
+        gap={1}
         min={0}
         placeholder="Minutes"
         variant="unstyled"
@@ -39,10 +71,23 @@ export const DurationInput = ({
         }}
         value={minutesFrom(totalSeconds)}
       >
-        <NumberInputField py={2} pl={4} pr={0} textAlign="right" />
+        <NumberInputField
+          height="40px"
+          px={0}
+          textAlign="right"
+          bg="transparent"
+          flex={1}
+        />
+        <Box aria-label="minutes" color="gray.400" flex={1} minWidth="1rem">
+          m
+        </Box>
       </NumberInput>
-      <Text as="span">:</Text>
       <NumberInput
+        as="label"
+        display="flex"
+        alignItems="center"
+        justifyContent="space-around"
+        gap={1}
         max={59}
         min={0}
         placeholder="Seconds"
@@ -54,8 +99,17 @@ export const DurationInput = ({
         }}
         value={secondsFrom(totalSeconds)}
       >
-        <NumberInputField py={2} pl={0} pr={4} />
+        <NumberInputField
+          height="40px"
+          px={0}
+          textAlign="right"
+          bg="transparent"
+          flex={1}
+        />
+        <Box aria-label="seconds" color="gray.400" flex={1} minWidth="1rem">
+          s
+        </Box>
       </NumberInput>
-    </Flex>
+    </Grid>
   )
 }
