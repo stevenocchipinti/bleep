@@ -1,3 +1,4 @@
+import { useState } from "react"
 import type { AppProps } from "next/app"
 import Head from "next/head"
 import {
@@ -5,12 +6,16 @@ import {
   StyleFunctionProps,
   extendTheme,
   theme as defaultTheme,
+  chakra,
 } from "@chakra-ui/react"
 
 import { TimerProvider } from "lib/useTimerMachine"
 
 import "@fontsource/dancing-script"
 import "@fontsource/noto-sans"
+import ConfettiExplosion from "react-confetti-explosion"
+
+const Confetti = chakra(ConfettiExplosion)
 
 const defaultButtonStyles = defaultTheme.components.Button
 
@@ -130,8 +135,16 @@ export const theme = extendTheme({
 })
 
 export default function App({ Component, pageProps }: AppProps) {
+  const [isExploding, setIsExploding] = useState(false)
+  const explode = () => {
+    if (!isExploding) {
+      setIsExploding(true)
+      setTimeout(() => setIsExploding(false), 3000)
+    }
+  }
+
   return (
-    <TimerProvider>
+    <TimerProvider celebration={explode}>
       <ChakraProvider theme={theme}>
         <Head>
           <title>Timer</title>
@@ -181,6 +194,16 @@ export default function App({ Component, pageProps }: AppProps) {
           <meta name="msapplication-tap-highlight" content="no" />
           <meta name="theme-color" content="#1a202c" />
         </Head>
+        {isExploding && (
+          <Confetti
+            position="absolute"
+            left="50%"
+            top="30%"
+            particleCount={200}
+            particleSize={8}
+            duration={3000}
+          />
+        )}
         <Component {...pageProps} />
       </ChakraProvider>
     </TimerProvider>

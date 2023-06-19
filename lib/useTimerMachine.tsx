@@ -9,9 +9,10 @@ const TimerActorContext = createContext(
 
 interface TimerProviderProps {
   children: React.ReactNode
+  celebration: () => void
 }
-const TimerProvider = ({ children }: TimerProviderProps) => {
-  const timerActor = useInterpret(timerMachine)
+const TimerProvider = ({ children, celebration }: TimerProviderProps) => {
+  const timerActor = useInterpret(timerMachine, { actions: { celebration } })
 
   return (
     <TimerActorContext.Provider value={timerActor}>
