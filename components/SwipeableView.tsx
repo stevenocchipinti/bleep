@@ -1,4 +1,6 @@
 import {
+  Box,
+  BoxProps,
   Button,
   ButtonProps,
   chakra,
@@ -11,10 +13,19 @@ import { ReactNode } from "react"
 import SwipeableViews from "react-swipeable-views"
 import SegmentedProgressBar from "./SegmentedProgressBar"
 import { MicrophoneIcon } from "./icons"
-import { motion } from "framer-motion"
 import { useTimerActor } from "lib/useTimerMachine"
 
-const MotionFlex = motion(Flex)
+const Quote = (props: BoxProps) => (
+  <Box
+    as="span"
+    m={1}
+    px={1}
+    boxShadow="0 3px 0 0 var(--chakra-colors-yellow-600)"
+    borderRadius="md"
+    bg="yellow.400"
+    {...props}
+  />
+)
 
 const SwipableParent = chakra(SwipeableViews, {
   baseStyle: {
@@ -35,7 +46,7 @@ interface HeaderProps {
   listening?: boolean
 }
 const Header = ({ children, transparent = false }: HeaderProps) => {
-  const { state, send } = useTimerActor()
+  const { state } = useTimerActor()
   const isListening = state.matches({ "voice recognition": "listening" })
 
   return (
@@ -64,13 +75,12 @@ const Header = ({ children, transparent = false }: HeaderProps) => {
           alignItems="center"
           justifyContent="center"
           p={2}
-          color="black"
+          color="orange.900"
           bg="yellow.500"
-          onClick={() =>
-            isListening ? send("STOP_LISTENING") : send("START_LISTENING")
-          }
+          flexWrap="wrap"
         >
-          <MicrophoneIcon height="1rem" />️ Listening for continue or next
+          <MicrophoneIcon height="1rem" />️ Listening for{" "}
+          <Quote>continue</Quote> <Quote>next</Quote> <Quote>stop</Quote>
         </Flex>
       </Collapse>
     </div>

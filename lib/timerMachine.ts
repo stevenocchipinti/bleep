@@ -1,4 +1,4 @@
-import { createMachine, assign, send } from "xstate"
+import { createMachine, assign, raise } from "xstate"
 import { assign as immerAssign } from "@xstate/immer"
 import localforage from "localforage"
 
@@ -718,9 +718,8 @@ const timerMachine = createMachine(
       stopTalking: () => {
         speechSynthesis.cancel()
       },
-      // TODO: Replace these deprecated "send" calls with "sendTo"... I think
-      startListening: send("START_LISTENING"),
-      stopListening: send("STOP_LISTENING"),
+      startListening: raise("START_LISTENING"),
+      stopListening: raise("STOP_LISTENING"),
       celebration: () => {
         // Do nothing, can be provided by the consuming code
       },
@@ -897,13 +896,13 @@ const timerMachine = createMachine(
         const recognition = new SpeechRecognition()
         recognition.continuous = true
 
-        const notifyAndSend = (
-          message: "START" | "PAUSE" | "RESET" | "CONTINUE"
-        ) => {
-          // TODO: Replace this with a UI notification?
-          console.log("🎙️ Recognised: ", message)
-          send(message)
-        }
+        // Speech recognition will stop automatically:
+        //  - After 5 seconds if no speech is detected
+        //  - After 60 seconds of listening either way
+        //
+        // While this flag is false, anytime the speech recognition stops, it
+        // will automatically be started again by the code below.
+        let reallyStop = false
 
         recognition.addEventListener("result", (e: any) => {
           const results: any[] = Array.from(e.results)
@@ -911,20 +910,20 @@ const timerMachine = createMachine(
           const sentence = result[0].transcript
           console.log(`🗣️ ${sentence}`)
 
-          // if (sentence.includes("pause")) notifyAndSend("PAUSE")
-          // if (sentence.includes("stop")) notifyAndSend("RESET")
-          // if (sentence.includes("start")) notifyAndSend("START")
-          if (sentence.includes("continue")) notifyAndSend("CONTINUE")
-          if (sentence.includes("next")) notifyAndSend("CONTINUE")
+          if (sentence.includes("continue")) send("CONTINUE")
+          if (sentence.includes("next")) send("CONTINUE")
+          if (sentence.includes("stop")) send("RESET")
         })
 
-        recognition.addEventListener("end", () => send("STOP_LISTENING"))
+        recognition.addEventListener("end", () => {
+          if (reallyStop) send("STOP_LISTENING")
+          else recognition.start()
+        })
 
         recognition.start()
-        console.log("machine listening")
         return () => {
+          reallyStop = true
           recognition.stop()
-          console.log("stopped listening")
         }
       },
     },
