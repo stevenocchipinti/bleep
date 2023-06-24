@@ -41,21 +41,6 @@ const speak = (text: string, voiceURI?: string) =>
     speechSynthesis.speak(utterance)
   })
 
-// NOTE: Pretty sure this can't be cancelled
-const speakCountdown = (seconds: number) =>
-  new Promise<void>(async (resolve, reject) => {
-    let secondsRemaining = seconds
-    speak("Starting in").catch(reject)
-    const interval = setInterval(() => {
-      if (secondsRemaining === 0) {
-        clearInterval(interval)
-        resolve()
-      } else {
-        speak(`${secondsRemaining--}`).catch(reject)
-      }
-    }, 1000)
-  })
-
 const useVoices = () => {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
 
@@ -69,4 +54,4 @@ const useVoices = () => {
   return voices
 }
 
-export { playTone, speak, speakCountdown, useVoices }
+export { playTone, speak, useVoices }
