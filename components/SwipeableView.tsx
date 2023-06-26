@@ -129,19 +129,25 @@ const Footer = ({
   return (
     <Flex direction="column" position="sticky" bottom={0} left={0} right={0}>
       {showProgress && <SegmentedProgressBar />}
-      <Grid
-        templateColumns="1fr 1fr 1fr 1fr"
-        justifyContent="center"
-        p={5}
-        gap={4}
+      <Box
         bg="blackAlpha.300"
         backdropFilter="blur(5px)"
         shadow="0 4px 30px rgba(0, 0, 0, 0.1)"
         borderTop={showProgress ? "none" : "1px solid rgba(255, 255, 255, 0.1)"}
-        sx={{ WebkitTapHighlightColor: "transparent" }}
       >
-        {children}
-      </Grid>
+        <Grid
+          templateColumns="1fr 1fr 1fr 1fr"
+          justifyContent="center"
+          p={5}
+          gap={4}
+          w="full"
+          maxW="60ch"
+          mx="auto"
+          sx={{ WebkitTapHighlightColor: "transparent" }}
+        >
+          {children}
+        </Grid>
+      </Box>
     </Flex>
   )
 }
@@ -186,7 +192,17 @@ const SwipeableChild = ({
   >
     {header && <Header>{header}</Header>}
     {transparentHeader && <Header transparent>{transparentHeader}</Header>}
-    {children}
+    <Flex
+      flex={1}
+      direction="column"
+      justifyContent="space-between"
+      gap={4}
+      w="full"
+      maxW="60ch"
+      mx="auto"
+    >
+      {children}
+    </Flex>
     {footer && <Footer showProgress={showProgress}>{footer}</Footer>}
   </Flex>
 )
