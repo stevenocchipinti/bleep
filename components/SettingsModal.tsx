@@ -27,6 +27,11 @@ import {
   Alert,
   AlertIcon,
   AlertTitle,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
 } from "@chakra-ui/react"
 import { useVoices } from "lib/audio"
 import { AllPrograms, AllProgramsSchema } from "lib/types"
@@ -110,70 +115,104 @@ const SettingsModal = ({ isOpen, onClose, ...props }: SettingsModalProps) => {
         <ModalHeader>Settings</ModalHeader>
         <ModalCloseButton />
         <ModalBody pb={6}>
-          <VStack spacing={8}>
-            <FormControl as={HStack} justifyContent="space-between">
-              <FormLabel htmlFor="sound">Sound</FormLabel>
-              <Switch
-                size="lg"
-                id="sound"
-                isChecked={settings.soundEnabled}
-                onChange={e =>
-                  send({
-                    type: "SET_SOUND_ENABLED",
-                    soundEnabled: e.target.checked,
-                  })
-                }
-              />
-            </FormControl>
+          <Tabs isFitted>
+            <TabList>
+              <Tab>Sound</Tab>
+              <Tab>Recognition</Tab>
+              <Tab>Data</Tab>
+            </TabList>
 
-            <FormControl>
-              <FormLabel>Voice</FormLabel>
-              <Select
-                placeholder="Select voice"
-                value={settings.voiceURI || undefined}
-                onChange={e =>
-                  send({ type: "SET_VOICE", voiceURI: e.target.value })
-                }
-              >
-                {voices.map((voice: SpeechSynthesisVoice) => (
-                  <option key={voice.voiceURI} value={voice.voiceURI}>
-                    {voice.name} - {voice.lang} {voice.localService || "*"}
-                  </option>
-                ))}
-              </Select>
-            </FormControl>
+            <TabPanels>
+              <TabPanel>
+                <VStack mt={4} spacing={8}>
+                  <FormControl as={HStack} justifyContent="space-between">
+                    <FormLabel htmlFor="sound">Sound</FormLabel>
+                    <Switch
+                      size="lg"
+                      id="sound"
+                      isChecked={settings.soundEnabled}
+                      onChange={e =>
+                        send({
+                          type: "SET_SOUND_ENABLED",
+                          enabled: e.target.checked,
+                        })
+                      }
+                    />
+                  </FormControl>
 
-            <FormControl isInvalid={!isValid}>
-              <FormLabel>Data</FormLabel>
-              <Textarea
-                value={data}
-                onChange={e => setData(e.target.value)}
-                fontFamily="monospace"
-                fontSize="sm"
-              />
-              <FormErrorMessage>Invalid data</FormErrorMessage>
-              <Button
-                mt={4}
-                w="full"
-                isDisabled={!isValid}
-                flex={1}
-                onClick={() => {
-                  send({ type: "SET_ALL_PROGRAMS", allPrograms })
-                }}
-              >
-                Import data
-              </Button>
-            </FormControl>
+                  <FormControl>
+                    <FormLabel>Voice</FormLabel>
+                    <Select
+                      placeholder="Select voice"
+                      value={settings.voiceURI || undefined}
+                      onChange={e =>
+                        send({ type: "SET_VOICE", voiceURI: e.target.value })
+                      }
+                    >
+                      {voices.map((voice: SpeechSynthesisVoice) => (
+                        <option key={voice.voiceURI} value={voice.voiceURI}>
+                          {voice.name} - {voice.lang}{" "}
+                          {voice.localService || "*"}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </VStack>
+              </TabPanel>
+              <TabPanel>
+                <VStack mt={4} spacing={8}>
+                  <FormControl as={HStack} justifyContent="space-between">
+                    <FormLabel htmlFor="sound">Voice recognition</FormLabel>
+                    <Switch
+                      size="lg"
+                      id="sound"
+                      isChecked={!!settings.voiceRecognitionEnabled}
+                      onChange={e =>
+                        send({
+                          type: "SET_VOICE_RECOGNITION_ENABLED",
+                          enabled: e.target.checked,
+                        })
+                      }
+                    />
+                  </FormControl>
+                </VStack>
+              </TabPanel>
+              <TabPanel>
+                <VStack mt={4} spacing={8}>
+                  <FormControl isInvalid={!isValid}>
+                    <FormLabel>Data</FormLabel>
+                    <Textarea
+                      value={data}
+                      onChange={e => setData(e.target.value)}
+                      fontFamily="monospace"
+                      fontSize="sm"
+                    />
+                    <FormErrorMessage>Invalid data</FormErrorMessage>
+                    <Button
+                      mt={4}
+                      w="full"
+                      isDisabled={!isValid}
+                      flex={1}
+                      onClick={() => {
+                        send({ type: "SET_ALL_PROGRAMS", allPrograms })
+                      }}
+                    >
+                      Import data
+                    </Button>
+                  </FormControl>
 
-            <Button
-              colorScheme="red"
-              leftIcon={<DeleteIcon />}
-              w="full"
-              onClick={() => setConfirmDelete(true)}
-            >
-              Restore default data
-            </Button>
-          </VStack>
+                  <Button
+                    colorScheme="red"
+                    leftIcon={<DeleteIcon />}
+                    w="full"
+                    onClick={() => setConfirmDelete(true)}
+                  >
+                    Restore default data
+                  </Button>
+                </VStack>
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
         </ModalBody>
 
         <ModalFooter>

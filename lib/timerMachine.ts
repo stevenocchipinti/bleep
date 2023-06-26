@@ -68,13 +68,19 @@ type PreviousEvent = { type: "PREVIOUS" }
 // Settings events
 type AllSettingsLoadedEvent = { type: "SETTINGS_LOADED"; data: Settings }
 type SetVoiceEvent = { type: "SET_VOICE"; voiceURI: string }
-type SetSoundEvent = { type: "SET_SOUND_ENABLED"; soundEnabled: boolean }
+type SetSoundEnabledEvent = { type: "SET_SOUND_ENABLED"; enabled: boolean }
+type SetVoiceRecognitionEnabledEvent = {
+  type: "SET_VOICE_RECOGNITION_ENABLED"
+  enabled: boolean
+}
 type SetAllProgramsEvent = { type: "SET_ALL_PROGRAMS"; allPrograms: Program[] }
 type ResetAllProgramsEvent = { type: "RESET_ALL_PROGRAMS" }
 
 // Voice recognition
 type StartListeningEvent = { type: "START_LISTENING" }
 type StopListeningEvent = { type: "STOP_LISTENING" }
+type DenyListeningEvent = { type: "DENY_LISTENING" }
+type AllowListeningEvent = { type: "ALLOW_LISTENING" }
 
 type Events =
   // Program events
@@ -107,10 +113,13 @@ type Events =
   | SetAllProgramsEvent
   | ResetAllProgramsEvent
   | SetVoiceEvent
-  | SetSoundEvent
+  | SetSoundEnabledEvent
+  | SetVoiceRecognitionEnabledEvent
   // Voice recognition
   | StartListeningEvent
   | StopListeningEvent
+  | DenyListeningEvent
+  | AllowListeningEvent
 
 type Context = {
   allPrograms: Program[]
@@ -161,7 +170,7 @@ export const currentProgramFrom = (context: Context): CurrentProgram => {
 
 const timerMachine = createMachine(
   {
-    /** @xstate-layout N4IgpgJg5mDOIC5QEMAOqB0AXAlgWzACcMAbAe2QhwDsoBiCM6sDGgNzIGsW1NcDi5SjSgJ2ZAMbJcTANoAGALoLFiUKjKwcM6mpAAPRAHYATBiNGALAE4TANgCM86wFYAHC5NGANCACeiF6WGNYOYSbWliY2DnYeAL7xvrzY+ESkFFS0dESEZMSoJNIAZvl4GCn86UJZouJSOioqehpaOnqGCADMThjylnbWXS5dll1uJvJuvgEIDi7yIdbLy-1GtiZeicnoqQIZlJB0ALIA8gBqAKIA+gAKAEqnAOL3AILHzUggrdo4TB2BLqRPqWKy2OIOIxueYzQKWFwhaFQzxuNx2KxGOzbECVNKCTJHADKlwAMpcAMIAFTujxe70+6k0v3+X06YTsCKcXW5HgmnhcdlhCBMkIw8OsmNMdkGlnmbmxuP2NSOADlLgB1GnPN4fJQtJntVmBJyLSJGJxudZDKxC6II6xIjwmVHoyzypI43ZVfGHCAYVB5KCEZB4AAEsDAJDAEiwRwAIpdiWSqVq6brVF8fobQJ0ulCQptZUMous4pYhTYjBhNi53A4vF1pZEugqvXiDhBIP7A8GwxGozGu7AsGR0ETKa97pSGd8DX9dEa5s5FrEOU4HG4BvILEKwpa+iYXPN4dFBhZW3x28q-QGyEGQ+HI9HY37h6PUEcHpdzgBJU4AVUJGcs3nAFukbDB3DsN1zQ3S0bX8RBoQcDAJmGExRjscZnGsC89mqAkbx7B9+2fIcRzHCA6DVAANac9UzOcWRzRBBjcatoOhVEwlrQVEIQZDUIwzxMPGBw8O9Dsu1ve8+yfQdXwoj8-R-CAozoV44zja4ACESVOckAGlgKYhcWO6FxrD6M95C6CJD0bPjZnrcYxWiaERJFTwJKvQjuzvXtHwHF8MDfSiMFU9SEzJSkbj0gzjIYxk2lAxdMPMOJrCmaIsphfiHDGLoMEbeR6wcHogXkLCfKVPyZMC0iFNCpSu0isATguOL9KMkyUuYgxEHQjKwgcFZ0XrIwXF3bkERcLdJrcCV5AWIwaoI31-NkoKyMU99WrU9r7kuFV3huB5tXpJLZz6syBvAxYxjiSbnA5FwjCq3cRis2tljmyxloWZY1p9TsiICkj5JCsLlIig66H-W441eWLUx1a4E0Jcl7h-W5KT-FVeuZW7Oi8dj2QFVw7MmSEfHy6x0WKgUpmlAY4hMYGpLBrbGqhlqVLhuMEZJH9yWRs7aR1QnszuuzFkbewRPehZSt3SaioK0IN36Eajw569NoayHyL2-motJS4UfOtMpdS8zuSK2x61cCw7MtDxdw8Ky7HsCI2bszE9bq4i5OC43wra+HEbF3TusSjNkqJsDRgROzhglf6ok8fpd2guxzC8JwBktUFt0Djb6oh0PdvC2BkDYEQGCYFhxG4Co21q8vg+2proaHOuRDEagOAaecmiukD+s6TxglrdweVcNw8xMXcnZCUbUSqkVuW9svQYNyudowQgAFdqGoBvbleQDLhtyfEAK+sMDiIFAaw+QIlp5yLDzkYH8cVEMLlV3tJLuPMuwnzPg3I6xJ6Lx2uonRc4Q85ZUtPyB0-RLDlnyqCIqGEuhTFlDYRaLYPSKnWnvCuIdD4QPPtkL8v4AJAXHqZMCo1yoYHmM6KYaIsKbCckhUUThbBughD0LEpD27kJAeDKhTUaEN1orA-UN0wKbCGNWDcL937vUGEKJEHDnDuVEbEYBXNDZVyPqfWh9Bb7E3viacwbo5qlUwe-dE018zfy8KTU87odiXg7hQ0BRs-TyNoBgCQZBT64FoKGRgAB3agdA8Y9WYSoxczo4gHnNPCN0m4AaqwlGKNwtkH4lNlC4Ux+9ZEhTCVACJUTqAxKgHEsgiS6C2KTtlVCjg3rvzRFYLou5bJVgmBhZwR535vT8Z6AJUizEHzkVYkQGBXhn0aRIEQoYABG5AJCcEbswVgQ8uA8EkSDaR3MQmWMgeEtZ1ANlbN2ZITgg9h7SFHkoTpGSNx5zspgjCXgphTF3JsIq-1jxmnpvWKplDu61OWXc9Zp9NmxOefsw5zcTmtzIRchZNTwGIvqfcx5aK9mvPqB8uQXyHBwInnY4UkwzClQlOhSygNpr2GrFlUIaJuSYiiLC4JFi6mrORdQVFLT0UHMYEcluZy5l4uqfCwltziXislTs8lbzJBUuoE0EwdKWE-PUYVKE5qFijF3I9ay6IgXT1GkKmRKrQlErFQ8lFTzyWYuORwHF5zObKrAa6tV7rSVSu1ZSxoXyuhGvSeZTYtlipYTdJWPM+Cpr5Tmnnd6vLlhAjRIvJ1VyRVupJZ62JkTokJKSSkuOyiEEJpdJBKYDooh5O5Na2sT87CGNGPg4YJD-H4SVXC4NNzrFhorS0qtTSa0dLSY2u69g7IcLsnKEp79KyfWBKCN0ydlqLyLRIxVgax3XNFa8eJyBfiVqYDE4+7VySnBVHjFU-4b6LulmyX6HDIgiiGN7Oan97FjA4qNewHgjD8uLeY6hZaNVbIILAWuMAfXyrbqe-W57S2hvLRKpDcBUNgB1SPalygv22zupCdwqFYhQjCNuDW-ClybBCKYKE0Q9zcNg4shFeHkWauHMgQgzTQw0HQ9ihVI6z3CvgwJj1QmsAibEzQUjeqx5xqXSTb231txModLYb+01RTLXprWUEJSoK8YJTeZAx8IxUWgRbb55luNPy8EeZOe6HAe1BEJcqkRyp5gWDM3FsnnXjtQPZxzdBCQTinK56jR4qyNkbJCDO2EsFf0xJBHosp-5oSASemT2G5NNWiw51Ulw6JJbZKMYIgxISOEiP0sItpSkcJiOVXtAwi42Zdf6GLn4joMMAnV+++XUKtt7X0vcLGIONY5M6dt5UohhYDWV51DysAuoXVp7998RiQXGYXLwVg3TL34r2lCAoFhz2g5nVaJXJIPNDJQ2Akm-XSde2Qd7wdYDqejRRg7VHcy9H6IMQdYwJggrpuxZWIoPD4LGeI4dEYsDNNgB2BusqsXfcw6FMAmORDY5qAPKNnyQcNsOwgf6RVUQoJFM6CItlsuIAALRsRO+aZE3t4RzTwhjrHOPsi5HyP6IoWBSiEHKCkYXpPRd1BOWR-VXzKN3wQGuREas1v1k3Jm2YHOuKQVGlYdEr1YiVJKwr2gZPCJxYttcc4pwRaftB5rzi5g8xYUtMzQYV2jegirFCIsNhDwWHN0L4nIvryO+pISACKptLHVeHpS4cYJsCX884MYmwnZtqFBz4P5hNyjXD29Cw1v0cx8V3H5z1JXgkhJKjd4TCPcMty5B9wOFIT9CtfxYvApioWEPSMTYpho8k7t5zeP1wm8t6tjqdvNOwf3xesVSEG51iNgFSx4vFhS9RG3Gacqa2p8i9rvXWJtuoCfbx7605hPb-Y6v1sl-QOqdZ-cAiSas3fm74ShF4bgoSYhAi67bguJDqzJE7T534YBvYv5fZP7y614z6IFoF36f7kZZ7exkwTCLyTC1imBeBF6j5iiyjjALBBBVTiQ26YHY6EBwCYH-YyL35NyP7+qYAv5HzMFwGsGySA6U44Ea4MqLTe7QaQZMoMZDKD5EHTarCawn6WS4T0FwGv79yxIfbIFcGwGX6aEtIfbYFq7U6MTxp3SrAcIQbvz0wG6+aD4gEZTgG-yQEFTQEpAcA4ASBgChhMGRJQDnw6AIFkC7YkA4DDhgDWJxYJbUjCzxbHQ-gqhPBZ4biWQcKPbCQgF8hF6zxijKwFRswCiOolaeHeG+HRh3iBHzikDhGxhRHxanC3DXBxGxQqiJHJGiGsJohmBDBZQjDbjoiDpF7wimgKxVQci2SbjwiJAegPKdjwBfC8Cr6a4c6HjpElhDC-KlS9r775qm7pyWSaL2CqHDrejLEMpsZ8imBVTQgFpAjs4ICeAeYRB9Glisz2C7wiDnFgTvRCRvSTCiKF7YIrhqKZTeylibCmLfGLgTDZK2RVSjDCJDAVjOD5xMzOh9HryWADbBrQlub4Jwn4IppImyGzCmDBCpxzShbjG2Q4nXK9wQB4nUb5jaLwnEk5SkmICRDBBFgSjuAYnLRo4wGSRbYlqHwMmwxRhMkkxcqslEmIkckrxVQcJsTQbrBqyRB0kWISlv60DSnGBYQcJl6uD9CLzbggZzCFxrwOhWgYQwTuGbZByRYXpEr6lzCDBWQIkfwig3b2BChDAIighcL-SZKWTswva+SdzOm4aTqzpiY1pun2CYLJochFyLSlScnun7juC8pUxgGbhanyaTr4aarSqJlApihZFOAs7uDDLciQTgnQjyBMb0zPanGRlBLRlFkrIllbJxkJlmHaaBCODqwpqTBTALCxDWrKnQr4IliWhxCFlLJ4bXq3ozr3o0CPpumjRpHNljBeIw7uL5TOjsSs6UyKyNgbZYZOlinLnFmIaxLIbEbbkYjWR2QSg+mlR+nYK9DrDhBiJs4FRLn8b3mKbv7KaiZbI0CJm9JLDzCWSuLQSeArybh-oCqLSWSTThntmBKXJwYVbDaMmDm04PxmCyjLR958jQh+ajJbxBb8q6wRm4X4qhg7YurblPFcLmpMYemQhChZzVjvw7k2DuBXkyZvYfZum1jsTNkWD2BYQ9Dj7TkcKgmLTgn0yQlqFY6JmnkijvTH6TShA+lF5ZR5wsoXa2BZTjAX516ZBfHEVr7dBZQj6YT9DHFShF76KM6aw8hcbYlaW2W+hukAohAWaTSVjQrWA5GLzVgKxpZ5gTJ0E17qGhQGGPjqFukW6oQrQjHj4w5F7JyQQDIWDdE8iTQ2XoF-Yv5ukLkqW77by2CNiG6c5eWLQ+XjB+UVXwFMG34CG9gLEJy05d56VuXbiHGbAFUDAhC0FQgYUhZiU8G6mGEA7bnMxij9rQbjBUEDCTWzTFVQjexlXV4wGlE+F+GVFLr0qsL849L9AWaoiSEPFc5RChVfkDHpk7wlFkBeFnUVEBFEzBGhG1GRH2WDWOX0ZmBoh3VzQPX-I5HdojEuKFEtZ4SnXlH+FVFMA1ERHWKJnLgUFRDBn56NjDFWBuRrixDjBuilQzHxBAA */
+    /** @xstate-layout N4IgpgJg5mDOIC5QEMAOqB0AXAlgWzACcMAbAe2QhwDsoBiCM6sDGgNzIGsW1NcDi5SjSgJ2ZAMbJcTANoAGALoLFiUKjKwcM6mpAAPRAHYATBiNGALAE4TANgCM86wFYAHC5NGANCACeiF6WGNYOYSbWliY2DnYeAL7xvrzY+ESkFFS0dESEZMSoJNIAZvl4GCn86UJZouJSOioqehpaOnqGCADMThjylnbWXS5dll1uJvJuvgEIDi7yIdbLy-1GtiZeicnoqQIZlJB0ALIA8gBqAKIA+gAKAEqnAOL3AILHzUggrdo4TB2BLqRPqWKy2OIOIxueYzQKWFwhaFQzxuNx2KxGOzbECVNKCTJHADKlwAMpcAMIAFTujxe70+6k0v3+X06YTsCKcXW5HgmnhcdlhCBMkIw8OsmNMdkGlnmbmxuP2NSOADlLgB1GnPN4fJQtJntVmBJyLSJGJxudZDKxC6II6xIjwmVHoyzypI43ZVfGHCAYVB5KCEZB4AAEsDAJDAEiwRwAIpdiWSqVq6brVF8fobQJ0ulCQptZUMous4pYhTYjBhNi53A4vF1pZEugqvXiDhBIP7A8GwxGozGu7AsGR0ETKa97pSGd8DX9dEa5s5FrEOU4HG4BvILEKwpa+iYXPN4dFBhZW3x28q-QGyEGQ+HI9HY37h6PUEcHpdzgBJU4AVUJGcs3nAFukbDB3DsN1zQ3S0bX8RBoQcDAJmGExRjscZnGsC89mqAkbx7B9+2fIcRzHCA6DVAANac9UzOcWRzRBBjcatoOhVEwlrQVEIQZDUIwzxMPGBw8O9Dsu1ve8+yfQdXwoj8-R-CAozoV44zja4ACESVOckAGlgKYhcWO6FxrD6M95C6CJD0bPjZnrcYxWiaERJFTwJKvQjuzvXtHwHF8MDfSiMFU9SEzJSkbj0gzjIYxk2lAxdMPMOJrCmaIsphfiHDGLoMEbeR6wcHogXkLCfKVPyZMC0iFNCpSu0isATguOL9KMkyUuYgxEHQjKwgcFZ0XrIwXF3bkERcLdJrcCV5AWIwaoI31-NkoKyMU99WrU9r7kuFV3huB5tXpJLZz6syBvAxYxjiSbnA5FwjCq3cRis2tljmyxloWZY1p9TsiICkj5JCsLlIig66H-W441eWLUx1a4E0Jcl7h-W5KT-FVeuZW7Oi8dj2QFVw7MmSEfHy6x0WKgUpmlAY4hMYGpLBrbGqhlqVLhuMEZJH9yWRs7aR1QnszuuzFkbewRPehZSt3SaioK0IN36Eajw569NoayHyL2-motJS4UfOtMpdS8zuSK2x61cCw7MtDxdw8Ky7HsCI2bszE9bq4i5OC43wra+HEbF3TusSjNkqJsDRgROzhglf6ok8fpd2guxzC8JwBktUFt0Djb6oh0PdvC2BkDYEQGCYFhxG4Co21q8vg+2proaHOuRDEagOAaecmiukD+s6TxglrdweVcNw8xMXcnZCUbUSqkVuW9svQYNyudowQgAFdqGoBvbleQDLhtyfEHmSaxTBcYFmGTcnPvqFgihb2xnsJwRS72kl3HmXYT5nwbkdYk9F47XUToueY3IMCjVcG6YYphZ67lBHnJsbpFqYgKo2IBXNDZVyPqfc+2Qvy-gAkBcepkwKjXKsglEUw0RYU2B-ASoonC2DdBCHoWIPSKnWnvCuIdD7gMofQWiMD9Q3TApsIY1YNxAgWF4Kq1ghRImQc4dyAjYjEP3hIpqUiG632JvfFaII7JDHmNBTEU18p5iKkCZ0XR+juAwatYR7dRHAPBiYkKZjaAYAkGQU+uBaChkYAAd2oHQPGPV6EKMXBEHoblPCHlzu9aY+V1hmDcGsaEGEBiWXZr4y8HcxEgKNn6EJUAwkROoFEqAMSyDxLoBYpOvDkEAKGA6RsAxyz5XkBhfOzoqqvSGLWIx4ju7BIoSIDArwz7NIkCIUMAAjcgEhOCN2YKwIeXAeB+JBgE7mdTyEQNCas6g6zNk7MkJwQew9pCjyUN0tJOUJmvyiJrZau4RTsSlKVDkPIBQVJ2FU-xJCD6mKWbctZp8NnRKeXsg5zdjmtxEecuFQSwGIsaXch5aLdkvPqO8uQnyHCwInpY4UCsxSQg8rKKEYRabOTsihRwIwPBxCKVMFwczalkIaSs5F1BUVtPRfsxghyW6nJhXi4xCzCU3OJZK6V2zyWvMkFS6gTQTB0oYd8gUqEehoiKfbIZWCMlAjCJEJw0osItkqfhFV8zQH1KJRK+5KLHnksxUcjgOKzmc1Vd6650i-WkplbqyljRPldBNak8ynC84EIFEeWW3JPpRD6NvCmTr6xCOhR6iNXqrnipJQG6J4TIlxISUkuO8j4HpsiFZLK71oL-XNMMLoWCFiIi+v0TcllTAisCWqn1GrY11raQ2lpTaukpPbXdewrhIIeIwotdwtZl75XcFZK0Hj7HyGysK91kl9ZVrFb614sTkC-HrUwKJx92rklOCqPGKp-w3zXdLEmy12LlIiK4SYm4hgr1clBIEDq5RhCnZc+9c7a1Ss2QQWAtcYDBsVW3ZVlbRWSIfVqzDcAcNgD1SPalyhAO2zupCdwqFYjsqcOaGwXCAFmAlKTaIe42HIdISRtDyLtXDmQIQVpoYaB4exUqitt7iMItE-68TWBJPSZoNRg1Y9U3rpJoMHjy13EFQWtNesxVNz1gchhMZuFr2+U7tOqNqBkDHwjFRKBFsvnmSdurESkJlhOAFCM5ym4qwTHKs2CEYyy2ekI0plzVy3MefHJOORjE02MZGGYCdDopiWDdG6Jx4XQRCWi49aEYz3TlpvUHZLZDUueeopcOivnGOjGCIMSEjhIg1bCLaWyKENZhBKsMuIQn4UhWa5+I6NDAIdbZD0YIRTFp2GWu9PcXG+EYGlCiKIspRjOim2Ge5WAZ2rv00BqxRURKlX6F4KwbpD2zA2yhbNIGXGZx8XV9s9zQziNgHJ0NCnJIA6BzppNdHrsMdzL0fogwB1jAmFMXcDpIIXuBSMbK9g8IRiwK02AHYG7yqxaDgjoUwCE5EMTmoA9E0fJh22m7CB-pFVRFlKLzoIi2TC4gAAtGxSCBdkS-1rJYfH1Oick+yLkfI-oihYFKIQcoKQCcy-p7QKHTOlusSPIiNW5VZTOnhEKAXXFIKjSsOiV6sQr3lo17TzmdBoHXHOKcEWAHYd3wQEMRYEw4h2UcO9TEr3BfYItbypEjhGwOcd9L5315XcW2uISACKptLHVeHpS4cY9dzC5E-Ra8GPEeAFObyPi9o+9fKoMeL6vE+0Dp4ROg3nqSvBJCSVG7w6E+4ZZiDivIcKQn6KMSv5q8xKw8FTSd7qnfN5d27zv3erY6j7yzuHn87LmBQTZjbVhbKV4sFb7kzoHSuG9pNKXNPF-J7dx7r31wjpfqeCqH8eNv3XGz7n-P9HfflQQQbbLRdblRY55KzAC5V6NjlTOg-yjBuoJ635QDE61z1zRIL4oEg4nKU6YGoH9wYFN4oE660YF77rmBMxHhoiNjrCcqC4bgoSYhAhG7bilRjA34y4A54HYFhqYB4EYBcFEGwAkGGqfL-4MrexkwTCLyTC1imBeDm4WAPRHYeBjKH6OAcHO6EBwBEGA7BzA5k4ho4GN7IHE7aGYF6GBLCGM6kHiFgSLTmAuL2Co6kzlTm6yGoQ4TOBhDbiuBAzz5CGhQEFtJA48EKb8FoGbKQ42GiHM5ZYGb3zex5yeCjReD2RRDojm4MFij+70wDqwGbh4QcA4ASBgChjaHhJQDnw6ACFkAXYkA4DDhgDSKu4ThTjXDCyEixTv4qhPAF6Hioh7amDrxwbch0EIAC7HosZQhVRvRrh47urFGlHlHRh3jVHzi1H1GNGxgtFdEZYdE-hdHHQ-i9GyC0qb6+6Hi2B9Jpw-Tl6Ar8RQGODVh2QUwcgOijQN67BLFlEVFrFEykDbHNENxdGnC3AHFHE9F9F2FpQAwhBYS+H0ykylaC7jCuIciuoo5FahBFFkAlG-GrFVEAm3h4CoCtJ0AJgqgACaEJ3RJx0J-eiiEQVYzqT0h4kwHiKJEx5oCINgoQcQ3slk-08eCWGAPxKxlR6xTA-kpJ5JK+pwmonRdJpxMJ6aEQKEF6R4wKbKFejxxW1Y3htYqIxcCx5a4pfxRJNRkRhBphYRlO5phJUp1AQR6BbSeBIhemFxDKh4UwqEkozoZUI05ussxUcolo-u8Ib0iQHo9ynY8AXwvAXpYEAuh4yCVgXgdiaIYKH0jxywd21uR45oUIWUkujmAgSZ3yQkb0kwAigykQQonge2dmsslkbMUQu8IgFZ5k70VZpgVU0IQIm4WCK4SimUV+SJUKop9WvoXZd0EwB470HiWENgOUg6-Ewp+cB6FgSJtkDuU5TmNSjWO0s5y2iwahtkVUowfC0G-EpgwQqcAwyw1BRWp2M6zUJsJ5n87E55S5V5q5QokQwQRYRS0Wc078r5UavcpsYAn5jKecP5l5K5Nga5zkzqyCbERgeYEoX0pZf21SFywmPcfMLpnZ8RrOTByC1mrgY6HiO4+Uhca8DoVopSloiB+5+F+Kb5DSsFsQyw1ktiwx729gAFwwT8aRJeYw-yEF1avqS60mTasFGiVYmIAwGioIPQupzkbMa8jY6iXEge0lqGMa6G2qsqil9sLGSR22lBu4NWqElo7kVUBUsohlImxlZGr6jaHSt09KiitukEvKWOhUqiw5Zgzob0-a3IpUmwrlKmxlT6L6i6b6NAH6ilYyZg-0doFggei04ecw7ie2x4sh250IsViyqmcaoYWGlGPFGI-FzJIoQlXGsoiw6w4QgifOBUZV6q7lammyEmUmmyNAil6IVk4weRfhi0oI4xHK30mw7IpUQIeR3VN47mnmPFJuzKy0o+fI0IHs5WUWQIR2eYusZZsKqq52M6PFjZkyUIoevFoQ4xWcBpIoqCC8tW7F6QEO+hsFRpfQ24UorqiCeVBUI5vs62GZ3sk5JhROil7E8170UQ24lkZUXCAuWU8F1uSFo+owmhd+mQpFCcrOlUxUmFW4GRvGaNOinOmsPI-GuFop-B14sFRWPGEuk0lY9Mo05uc81YCsjYYxzgp1SBMu1pbpQhsFHGbkuV6wIBIwXJUBIo1Y-0PhaCHI-QeNKBtRj4phsFloecLk6I28tgul5u1Ni0tN4w9NmtZhOhyBlhsk8ZRNW+CAg+CNj2yNoQmwwZAwIQTlUIe6J1H1MNzuYtDtvYTtcCrOkImwFq70Eooei8R+jxycoZx6i0awW2v2opDpkp66vl3yEEb08w7gkGZoZt5q6woISd3I1d2dKQud-xNRl1DRTR0iilmF6sRWaIvWA5Iwihgw1YZoRSch6pwd3xeJyxFpTpgJbdhNUdLtaRhS8sWEzlPQDgPtGpI9RW6IgeW8uJ+JEpTdGxJJZJ89Bd6arxYoowMhsQNWOZkBUxjoIBE0b8B9U9jpAJYdeBilpukEPJpdUw5dKd8Iadi0Gd01pU79BJedOgoYAAFOEqgH4AAJS-29k1kDl1n86Mr-TFRbz-QYnhUM0N2T0wPH1MAINIOoObGhit07Hn2mrdkB6Hh9m1lDn8QYReAVZHWAGTTlTQNH2WnzhUOjg0P0PAm0CS0sPVn9nRYcOzCnhmDcqggBlZnQ0T2H3T1EyiPIMoMCFgCxLhgaaxihgODSMYNyODk4NXF5xRa1jzB84jDRnxBAA */
     id: "app",
 
     schema: {
@@ -175,6 +184,7 @@ const timerMachine = createMachine(
       settings: {
         voiceURI: null,
         soundEnabled: true,
+        voiceRecognitionEnabled: null,
       },
       // Timer
       selectedProgramId: null,
@@ -527,9 +537,15 @@ const timerMachine = createMachine(
               },
 
               RESET_ALL_PROGRAMS: "resetting programs",
+
               SET_ALL_PROGRAMS: {
                 target: "saving programs",
                 actions: "setAllPrograms",
+              },
+
+              SET_VOICE_RECOGNITION_ENABLED: {
+                target: "saving settings",
+                actions: "setVoiceRecognitionEnabled",
               },
             },
           },
@@ -573,7 +589,16 @@ const timerMachine = createMachine(
         states: {
           "not listening": {
             on: {
-              START_LISTENING: "listening",
+              START_LISTENING: [
+                {
+                  target: "prompting",
+                  cond: "voiceRecognitionNotConfigured",
+                },
+                {
+                  target: "listening",
+                  cond: "voiceRecognitionEnabled",
+                },
+              ],
             },
           },
 
@@ -586,9 +611,40 @@ const timerMachine = createMachine(
               src: "listen",
             },
           },
+
+          prompting: {
+            on: {
+              DENY_LISTENING: {
+                target: "not listening",
+                actions: "denyListening",
+              },
+
+              ALLOW_LISTENING: {
+                target: "saving settings",
+                actions: "allowListening",
+              },
+            },
+          },
+
+          "saving settings": {
+            invoke: {
+              src: "saveSettings",
+              onDone: "listening",
+            },
+          },
         },
 
         initial: "not listening",
+      },
+
+      "voice recognition (copy)": {
+        states: {
+          "not listening": {},
+          listening: {},
+          "new state 1": {},
+        },
+
+        initial: "new state 1",
       },
     },
 
@@ -654,6 +710,10 @@ const timerMachine = createMachine(
         const { program } = currentProgramFrom(context)
         return !!program && ProgramSchema.safeParse(program).success
       },
+      voiceRecognitionEnabled: ({ settings }) =>
+        !!settings.voiceRecognitionEnabled && navigator.onLine,
+      voiceRecognitionNotConfigured: ({ settings }) =>
+        settings.voiceRecognitionEnabled === null,
     },
 
     actions: {
@@ -720,6 +780,14 @@ const timerMachine = createMachine(
       },
       startListening: raise("START_LISTENING"),
       stopListening: raise("STOP_LISTENING"),
+      denyListening: raise({
+        type: "SET_VOICE_RECOGNITION_ENABLED",
+        enabled: false,
+      }),
+      allowListening: raise({
+        type: "SET_VOICE_RECOGNITION_ENABLED",
+        enabled: true,
+      }),
       celebration: () => {
         // Do nothing, can be provided by the consuming code
       },
@@ -823,9 +891,14 @@ const timerMachine = createMachine(
       setVoiceURI: immerAssign((context, event: SetVoiceEvent) => {
         context.settings.voiceURI = event.voiceURI
       }),
-      setSoundEnabled: immerAssign((context, event: SetSoundEvent) => {
-        context.settings.soundEnabled = event.soundEnabled
+      setSoundEnabled: immerAssign((context, event: SetSoundEnabledEvent) => {
+        context.settings.soundEnabled = event.enabled
       }),
+      setVoiceRecognitionEnabled: immerAssign(
+        (context, event: SetVoiceRecognitionEnabledEvent) => {
+          context.settings.voiceRecognitionEnabled = event.enabled
+        }
+      ),
     },
 
     services: {
@@ -845,7 +918,7 @@ const timerMachine = createMachine(
       // Settings
       loadSettings: () =>
         localforage.getItem("settings").then(data => {
-          if (data) return data
+          if (data) return SettingsSchema.parse(data)
           else throw "No data found"
         }),
       saveDefaultSettings: () =>
@@ -885,47 +958,50 @@ const timerMachine = createMachine(
       },
 
       // Voice recognition
-      listen: () => send => {
-        const SpeechRecognition =
-          window?.SpeechRecognition || window?.webkitSpeechRecognition
-        if (!SpeechRecognition) {
-          console.error("Speech recognition not supported")
-          return
-        }
+      listen:
+        ({ settings }) =>
+        send => {
+          if (!settings.voiceRecognitionEnabled) return
 
-        const recognition = new SpeechRecognition()
-        recognition.continuous = true
+          const SpeechRecognition =
+            window?.SpeechRecognition || window?.webkitSpeechRecognition
+          if (!SpeechRecognition) {
+            console.error("Speech recognition not supported")
+            return
+          }
 
-        // Speech recognition will stop automatically:
-        //  - After 5 seconds if no speech is detected
-        //  - After 60 seconds of listening either way
-        //
-        // While this flag is false, anytime the speech recognition stops, it
-        // will automatically be started again by the code below.
-        let reallyStop = false
+          const recognition = new SpeechRecognition()
+          recognition.continuous = true
 
-        recognition.addEventListener("result", (e: any) => {
-          const results: any[] = Array.from(e.results)
-          const result = results[results.length - 1]
-          const sentence = result[0].transcript
-          console.log(`🗣️ ${sentence}`)
+          // Speech recognition will stop automatically:
+          //  - After 5 seconds if no speech is detected
+          //  - After 60 seconds of listening either way
+          //
+          // While this flag is false, anytime the speech recognition stops, it
+          // will automatically be started again by the code below.
+          let reallyStop = false
 
-          if (sentence.includes("continue")) send("CONTINUE")
-          if (sentence.includes("next")) send("CONTINUE")
-          if (sentence.includes("stop")) send("RESET")
-        })
+          recognition.addEventListener("result", (e: any) => {
+            const results: any[] = Array.from(e.results)
+            const result = results[results.length - 1]
+            const sentence = result[0].transcript
+            console.log(`🗣️ ${sentence}`)
 
-        recognition.addEventListener("end", () => {
-          if (reallyStop) send("STOP_LISTENING")
-          else recognition.start()
-        })
+            if (sentence.includes("continue")) send("CONTINUE")
+            if (sentence.includes("next")) send("CONTINUE")
+          })
 
-        recognition.start()
-        return () => {
-          reallyStop = true
-          recognition.stop()
-        }
-      },
+          recognition.addEventListener("end", () => {
+            if (reallyStop) send("STOP_LISTENING")
+            else recognition.start()
+          })
+
+          recognition.start()
+          return () => {
+            reallyStop = true
+            recognition.stop()
+          }
+        },
     },
   }
 )

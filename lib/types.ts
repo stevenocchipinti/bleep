@@ -54,6 +54,7 @@ export const AllProgramsSchema = z.array(ProgramSchema)
 export const SettingsSchema = z.object({
   voiceURI: z.string().nullable().default(null),
   soundEnabled: z.boolean().default(true),
+  voiceRecognitionEnabled: z.boolean().nullable().default(null),
 })
 
 export type TimerBlock = z.infer<typeof TimerBlockSchema>

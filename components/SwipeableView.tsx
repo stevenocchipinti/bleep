@@ -8,6 +8,7 @@ import {
   Flex,
   Grid,
   GridItem,
+  Text,
 } from "@chakra-ui/react"
 import { ReactNode } from "react"
 import SwipeableViews from "react-swipeable-views"
@@ -15,11 +16,34 @@ import SegmentedProgressBar from "./SegmentedProgressBar"
 import { MicrophoneIcon } from "./icons"
 import { useTimerActor } from "lib/useTimerMachine"
 
+interface VoiceBannerProps {
+  show: boolean
+  children: ReactNode
+}
+const VoiceBanner = ({ show, children }: VoiceBannerProps) => {
+  return (
+    <Collapse in={show} animateOpacity>
+      <Flex
+        alignItems="center"
+        justifyContent="center"
+        p={2}
+        color="orange.900"
+        bg="yellow.500"
+        flexWrap="wrap"
+        minH={12}
+      >
+        <MicrophoneIcon height="1rem" /> {children}
+      </Flex>
+    </Collapse>
+  )
+}
+
 const Quote = (props: BoxProps) => (
   <Box
     as="span"
     m={1}
-    px={1}
+    px={2}
+    py={1}
     boxShadow="0 3px 0 0 var(--chakra-colors-yellow-600)"
     borderRadius="md"
     bg="yellow.400"
@@ -46,8 +70,9 @@ interface HeaderProps {
   listening?: boolean
 }
 const Header = ({ children, transparent = false }: HeaderProps) => {
-  const { state } = useTimerActor()
+  const { state, send } = useTimerActor()
   const isListening = state.matches({ "voice recognition": "listening" })
+  const isPrompting = state.matches({ "voice recognition": "prompting" })
 
   return (
     <div>
@@ -70,19 +95,26 @@ const Header = ({ children, transparent = false }: HeaderProps) => {
       >
         {children}
       </Flex>
-      <Collapse in={isListening} animateOpacity>
-        <Flex
-          alignItems="center"
-          justifyContent="center"
-          p={2}
-          color="orange.900"
-          bg="yellow.500"
-          flexWrap="wrap"
-        >
-          <MicrophoneIcon height="1rem" />️ Listening for{" "}
-          <Quote>continue</Quote> <Quote>next</Quote> <Quote>stop</Quote>
+
+      <VoiceBanner show={isPrompting}>
+        <Flex alignItems="center" gap={6}>
+          <Text>Use voice recognition?</Text>
+          <Flex gap={2}>
+            <Button size="sm" onClick={() => send("DENY_LISTENING")}>
+              No
+            </Button>
+            <Button size="sm" onClick={() => send("ALLOW_LISTENING")}>
+              Yes
+            </Button>
+          </Flex>
         </Flex>
-      </Collapse>
+      </VoiceBanner>
+
+      <VoiceBanner show={isListening}>
+        <Text>
+          Listening for <Quote>continue</Quote> <Quote>next</Quote>
+        </Text>
+      </VoiceBanner>
     </div>
   )
 }
