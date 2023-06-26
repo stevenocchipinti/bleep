@@ -85,7 +85,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
             isDisabled={!state.can({ type: "PREVIOUS" })}
             onClick={() => send("PREVIOUS")}
           >
-            <RewindIcon />
+            <RewindIcon maxH={7} />
           </FooterButton>
 
           <FooterButton
@@ -93,7 +93,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
             isDisabled={!state.can({ type: "RESET" })}
             onClick={() => send("RESET")}
           >
-            <StopIcon />
+            <StopIcon maxH={7} />
           </FooterButton>
 
           {state.can({ type: "PAUSE" }) ? (
@@ -102,7 +102,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
               isDisabled={blocks.length === 0 || is("Awaiting continue")}
               onClick={() => send("PAUSE")}
             >
-              <PauseIcon />
+              <PauseIcon maxH={7} />
             </FooterButton>
           ) : (
             <FooterButton
@@ -110,7 +110,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
               isDisabled={!state.can({ type: "START" })}
               onClick={() => send("START")}
             >
-              <PlayIcon />
+              <PlayIcon maxH={7} />
             </FooterButton>
           )}
 
@@ -119,7 +119,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
             isDisabled={!state.can({ type: "NEXT" })}
             onClick={() => send("NEXT")}
           >
-            <FastForwardIcon />
+            <FastForwardIcon maxH={7} />
           </FooterButton>
         </>
       }
