@@ -40,6 +40,7 @@ import {
   EditablePreview,
   EditableTextarea,
   FormErrorMessage,
+  Box,
 } from "@chakra-ui/react"
 import {
   BlockSchema,
@@ -336,37 +337,38 @@ const ConfigScreen = ({
           </FooterButton>
         }
       >
-        <Editable defaultValue={program.description} display="flex" flex={1}>
-          <EditablePreview
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            flexGrow={1}
-            textAlign="center"
-            fontSize="xl"
-            p={4}
-            pb={8}
-          />
-          <EditableTextarea
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            flexGrow={1}
-            textAlign="center"
-            fontSize="xl"
-            m={4}
-            p={4}
-            pb={8}
-            required
-            onChange={e =>
-              debouncedSend({
-                type: "UPDATE_PROGRAM_DESCRIPTION",
-                description: e.target.value,
-              })
-            }
-          />
-        </Editable>
-
+        <Box my="auto">
+          <Editable defaultValue={program.description} display="flex" flex={1}>
+            <EditablePreview
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              flexGrow={1}
+              textAlign="center"
+              fontSize="xl"
+              p={4}
+              pb={8}
+            />
+            <EditableTextarea
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              flexGrow={1}
+              textAlign="center"
+              fontSize="xl"
+              m={4}
+              p={4}
+              pb={8}
+              required
+              onChange={e =>
+                debouncedSend({
+                  type: "UPDATE_PROGRAM_DESCRIPTION",
+                  description: e.target.value,
+                })
+              }
+            />
+          </Editable>
+        </Box>
         <Flex direction="column" gap={4} p={4} pb={0}>
           <DndContext
             onDragStart={onDragStart}
