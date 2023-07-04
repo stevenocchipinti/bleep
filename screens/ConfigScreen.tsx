@@ -41,6 +41,8 @@ import {
   EditableTextarea,
   FormErrorMessage,
   Box,
+  InputGroup,
+  InputRightElement,
 } from "@chakra-ui/react"
 import {
   BlockSchema,
@@ -64,8 +66,8 @@ import { ChipTab } from "@/components/Chip"
 import { DurationInput } from "@/components/DurationInput"
 import { SwipeableChild, FooterButton } from "@/components/SwipeableView"
 import { useTimerActor } from "lib/useTimerMachine"
-import { currentProgramFrom } from "lib/timerMachine"
-import { ShareIcon } from "@/components/icons"
+import { currentProgramFrom, speakerFrom } from "lib/timerMachine"
+import { ChatBubbleIcon, ShareIcon, SpeakerIcon } from "@/components/icons"
 
 const OptionalIndicator = () => (
   <Text color="gray.400" fontSize="xs" ml={2} as="span">
@@ -81,6 +83,83 @@ const FlexTabPanel = ({ children }: { children: React.ReactNode }) => (
   </TabPanel>
 )
 
+interface InputWithCustomPronunciationProps {
+  defaultValue: string
+  placeholder: string
+  isDisabled?: boolean
+  onChange?: (newText: string) => void
+  onClick?: () => void
+  isProvided: boolean
+}
+const InputWithCustomPronunciation = ({
+  defaultValue,
+  placeholder,
+  isDisabled,
+  onChange,
+  onClick,
+  isProvided,
+}: InputWithCustomPronunciationProps) => (
+  <InputGroup>
+    <Input
+      isDisabled={isDisabled}
+      defaultValue={defaultValue}
+      placeholder={placeholder}
+      variant="filled"
+      onChange={e => onChange?.(e.target.value)}
+    />
+    <InputRightElement>
+      <IconButton
+        variant="ghost"
+        aria-label="Provide custom pronunciation"
+        icon={<ChatBubbleIcon filled={isProvided} opacity={0.6} />}
+        size="xs"
+        onClick={onClick}
+      />
+    </InputRightElement>
+  </InputGroup>
+)
+
+interface InputWithSpeechSynthProps {
+  defaultValue: string
+  placeholder: string
+  isDisabled?: boolean
+  onChange?: (newText: string) => void
+}
+const InputWithSpeechSynth = ({
+  defaultValue,
+  placeholder,
+  isDisabled,
+  onChange,
+}: InputWithSpeechSynthProps) => {
+  const { state } = useTimerActor()
+  const speak = speakerFrom(state.context)
+  const [text, setText] = useState(defaultValue)
+
+  return (
+    <InputGroup>
+      <Input
+        isDisabled={isDisabled}
+        variant="filled"
+        placeholder={placeholder}
+        value={text}
+        onChange={e => {
+          setText(e.target.value)
+          onChange?.(e.target.value)
+        }}
+      />
+      <InputRightElement>
+        <IconButton
+          variant="ghost"
+          aria-label="Speak"
+          icon={<SpeakerIcon />}
+          size="xs"
+          onClick={() => speak(text)}
+        />
+      </InputRightElement>
+    </InputGroup>
+  )
+}
+
 interface ConfigScreenProps {
   openSettingsModal: () => void
   goBack: () => void
@@ -92,6 +171,13 @@ const ConfigScreen = ({
   goForward,
 }: ConfigScreenProps) => {
   const [currentBlock, setCurrentBlock] = useState<number | null>(null)
+
+  // Pronunciation modal
+  const [indexToSetPronunciation, setIndexToSetPronunciation] = useState<
+    null | number
+  >(null)
+  const pronunciationCancelRef = React.useRef<any>()
+  const [pronunciation, setPronunciation] = useState("")
 
   // Delete modal
   type ThingToDelete =
@@ -154,6 +240,105 @@ const ConfigScreen = ({
   return (
     <>
       <AlertDialog
+        isOpen={indexToSetPronunciation !== null}
+        leastDestructiveRef={pronunciationCancelRef}
+        onClose={() => setIndexToSetPronunciation(null)}
+        isCentered
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent mx={4}>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Customise pronunciation
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              <Flex gap={4} direction="column">
+                <Text mb={4}>
+                  Specify alternative text for speech synthesis that is not
+                  otherwise displayed.
+                </Text>
+                <FormControl>
+                  <FormLabel>Name</FormLabel>
+                  <InputWithSpeechSynth
+                    isDisabled
+                    defaultValue={
+                      indexToSetPronunciation === null
+                        ? ""
+                        : program.blocks[indexToSetPronunciation].name
+                    }
+                    placeholder="Name"
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel>Pronunciation</FormLabel>
+                  <InputWithSpeechSynth
+                    defaultValue={
+                      indexToSetPronunciation === null
+                        ? ""
+                        : program.blocks[indexToSetPronunciation]
+                            ?.pronunciation ||
+                          program.blocks[indexToSetPronunciation]?.name
+                    }
+                    placeholder="Pronunciation"
+                    onChange={newText => setPronunciation(newText)}
+                  />
+                </FormControl>
+              </Flex>
+            </AlertDialogBody>
+
+            <AlertDialogFooter mt={6}>
+              <Button
+                ref={pronunciationCancelRef}
+                onClick={() => setIndexToSetPronunciation(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                ref={pronunciationCancelRef}
+                onClick={() => {
+                  if (indexToSetPronunciation !== null) {
+                    const block = program.blocks[indexToSetPronunciation]
+                    send({
+                      type: "UPDATE_BLOCK",
+                      index: indexToSetPronunciation,
+                      block: { ...block, pronunciation: undefined },
+                    })
+                    setIndexToSetPronunciation(null)
+                  }
+                }}
+                ml={3}
+              >
+                Clear
+              </Button>
+              <Button
+                colorScheme="teal"
+                onClick={() => {
+                  if (indexToSetPronunciation !== null) {
+                    const block = program.blocks[indexToSetPronunciation]
+                    send({
+                      type: "UPDATE_BLOCK",
+                      index: indexToSetPronunciation,
+                      block: {
+                        ...block,
+                        pronunciation:
+                          pronunciation === block.name
+                            ? undefined
+                            : pronunciation,
+                      },
+                    })
+                    setIndexToSetPronunciation(null)
+                  }
+                }}
+                ml={3}
+              >
+                Save
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
+      <AlertDialog
         isOpen={shareModalIsOpen}
         leastDestructiveRef={shareCancelRef}
         onClose={() => setShareModalIsOpen(false)}
@@ -204,6 +389,7 @@ const ConfigScreen = ({
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
+
       <AlertDialog
         isOpen={!!thingToDelete}
         leastDestructiveRef={deleteCancelRef}
@@ -252,6 +438,7 @@ const ConfigScreen = ({
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
+
       <SwipeableChild
         header={
           <>
@@ -410,8 +597,7 @@ const ConfigScreen = ({
                 })
               }
 
-              const onNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                const name = e.target.value
+              const onNameChange = (name: string) => {
                 if (block.name !== name)
                   debouncedSend({
                     type: "UPDATE_BLOCK",
@@ -531,12 +717,14 @@ const ConfigScreen = ({
                           isInvalid={!!errors?.name}
                         >
                           <FormLabel>Name</FormLabel>
-                          <Input
+                          <InputWithCustomPronunciation
                             defaultValue={block.name}
                             placeholder="Name"
-                            variant="filled"
                             onChange={onNameChange}
+                            isProvided={!!block.pronunciation}
+                            onClick={() => setIndexToSetPronunciation(index)}
                           />
+
                           <FormErrorMessage>
                             {errors?.name?.join(" and ")}
                           </FormErrorMessage>
@@ -581,11 +769,12 @@ const ConfigScreen = ({
                           isInvalid={!!errors?.name}
                         >
                           <FormLabel>Name</FormLabel>
-                          <Input
+                          <InputWithCustomPronunciation
                             defaultValue={block.name}
                             placeholder="Name"
-                            variant="filled"
                             onChange={onNameChange}
+                            isProvided={!!block.pronunciation}
+                            onClick={() => setIndexToSetPronunciation(index)}
                           />
                           <FormErrorMessage>
                             {errors?.name?.join(" and ")}
@@ -619,11 +808,12 @@ const ConfigScreen = ({
                           isInvalid={!!errors?.name}
                         >
                           <FormLabel>Name</FormLabel>
-                          <Input
+                          <InputWithCustomPronunciation
                             defaultValue={block.name}
                             placeholder="Name"
-                            variant="filled"
                             onChange={onNameChange}
+                            isProvided={!!block.pronunciation}
+                            onClick={() => setIndexToSetPronunciation(index)}
                           />
                           <FormErrorMessage>
                             {errors?.name?.join(" and ")}

@@ -11,6 +11,7 @@ const generateId = (length: number) => {
 const commonBlockProperties = {
   id: z.string().default(() => generateId(6)),
   name: z.string().nonempty(),
+  pronunciation: z.string().optional(),
   disabled: z.boolean().default(false).optional(),
 }
 
