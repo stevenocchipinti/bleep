@@ -449,13 +449,15 @@ const ConfigScreen = ({
 
               const onRepsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 const reps = parseInt(e.target.value) || undefined
-                if (block.type === "pause" && reps !== block.reps)
+                if (
+                  (block.type === "pause" || block.type === "timer") &&
+                  reps !== block.reps
+                )
                   debouncedSend({
                     type: "UPDATE_BLOCK",
                     index,
                     block: {
                       ...block,
-                      type: "pause",
                       reps,
                     },
                   })
@@ -539,6 +541,26 @@ const ConfigScreen = ({
                             {errors?.name?.join(" and ")}
                           </FormErrorMessage>
                         </FormControl>
+                        <FormControl
+                          isDisabled={block.disabled}
+                          isInvalid={!!errors?.reps}
+                        >
+                          <FormLabel optionalIndicator={<OptionalIndicator />}>
+                            Reps
+                          </FormLabel>
+                          <Input
+                            defaultValue={
+                              block.type === "timer" ? block.reps || "" : ""
+                            }
+                            type="number"
+                            placeholder="Reps"
+                            variant="filled"
+                            onChange={onRepsChange}
+                          />
+                          <FormErrorMessage>
+                            {errors?.reps?.join(" and ")}
+                          </FormErrorMessage>
+                        </FormControl>
                         <Grid templateColumns="1fr 1fr" gap={6}>
                           <FormControl
                             isDisabled={block.disabled}
@@ -559,7 +581,14 @@ const ConfigScreen = ({
                             isDisabled={block.disabled}
                             isInvalid={!!errors?.seconds}
                           >
-                            <FormLabel>Duration</FormLabel>
+                            <FormLabel>
+                              {block.type === "timer" &&
+                              block.reps &&
+                              block.reps > 1
+                                ? "Rep"
+                                : "Block"}{" "}
+                              duration
+                            </FormLabel>
                             <DurationInput
                               totalSeconds={
                                 block.type === "timer" ? block.seconds : 0

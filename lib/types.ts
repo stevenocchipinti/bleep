@@ -17,6 +17,7 @@ const commonBlockProperties = {
 export const TimerBlockSchema = z.object({
   ...commonBlockProperties,
   type: z.literal("timer"),
+  reps: z.number().positive().optional(),
   seconds: z.number().positive().min(1),
   leadSeconds: z.number().nonnegative().default(3),
 })
