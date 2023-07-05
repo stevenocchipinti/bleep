@@ -73,6 +73,7 @@ const Page = () => {
 
           {program !== null ? (
             <ConfigScreen
+              key={program?.id}
               openSettingsModal={onOpen}
               goForward={() => {
                 history.go(1)
