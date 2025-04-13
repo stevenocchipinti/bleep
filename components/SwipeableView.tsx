@@ -83,12 +83,14 @@ const Header = ({ children, transparent = false }: HeaderProps) => {
         left={0}
         right={0}
         p={3}
+        m={1}
         gap={6}
         bg={transparent ? "transparent" : "blackAlpha.300"}
         shadow={transparent ? "transparent" : "0 4px 30px rgba(0, 0, 0, 0.1)"}
         backdropFilter="blur(5px)"
-        borderBottom={
-          transparent ? "transparent" : "1px solid rgba(255, 255, 255, 0.1)"
+        borderRadius="lg"
+        border={
+          transparent ? "transparent" : "1px solid rgba(255, 255, 255, 0.08)"
         }
         zIndex={1}
         sx={{ WebkitTapHighlightColor: "transparent" }}
