@@ -1,29 +1,24 @@
-# Next.js + Jest
+# Bleep
 
-This example shows how to configure Jest to work with Next.js.
+An exercise timer web app using modern browser APIs.
 
-This includes Next.js' built-in support for Global CSS, CSS Modules and TypeScript.
+- Makes bleep noises
+- Works offline
+- Reads out the exercises
+- Prevents the screen from turning off during exercise
+- Voice recognition to control the routine hands free
 
-## How to Use
-
-Quickly get started using [Create Next App](https://github.com/vercel/next.js/tree/canary/packages/create-next-app#readme)!
-
-In your terminal, run the following command:
+## Getting started
 
 ```bash
-npx create-next-app --example with-jest with-jest-app
+yarn dev
 ```
+
+## Dev
+
+This app was created with [Create Next App](https://github.com/vercel/next.js/tree/canary/packages/create-next-app#readme)
+with the following command:
 
 ```bash
 yarn create next-app --example with-jest with-jest-app
-```
-
-```bash
-pnpm create next-app --example with-jest with-jest-app
-```
-
-## Run Jest Tests
-
-```bash
-npm test
 ```
