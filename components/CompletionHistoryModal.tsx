@@ -19,16 +19,137 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogOverlay,
+  Grid,
+  Box,
+  FormControl,
+  FormLabel,
+  Input,
 } from "@chakra-ui/react"
 import { ChevronLeftIcon, ChevronRightIcon, DeleteIcon } from "@chakra-ui/icons"
 import { useTimerActor } from "lib/useTimerMachine"
-import { ProgramCompletion } from "lib/types"
+import { ProgramCompletion, ProgramCompletionSchema } from "lib/types"
 
 interface CompletionHistoryModalProps {
   isOpen: boolean
   onClose: () => void
   programId: string
   programName: string
+}
+
+// Helper functions for calendar operations
+const getDaysInMonth = (date: Date): (Date | null)[] => {
+  const year = date.getFullYear()
+  const month = date.getMonth()
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+
+  const days: (Date | null)[] = []
+
+  // Add empty days for padding (start of week)
+  const startDayOfWeek = firstDay.getDay() // 0 = Sunday
+  for (let i = 0; i < startDayOfWeek; i++) {
+    days.push(null)
+  }
+
+  // Add all days in month
+  for (let day = 1; day <= lastDay.getDate(); day++) {
+    days.push(new Date(year, month, day))
+  }
+
+  return days
+}
+
+const hasCompletions = (
+  date: Date | null,
+  completions: ProgramCompletion[]
+): boolean => {
+  if (!date) return false
+  const dateStr = date.toISOString().split("T")[0]
+  return completions.some(c => c.completedAt.startsWith(dateStr))
+}
+
+const isSameDay = (date1: Date | null, date2: Date | null): boolean => {
+  if (!date1 || !date2) return false
+  return (
+    date1.toISOString().split("T")[0] === date2.toISOString().split("T")[0]
+  )
+}
+
+interface MonthCalendarProps {
+  month: Date
+  selectedDate: Date | null
+  onSelectDate: (date: Date) => void
+  completions: ProgramCompletion[]
+}
+
+const MonthCalendar = ({
+  month,
+  selectedDate,
+  onSelectDate,
+  completions,
+}: MonthCalendarProps) => {
+  const days = getDaysInMonth(month)
+  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+  return (
+    <VStack spacing={2}>
+      {/* Week day headers */}
+      <Grid templateColumns="repeat(7, 1fr)" gap={1} w="full">
+        {weekDays.map(day => (
+          <Box key={day} textAlign="center" fontSize="sm" color="gray.500">
+            {day}
+          </Box>
+        ))}
+      </Grid>
+
+      {/* Calendar days */}
+      <Grid templateColumns="repeat(7, 1fr)" gap={1} w="full">
+        {days.map((date, index) => {
+          const isSelected = isSameDay(date, selectedDate)
+          const hasData = date ? hasCompletions(date, completions) : false
+          const isToday = date ? isSameDay(date, new Date()) : false
+
+          return (
+            <Button
+              key={index}
+              size="sm"
+              variant={isSelected ? "solid" : "ghost"}
+              colorScheme={isSelected ? "teal" : undefined}
+              onClick={() => date && onSelectDate(date)}
+              isDisabled={!date}
+              position="relative"
+              h="40px"
+            >
+              {date ? (
+                <>
+                  <Text
+                    position="relative"
+                    zIndex={1}
+                    fontWeight={isToday ? "bold" : "normal"}
+                  >
+                    {date.getDate()}
+                  </Text>
+                  {hasData && !isSelected && (
+                    <Box
+                      position="absolute"
+                      top="50%"
+                      left="50%"
+                      transform="translate(-50%, -50%)"
+                      w="32px"
+                      h="32px"
+                      borderRadius="full"
+                      bg="teal.100"
+                      zIndex={0}
+                    />
+                  )}
+                </>
+              ) : null}
+            </Button>
+          )
+        })}
+      </Grid>
+    </VStack>
+  )
 }
 
 const CompletionHistoryModal = ({
@@ -167,10 +288,13 @@ const CompletionHistoryModal = ({
                 />
               </HStack>
 
-              {/* Calendar component - TODO: Implement in Phase 4 */}
-              <Text color="gray.500" textAlign="center" py={8}>
-                Calendar component coming in Phase 4
-              </Text>
+               {/* Calendar component */}
+               <MonthCalendar
+                 month={selectedMonth}
+                 selectedDate={selectedDate}
+                 onSelectDate={setSelectedDate}
+                 completions={completions}
+               />
 
               <Divider />
 
