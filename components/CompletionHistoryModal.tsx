@@ -61,7 +61,7 @@ const getDaysInMonth = (date: Date): (Date | null)[] => {
 
 const hasCompletions = (
   date: Date | null,
-  completions: ProgramCompletion[]
+  completions: ProgramCompletion[],
 ): boolean => {
   if (!date) return false
   const dateStr = date.toISOString().split("T")[0]
@@ -70,9 +70,23 @@ const hasCompletions = (
 
 const isSameDay = (date1: Date | null, date2: Date | null): boolean => {
   if (!date1 || !date2) return false
-  return (
-    date1.toISOString().split("T")[0] === date2.toISOString().split("T")[0]
-  )
+  return date1.toISOString().split("T")[0] === date2.toISOString().split("T")[0]
+}
+
+// Convert ISO string to datetime-local input format (YYYY-MM-DDTHH:mm)
+const toDateTimeLocalString = (isoString: string) => {
+  const date = new Date(isoString)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  const hours = String(date.getHours()).padStart(2, "0")
+  const minutes = String(date.getMinutes()).padStart(2, "0")
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
+// Convert datetime-local input to ISO string
+const fromDateTimeLocalString = (localString: string) => {
+  return new Date(localString).toISOString()
 }
 
 interface MonthCalendarProps {
@@ -163,8 +177,9 @@ const CompletionHistoryModal = ({
   // Filter completions for current program
   const completions = state.context.programCompletions
     .filter(c => c.programId === programId)
-    .sort((a, b) =>
-      new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+    .sort(
+      (a, b) =>
+        new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime(),
     )
 
   // Calendar state
@@ -173,9 +188,20 @@ const CompletionHistoryModal = ({
 
   // Delete confirmation state
   const [completionToDelete, setCompletionToDelete] = useState<string | null>(
-    null
+    null,
   )
   const deleteCancelRef = useRef<any>()
+
+  // Edit completion state
+  const [editingCompletion, setEditingCompletion] =
+    useState<ProgramCompletion | null>(null)
+  const [editDateTime, setEditDateTime] = useState("")
+  const editCancelRef = useRef<any>()
+
+  // Add completion state
+  const [isAddingCompletion, setIsAddingCompletion] = useState(false)
+  const [addDateTime, setAddDateTime] = useState("")
+  const addCancelRef = useRef<any>()
 
   // Get completions for selected date
   const selectedDateStr = selectedDate?.toISOString().split("T")?.[0] // YYYY-MM-DD
@@ -258,6 +284,129 @@ const CompletionHistoryModal = ({
         </AlertDialogOverlay>
       </AlertDialog>
 
+      {/* Edit completion dialog */}
+      <AlertDialog
+        isOpen={!!editingCompletion}
+        leastDestructiveRef={editCancelRef}
+        onClose={() => {
+          setEditingCompletion(null)
+          setEditDateTime("")
+        }}
+        isCentered
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent mx={4}>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Edit completion
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              <FormControl>
+                <FormLabel>Date and Time</FormLabel>
+                <Input
+                  type="datetime-local"
+                  value={editDateTime}
+                  onChange={e => setEditDateTime(e.target.value)}
+                />
+              </FormControl>
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button
+                ref={editCancelRef}
+                onClick={() => {
+                  setEditingCompletion(null)
+                  setEditDateTime("")
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                colorScheme="teal"
+                onClick={() => {
+                  if (editingCompletion && editDateTime) {
+                    send({
+                      type: "UPDATE_COMPLETION",
+                      completionId: editingCompletion.id,
+                      completedAt: fromDateTimeLocalString(editDateTime),
+                    })
+                  }
+                  setEditingCompletion(null)
+                  setEditDateTime("")
+                }}
+                ml={3}
+                isDisabled={!editDateTime}
+              >
+                Save
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
+      {/* Add completion dialog */}
+      <AlertDialog
+        isOpen={isAddingCompletion}
+        leastDestructiveRef={addCancelRef}
+        onClose={() => {
+          setIsAddingCompletion(false)
+          setAddDateTime("")
+        }}
+        isCentered
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent mx={4}>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Add completion
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              <FormControl>
+                <FormLabel>Date and Time</FormLabel>
+                <Input
+                  type="datetime-local"
+                  value={addDateTime}
+                  onChange={e => setAddDateTime(e.target.value)}
+                />
+              </FormControl>
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button
+                ref={addCancelRef}
+                onClick={() => {
+                  setIsAddingCompletion(false)
+                  setAddDateTime("")
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                colorScheme="teal"
+                onClick={() => {
+                  if (addDateTime) {
+                    send({
+                      type: "ADD_COMPLETION",
+                      completion: ProgramCompletionSchema.parse({
+                        programId,
+                        programName,
+                        completedAt: fromDateTimeLocalString(addDateTime),
+                      }),
+                    })
+                  }
+                  setIsAddingCompletion(false)
+                  setAddDateTime("")
+                }}
+                ml={3}
+                isDisabled={!addDateTime}
+              >
+                Add
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
       {/* Main modal */}
       <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
         <ModalOverlay />
@@ -288,13 +437,13 @@ const CompletionHistoryModal = ({
                 />
               </HStack>
 
-               {/* Calendar component */}
-               <MonthCalendar
-                 month={selectedMonth}
-                 selectedDate={selectedDate}
-                 onSelectDate={setSelectedDate}
-                 completions={completions}
-               />
+              {/* Calendar component */}
+              <MonthCalendar
+                month={selectedMonth}
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
+                completions={completions}
+              />
 
               <Divider />
 
@@ -318,8 +467,16 @@ const CompletionHistoryModal = ({
                       >
                         <Text>{formatDateTime(completion.completedAt)}</Text>
                         <HStack>
-                          {/* Edit button - TODO: Implement in Phase 5 */}
-                          <Button size="sm" variant="ghost">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setEditingCompletion(completion)
+                              setEditDateTime(
+                                toDateTimeLocalString(completion.completedAt),
+                              )
+                            }}
+                          >
                             Edit
                           </Button>
                           <IconButton
@@ -327,17 +484,28 @@ const CompletionHistoryModal = ({
                             icon={<DeleteIcon />}
                             size="sm"
                             variant="ghost"
-                            onClick={() =>
-                              setCompletionToDelete(completion.id)
-                            }
+                            onClick={() => setCompletionToDelete(completion.id)}
                           />
                         </HStack>
                       </HStack>
                     ))
                   )}
 
-                  {/* Add button - TODO: Implement in Phase 5 */}
-                  <Button variant="outline" size="sm">
+                  {/* Add completion button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Default to selected date at current time
+                      const defaultDate = selectedDate || new Date()
+                      defaultDate.setHours(new Date().getHours())
+                      defaultDate.setMinutes(new Date().getMinutes())
+                      setAddDateTime(
+                        toDateTimeLocalString(defaultDate.toISOString()),
+                      )
+                      setIsAddingCompletion(true)
+                    }}
+                  >
                     Add completion
                   </Button>
                 </VStack>
