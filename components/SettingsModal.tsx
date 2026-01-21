@@ -32,9 +32,10 @@ import {
   TabPanel,
   TabPanels,
   Tabs,
+  Divider,
 } from "@chakra-ui/react"
 import { useVoices } from "lib/audio"
-import { AllPrograms, AllProgramsSchema } from "lib/types"
+import { AllPrograms, AllProgramsSchema, AllProgramCompletions, AllProgramCompletionsSchema } from "lib/types"
 import { useTimerActor } from "lib/useTimerMachine"
 import { useEffect, useRef, useState } from "react"
 
@@ -42,6 +43,7 @@ type SettingsModalProps = Omit<ModalProps, "children">
 const SettingsModal = ({ isOpen, onClose, ...props }: SettingsModalProps) => {
   const voices = useVoices()
   const [data, setData] = useState("[]")
+  const [completionData, setCompletionData] = useState("[]")
   const [confirmDelete, setConfirmDelete] = useState(false)
   const cancelRef = useRef<any>()
 
@@ -61,9 +63,26 @@ const SettingsModal = ({ isOpen, onClose, ...props }: SettingsModalProps) => {
     // invalid
   }
 
+  let allCompletions: AllProgramCompletions = []
+  let isCompletionDataValid = false
+
+  try {
+    const parsed = AllProgramCompletionsSchema.safeParse(JSON.parse(completionData))
+    if (parsed.success) {
+      allCompletions = parsed.data
+      isCompletionDataValid = true
+    }
+  } catch (e) {
+    // invalid
+  }
+
   useEffect(() => {
     setData(JSON.stringify(state.context.allPrograms))
   }, [state.context.allPrograms, isOpen])
+
+  useEffect(() => {
+    setCompletionData(JSON.stringify(state.context.programCompletions))
+  }, [state.context.programCompletions, isOpen])
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} {...props}>
@@ -177,40 +196,73 @@ const SettingsModal = ({ isOpen, onClose, ...props }: SettingsModalProps) => {
                   </FormControl>
                 </VStack>
               </TabPanel>
-              <TabPanel>
-                <VStack mt={4} spacing={8}>
-                  <FormControl isInvalid={!isValid}>
-                    <FormLabel>Data</FormLabel>
-                    <Textarea
-                      value={data}
-                      onChange={e => setData(e.target.value)}
-                      fontFamily="monospace"
-                      fontSize="sm"
-                    />
-                    <FormErrorMessage>Invalid data</FormErrorMessage>
-                    <Button
-                      mt={4}
-                      w="full"
-                      isDisabled={!isValid}
-                      flex={1}
-                      onClick={() => {
-                        send({ type: "SET_ALL_PROGRAMS", allPrograms })
-                      }}
-                    >
-                      Import data
-                    </Button>
-                  </FormControl>
+               <TabPanel>
+                 <VStack mt={4} spacing={8}>
+                   {/* Program Data Section */}
+                   <VStack spacing={4} w="full" align="start">
+                     <Text fontWeight="bold">Program Data</Text>
+                     <FormControl isInvalid={!isValid} w="full">
+                       <FormLabel>Programs</FormLabel>
+                       <Textarea
+                         value={data}
+                         onChange={e => setData(e.target.value)}
+                         fontFamily="monospace"
+                         fontSize="sm"
+                         rows={6}
+                       />
+                       <FormErrorMessage>Invalid program data</FormErrorMessage>
+                       <Button
+                         mt={4}
+                         w="full"
+                         isDisabled={!isValid}
+                         onClick={() => {
+                           send({ type: "SET_ALL_PROGRAMS", allPrograms })
+                         }}
+                       >
+                         Import programs
+                       </Button>
+                     </FormControl>
 
-                  <Button
-                    colorScheme="red"
-                    leftIcon={<DeleteIcon />}
-                    w="full"
-                    onClick={() => setConfirmDelete(true)}
-                  >
-                    Restore default data
-                  </Button>
-                </VStack>
-              </TabPanel>
+                     <Button
+                       colorScheme="red"
+                       leftIcon={<DeleteIcon />}
+                       w="full"
+                       onClick={() => setConfirmDelete(true)}
+                     >
+                       Restore default data
+                     </Button>
+                   </VStack>
+
+                   {/* Divider */}
+                   <Divider />
+
+                   {/* Completion History Data Section */}
+                   <VStack spacing={4} w="full" align="start">
+                     <Text fontWeight="bold">Completion History Data</Text>
+                     <FormControl isInvalid={!isCompletionDataValid} w="full">
+                       <FormLabel>Completion Data</FormLabel>
+                       <Textarea
+                         value={completionData}
+                         onChange={e => setCompletionData(e.target.value)}
+                         fontFamily="monospace"
+                         fontSize="sm"
+                         rows={6}
+                       />
+                       <FormErrorMessage>Invalid completion data</FormErrorMessage>
+                       <Button
+                         mt={4}
+                         w="full"
+                         isDisabled={!isCompletionDataValid}
+                         onClick={() => {
+                           send({ type: "SET_ALL_COMPLETIONS", completions: allCompletions })
+                         }}
+                       >
+                         Import completion history
+                       </Button>
+                     </FormControl>
+                   </VStack>
+                 </VStack>
+               </TabPanel>
             </TabPanels>
           </Tabs>
         </ModalBody>
