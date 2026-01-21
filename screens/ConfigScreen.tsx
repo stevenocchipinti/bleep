@@ -838,14 +838,24 @@ const ConfigScreen = ({
                         </FormControl>
                       </FlexTabPanel>
                       <Flex gap={4} justifyContent="space-between" mt={2}>
-                        <IconButton
-                          variant="outline"
-                          aria-label="Delete block"
-                          icon={<DeleteIcon />}
-                          onClick={() =>
-                            setThingToDelete({ type: "block", index })
-                          }
-                        />
+                        <Flex gap={2}>
+                          <IconButton
+                            variant="outline"
+                            aria-label="Delete block"
+                            icon={<DeleteIcon />}
+                            onClick={() =>
+                              setThingToDelete({ type: "block", index })
+                            }
+                          />
+                          <IconButton
+                            variant="outline"
+                            aria-label="Duplicate block"
+                            icon={<CopyIcon />}
+                            onClick={() => {
+                              send({ type: "DUPLICATE_BLOCK", index })
+                            }}
+                          />
+                        </Flex>
                         <FormControl
                           display="flex"
                           alignItems="center"

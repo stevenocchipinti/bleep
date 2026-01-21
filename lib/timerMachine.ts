@@ -53,6 +53,7 @@ type UpdateBlockEvent = {
   block: Block
 }
 type DeleteBlockEvent = { type: "DELETE_BLOCK"; index: number }
+type DuplicateBlockEvent = { type: "DUPLICATE_BLOCK"; index: number }
 
 // Timer events
 type StartEvent = { type: "START" }
@@ -98,6 +99,7 @@ type Events =
   | MoveBlockEvent
   | UpdateBlockEvent
   | DeleteBlockEvent
+  | DuplicateBlockEvent
   // Timer events
   | StartEvent
   | ResetEvent
@@ -248,6 +250,11 @@ const timerMachine = createMachine(
                           DELETE_BLOCK: {
                             target: "saving",
                             actions: ["deleteBlock"],
+                          },
+
+                          DUPLICATE_BLOCK: {
+                            target: "saving",
+                            actions: ["duplicateBlock"],
                           },
 
                           MOVE_BLOCK: {
@@ -858,6 +865,21 @@ const timerMachine = createMachine(
       }),
       deleteBlock: immerAssign((context, event: DeleteBlockEvent) => {
         currentProgramFrom(context).blocks.splice(event.index, 1)
+      }),
+      duplicateBlock: immerAssign((context, event: DuplicateBlockEvent) => {
+        const blocks = currentProgramFrom(context).blocks
+        const blockToDuplicate = blocks[event.index]
+        if (!blockToDuplicate) return
+        
+        // Create a copy of the block with a new ID and modified name
+        const duplicatedBlock = BlockSchema.parse({
+          ...blockToDuplicate,
+          id: undefined, // Will generate a new ID via the schema default
+          name: `${blockToDuplicate.name} (copy)`,
+        })
+        
+        // Insert the duplicated block right after the original
+        blocks.splice(event.index + 1, 0, duplicatedBlock)
       }),
       moveBlock: immerAssign(
         (context, { fromIndex, toIndex }: MoveBlockEvent) => {
