@@ -7,6 +7,7 @@ import {
   CopyIcon,
   SettingsIcon,
   ArrowForwardIcon,
+  CalendarIcon,
 } from "@chakra-ui/icons"
 import {
   IconButton,
@@ -60,6 +61,7 @@ import QRCode from "react-qr-code"
 import { useDebouncedCallback } from "use-debounce"
 
 import DndContext from "@/components/DndContext"
+import CompletionHistoryModal from "@/components/CompletionHistoryModal"
 
 import CardButton from "@/components/CardButton"
 import { ChipTab } from "@/components/Chip"
@@ -192,7 +194,7 @@ const ConfigScreen = ({
   const { program, blocks } = currentProgramFrom(state.context)
   const isValid = ProgramSchema.safeParse(program).success
 
-  // Sharing
+   // Sharing
   interface ShareData {
     title: string
     text: string
@@ -202,6 +204,9 @@ const ConfigScreen = ({
   const [shareModalIsOpen, setShareModalIsOpen] = useState(false)
   const [canUseShareAPI, setCanUseShareAPI] = useState(false)
   const shareCancelRef = React.useRef<any>()
+
+  // History modal
+  const [historyModalIsOpen, setHistoryModalIsOpen] = useState(false)
   useEffect(() => {
     setCanUseShareAPI(!!window.navigator?.share)
 
@@ -481,35 +486,41 @@ const ConfigScreen = ({
                 icon={<HamburgerIcon />}
                 variant="outline"
               />
-              <MenuList>
-                <MenuGroup>
-                  <MenuItem
-                    icon={<LinkIcon />}
-                    isDisabled={!isValid}
-                    onClick={() => setShareModalIsOpen(true)}
-                  >
-                    Share
-                  </MenuItem>
-                  <MenuItem
-                    icon={<CopyIcon />}
-                    onClick={() => send({ type: "DUPLICATE_PROGRAM" })}
-                  >
-                    Duplicate
-                  </MenuItem>
-                  <MenuItem
-                    icon={<DeleteIcon />}
-                    onClick={() => setThingToDelete({ type: "program" })}
-                  >
-                    Delete
-                  </MenuItem>
-                </MenuGroup>
-                <MenuDivider />
-                <MenuGroup>
-                  <MenuItem onClick={openSettingsModal} icon={<SettingsIcon />}>
-                    Settings
-                  </MenuItem>
-                </MenuGroup>
-              </MenuList>
+               <MenuList>
+                 <MenuGroup>
+                   <MenuItem
+                     icon={<LinkIcon />}
+                     isDisabled={!isValid}
+                     onClick={() => setShareModalIsOpen(true)}
+                   >
+                     Share
+                   </MenuItem>
+                   <MenuItem
+                     icon={<CalendarIcon />}
+                     onClick={() => setHistoryModalIsOpen(true)}
+                   >
+                     History
+                   </MenuItem>
+                   <MenuItem
+                     icon={<CopyIcon />}
+                     onClick={() => send({ type: "DUPLICATE_PROGRAM" })}
+                   >
+                     Duplicate
+                   </MenuItem>
+                   <MenuItem
+                     icon={<DeleteIcon />}
+                     onClick={() => setThingToDelete({ type: "program" })}
+                   >
+                     Delete
+                   </MenuItem>
+                 </MenuGroup>
+                 <MenuDivider />
+                 <MenuGroup>
+                   <MenuItem onClick={openSettingsModal} icon={<SettingsIcon />}>
+                     Settings
+                   </MenuItem>
+                 </MenuGroup>
+               </MenuList>
             </Menu>
           </>
         }
@@ -886,10 +897,17 @@ const ConfigScreen = ({
               Add block
             </Button>
           </DndContext>
-        </Flex>
-      </SwipeableChild>
-    </>
-  )
+         </Flex>
+       </SwipeableChild>
+
+       <CompletionHistoryModal
+         isOpen={historyModalIsOpen}
+         onClose={() => setHistoryModalIsOpen(false)}
+         programId={program.id}
+         programName={program.name}
+       />
+     </>
+   )
 }
 
 export default ConfigScreen
