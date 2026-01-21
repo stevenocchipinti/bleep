@@ -58,6 +58,15 @@ export const SettingsSchema = z.object({
   voiceRecognitionEnabled: z.boolean().nullable().default(null),
 })
 
+export const ProgramCompletionSchema = z.object({
+  id: z.string().default(() => generateId(6)),
+  programId: z.string(),
+  programName: z.string(),
+  completedAt: z.string(),
+})
+
+export const AllProgramCompletionsSchema = z.array(ProgramCompletionSchema)
+
 export type TimerBlock = z.infer<typeof TimerBlockSchema>
 export type PauseBlock = z.infer<typeof PauseBlockSchema>
 export type MessageBlock = z.infer<typeof MessageBlockSchema>
@@ -65,3 +74,5 @@ export type Block = z.infer<typeof BlockSchema>
 export type Program = z.infer<typeof ProgramSchema>
 export type AllPrograms = z.infer<typeof AllProgramsSchema>
 export type Settings = z.infer<typeof SettingsSchema>
+export type ProgramCompletion = z.infer<typeof ProgramCompletionSchema>
+export type AllProgramCompletions = z.infer<typeof AllProgramCompletionsSchema>

@@ -4,12 +4,14 @@ import localforage from "localforage"
 
 import defaultData from "./defaultData"
 import {
-  AllProgramsSchema,
-  BlockSchema,
-  ProgramSchema,
-  SettingsSchema,
-} from "./types"
-import type { Block, Program, Settings } from "./types"
+   AllProgramsSchema,
+   BlockSchema,
+   ProgramSchema,
+   SettingsSchema,
+   AllProgramCompletionsSchema,
+   ProgramCompletionSchema,
+ } from "./types"
+ import type { Block, Program, Settings, ProgramCompletion, AllProgramCompletions } from "./types"
 import { playTone, speak as speakFn } from "./audio"
 
 declare global {
@@ -83,6 +85,13 @@ type StopListeningEvent = { type: "STOP_LISTENING" }
 type DenyListeningEvent = { type: "DENY_LISTENING" }
 type AllowListeningEvent = { type: "ALLOW_LISTENING" }
 
+// Completions
+type AllCompletionsLoadedEvent = { type: "COMPLETIONS_LOADED"; data: AllProgramCompletions }
+type AddCompletionEvent = { type: "ADD_COMPLETION"; completion: ProgramCompletion }
+type UpdateCompletionEvent = { type: "UPDATE_COMPLETION"; completionId: string; completedAt: string }
+type DeleteCompletionEvent = { type: "DELETE_COMPLETION"; completionId: string }
+type SetAllCompletionsEvent = { type: "SET_ALL_COMPLETIONS"; completions: AllProgramCompletions }
+
 type Events =
   // Program events
   | AllProgramsLoadedEvent
@@ -122,9 +131,16 @@ type Events =
   | StopListeningEvent
   | DenyListeningEvent
   | AllowListeningEvent
+  // Completions
+  | AllCompletionsLoadedEvent
+  | AddCompletionEvent
+  | UpdateCompletionEvent
+  | DeleteCompletionEvent
+  | SetAllCompletionsEvent
 
 type Context = {
   allPrograms: Program[]
+  programCompletions: ProgramCompletion[]
   settings: Settings
   selectedProgramId: string | null
   currentBlockIndex: number
@@ -182,6 +198,7 @@ const timerMachine = createMachine(
 
     context: {
       allPrograms: [],
+      programCompletions: [],
       // Settings
       settings: {
         voiceURI: null,
@@ -279,7 +296,7 @@ const timerMachine = createMachine(
 
                           DELETE_PROGRAM: {
                             target: "saving",
-                            actions: ["deleteProgram"],
+                            actions: ["deleteProgram", "deleteCompletionsForProgram"],
                           },
 
                           UPDATE_BLOCK: {
@@ -441,7 +458,7 @@ const timerMachine = createMachine(
                     always: {
                       target: "stopped",
                       cond: "timerFinished",
-                      actions: "celebration",
+                      actions: ["celebration", "recordCompletion"],
                     },
                   },
 
@@ -641,8 +658,61 @@ const timerMachine = createMachine(
           },
         },
 
-        initial: "not listening",
-      },
+         initial: "not listening",
+       },
+
+       completions: {
+         states: {
+           loading: {
+             invoke: {
+               src: "loadCompletions",
+               onDone: {
+                 target: "loaded",
+                 actions: assign({
+                   programCompletions: (_, event) => event.data,
+                 }),
+               },
+               onError: {
+                 target: "loaded",
+                 actions: assign({
+                   programCompletions: () => [],
+                 }),
+               },
+             },
+           },
+
+           loaded: {
+             on: {
+               ADD_COMPLETION: {
+                 target: "saving",
+                 actions: "addCompletion",
+               },
+               UPDATE_COMPLETION: {
+                 target: "saving",
+                 actions: "updateCompletion",
+               },
+               DELETE_COMPLETION: {
+                 target: "saving",
+                 actions: "deleteCompletion",
+               },
+               SET_ALL_COMPLETIONS: {
+                 target: "saving",
+                 actions: "setAllCompletions",
+               },
+             },
+           },
+
+           saving: {
+             invoke: {
+               src: "saveCompletions",
+               onDone: "loaded",
+               onError: "loaded",
+             },
+           },
+         },
+
+         initial: "loading",
+       },
     },
 
     predictableActionArguments: true,
@@ -911,6 +981,46 @@ const timerMachine = createMachine(
           context.settings.voiceRecognitionEnabled = event.enabled
         }
       ),
+
+      // Completion actions
+      recordCompletion: immerAssign(context => {
+        const program = context.allPrograms.find(p => p.id === context.selectedProgramId)
+        if (!program) return
+
+        const completion = ProgramCompletionSchema.parse({
+          programId: context.selectedProgramId,
+          programName: program.name,
+          completedAt: new Date().toISOString(),
+        })
+        context.programCompletions.push(completion)
+      }),
+
+      addCompletion: immerAssign((context, event: AddCompletionEvent) => {
+        context.programCompletions.push(event.completion)
+      }),
+
+      updateCompletion: immerAssign((context, event: UpdateCompletionEvent) => {
+        const completion = context.programCompletions.find(c => c.id === event.completionId)
+        if (completion) {
+          completion.completedAt = event.completedAt
+        }
+      }),
+
+      deleteCompletion: immerAssign((context, event: DeleteCompletionEvent) => {
+        context.programCompletions = context.programCompletions.filter(
+          c => c.id !== event.completionId
+        )
+      }),
+
+      deleteCompletionsForProgram: immerAssign(context => {
+        context.programCompletions = context.programCompletions.filter(
+          c => c.programId !== context.selectedProgramId
+        )
+      }),
+
+      setAllCompletions: immerAssign((context, event: SetAllCompletionsEvent) => {
+        context.programCompletions = event.completions
+      }),
     },
 
     services: {
@@ -974,51 +1084,61 @@ const timerMachine = createMachine(
         else return Promise.resolve()
       },
 
-      // Voice recognition
-      listen:
-        ({ settings }) =>
-        send => {
-          if (!settings.voiceRecognitionEnabled) return
+       // Voice recognition
+       listen:
+         ({ settings }) =>
+         send => {
+           if (!settings.voiceRecognitionEnabled) return
 
-          const SpeechRecognition =
-            window?.SpeechRecognition || window?.webkitSpeechRecognition
-          if (!SpeechRecognition) {
-            console.error("Speech recognition not supported")
-            return
-          }
+           const SpeechRecognition =
+             window?.SpeechRecognition || window?.webkitSpeechRecognition
+           if (!SpeechRecognition) {
+             console.error("Speech recognition not supported")
+             return
+           }
 
-          const recognition = new SpeechRecognition()
-          recognition.continuous = true
+           const recognition = new SpeechRecognition()
+           recognition.continuous = true
 
-          // Speech recognition will stop automatically:
-          //  - After 5 seconds if no speech is detected
-          //  - After 60 seconds of listening either way
-          //
-          // While this flag is false, anytime the speech recognition stops, it
-          // will automatically be started again by the code below.
-          let reallyStop = false
+           // Speech recognition will stop automatically:
+           //  - After 5 seconds if no speech is detected
+           //  - After 60 seconds of listening either way
+           //
+           // While this flag is false, anytime the speech recognition stops, it
+           // will automatically be started again by the code below.
+           let reallyStop = false
 
-          recognition.addEventListener("result", (e: any) => {
-            const results: any[] = Array.from(e.results)
-            const result = results[results.length - 1]
-            const sentence = result[0].transcript
-            console.log(`🗣️ ${sentence}`)
+           recognition.addEventListener("result", (e: any) => {
+             const results: any[] = Array.from(e.results)
+             const result = results[results.length - 1]
+             const sentence = result[0].transcript
+             console.log(`🗣️ ${sentence}`)
 
-            if (sentence.includes("continue")) send("CONTINUE")
-            if (sentence.includes("next")) send("CONTINUE")
-          })
+             if (sentence.includes("continue")) send("CONTINUE")
+             if (sentence.includes("next")) send("CONTINUE")
+           })
 
-          recognition.addEventListener("end", () => {
-            if (reallyStop) send("STOP_LISTENING")
-            else recognition.start()
-          })
+           recognition.addEventListener("end", () => {
+             if (reallyStop) send("STOP_LISTENING")
+             else recognition.start()
+           })
 
-          recognition.start()
-          return () => {
-            reallyStop = true
-            recognition.stop()
-          }
-        },
+           recognition.start()
+           return () => {
+             reallyStop = true
+             recognition.stop()
+           }
+         },
+
+       // Completions
+       loadCompletions: () =>
+         localforage.getItem("programCompletions").then(data => {
+           if (data) return AllProgramCompletionsSchema.parse(data)
+           return []
+         }),
+
+       saveCompletions: ({ programCompletions }) =>
+         localforage.setItem("programCompletions", programCompletions),
     },
   }
 )
