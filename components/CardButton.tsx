@@ -67,9 +67,8 @@ const CardButton = ({
         transition="0.2s"
         opacity={disabled ? 0.7 : 1}
         variant={selected ? "filled" : undefined}
-        bg={selected ? "gray.600" : undefined}
-        borderWidth={selected ? "2px" : "1px"}
-        borderColor={selected ? "teal.500" : "transparent"}
+        borderWidth={"2px"}
+        borderColor={selected ? "gray.400" : "gray.700"}
         ref={setNodeRef}
         {...props}
       >
@@ -124,10 +123,10 @@ const CardButton = ({
               />
             }
           />
-         </CardHeader>
+        </CardHeader>
 
         {heatmapContent && (
-          <CardBody px={4} py={2}>
+          <CardBody p={2} pt={0}>
             {heatmapContent}
           </CardBody>
         )}
