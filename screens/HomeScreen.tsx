@@ -1,4 +1,5 @@
 import CardButton from "@/components/CardButton"
+import CompletionHeatmap from "@/components/CompletionHeatmap"
 import Logo from "@/components/Logo"
 import { SwipeableChild } from "@/components/SwipeableView"
 import { SettingsIcon } from "@chakra-ui/icons"
@@ -30,7 +31,7 @@ const HomeScreen = ({
   const [hasNewProgram, setHasNewProgram] = useState(false)
 
   const { state, send } = useTimerActor()
-  const { allPrograms, selectedProgramId } = state.context
+  const { allPrograms, selectedProgramId, programCompletions } = state.context
 
   const programIds = allPrograms.map(program => program.id)
 
@@ -75,9 +76,7 @@ const HomeScreen = ({
       </Flex>
 
       <Heading as="h2" textAlign="center" px={8} size="xl">
-        {allPrograms.length > 0
-          ? "Choose your program"
-          : "Create your first program below"}
+        {allPrograms.length === 0 && "Create your first program below"}
       </Heading>
 
       <VStack spacing={4} alignItems="stretch" p={6}>
@@ -97,6 +96,12 @@ const HomeScreen = ({
                   e.stopPropagation()
                   selectProgramById(program.id, isValid)
                 }}
+                heatmapContent={
+                  <CompletionHeatmap
+                    completions={programCompletions}
+                    programId={id}
+                  />
+                }
               />
             )
           })}

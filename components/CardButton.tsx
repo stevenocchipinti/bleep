@@ -28,6 +28,7 @@ interface CardButtonProps {
   children?: React.ReactNode
   style?: any
   isExpanded?: boolean
+  heatmapContent?: React.ReactNode
 }
 
 const CardButton = ({
@@ -43,6 +44,7 @@ const CardButton = ({
   isExpanded,
   onClick,
   innerButtonOnClick,
+  heatmapContent,
   ...props
 }: CardButtonProps) => {
   const transforms = {
@@ -63,10 +65,11 @@ const CardButton = ({
     <div style={style} {...attributes}>
       <Card
         transition="0.2s"
-        transform={selected ? "scale(1.05)" : undefined}
         opacity={disabled ? 0.7 : 1}
         variant={selected ? "filled" : undefined}
         bg={selected ? "gray.600" : undefined}
+        borderWidth={selected ? "2px" : "1px"}
+        borderColor={selected ? "teal.500" : "transparent"}
         ref={setNodeRef}
         {...props}
       >
@@ -121,7 +124,13 @@ const CardButton = ({
               />
             }
           />
-        </CardHeader>
+         </CardHeader>
+
+        {heatmapContent && (
+          <CardBody px={4} py={2}>
+            {heatmapContent}
+          </CardBody>
+        )}
 
         <Collapse in={isExpanded} animateOpacity>
           <CardBody p={4} pt={0}>
