@@ -126,7 +126,7 @@ const CardButton = ({
         </CardHeader>
 
         {heatmapContent && (
-          <CardBody p={2} pt={0}>
+          <CardBody p={2} pt={0} onClick={onClick} cursor="pointer">
             {heatmapContent}
           </CardBody>
         )}

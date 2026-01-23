@@ -64,8 +64,21 @@ const hasCompletions = (
   completions: ProgramCompletion[],
 ): boolean => {
   if (!date) return false
-  const dateStr = date.toISOString().split("T")[0]
-  return completions.some(c => c.completedAt.startsWith(dateStr))
+  // Compare using local date strings (YYYY-MM-DD) to avoid timezone issues
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  const dateStr = `${year}-${month}-${day}`
+  
+  return completions.some(c => {
+    // Parse the stored ISO timestamp and convert to local date string
+    const completionDate = new Date(c.completedAt)
+    const compYear = completionDate.getFullYear()
+    const compMonth = String(completionDate.getMonth() + 1).padStart(2, "0")
+    const compDay = String(completionDate.getDate()).padStart(2, "0")
+    const compDateStr = `${compYear}-${compMonth}-${compDay}`
+    return compDateStr === dateStr
+  })
 }
 
 const isSameDay = (date1: Date | null, date2: Date | null): boolean => {
@@ -84,9 +97,25 @@ const toDateTimeLocalString = (isoString: string) => {
   return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
-// Convert datetime-local input to ISO string
+// Convert datetime-local input to ISO string (preserve local timezone)
 const fromDateTimeLocalString = (localString: string) => {
-  return new Date(localString).toISOString()
+  // datetime-local format: YYYY-MM-DDTHH:mm
+  // Parse it manually to avoid timezone conversion
+  const [datePart, timePart] = localString.split("T")
+  const [year, month, day] = datePart.split("-")
+  const [hours, minutes] = timePart.split(":")
+  
+  // Create date in local timezone
+  const date = new Date(
+    parseInt(year),
+    parseInt(month) - 1,
+    parseInt(day),
+    parseInt(hours),
+    parseInt(minutes),
+    0
+  )
+  
+  return date.toISOString()
 }
 
 interface MonthCalendarProps {
@@ -127,12 +156,13 @@ const MonthCalendar = ({
             <Button
               key={index}
               size="sm"
-              variant={isSelected ? "solid" : "ghost"}
-              colorScheme={isSelected ? "teal" : undefined}
+              variant="ghost"
               onClick={() => date && onSelectDate(date)}
               isDisabled={!date}
               position="relative"
               h="40px"
+              borderWidth={isSelected ? "2px" : "0"}
+              borderColor={isSelected ? "teal.400" : "transparent"}
             >
               {date ? (
                 <>
@@ -140,19 +170,20 @@ const MonthCalendar = ({
                     position="relative"
                     zIndex={1}
                     fontWeight={isToday ? "bold" : "normal"}
+                    color={hasData ? "teal.400" : undefined}
                   >
                     {date.getDate()}
                   </Text>
-                  {hasData && !isSelected && (
+                  {hasData && (
                     <Box
                       position="absolute"
-                      top="50%"
+                      bottom="4px"
                       left="50%"
-                      transform="translate(-50%, -50%)"
-                      w="32px"
-                      h="32px"
+                      transform="translateX(-50%)"
+                      w="4px"
+                      h="4px"
                       borderRadius="full"
-                      bg="teal.100"
+                      bg="teal.400"
                       zIndex={0}
                     />
                   )}
@@ -204,11 +235,16 @@ const CompletionHistoryModal = ({
   const addCancelRef = useRef<any>()
 
   // Get completions for selected date
-  const selectedDateStr = selectedDate?.toISOString().split("T")?.[0] // YYYY-MM-DD
-  const completionsForSelectedDate =
-    selectedDate && selectedDateStr
-      ? completions.filter(c => c.completedAt.startsWith(selectedDateStr))
-      : []
+  const completionsForSelectedDate = selectedDate
+    ? completions.filter(c => {
+        const completionDate = new Date(c.completedAt)
+        return (
+          completionDate.getFullYear() === selectedDate.getFullYear() &&
+          completionDate.getMonth() === selectedDate.getMonth() &&
+          completionDate.getDate() === selectedDate.getDate()
+        )
+      })
+    : []
 
   // Format date for display (Australian format: YYYY/MM/DD HH:mm)
   const formatDateTime = (isoString: string) => {
@@ -411,10 +447,10 @@ const CompletionHistoryModal = ({
       <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
         <ModalOverlay />
         <ModalContent mx={4}>
-          <ModalHeader>History: {programName}</ModalHeader>
+          <ModalHeader>{programName}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <VStack spacing={4} align="stretch">
+            <VStack spacing={6} align="stretch">
               {/* Month navigation */}
               <HStack justify="space-between">
                 <IconButton
@@ -445,15 +481,9 @@ const CompletionHistoryModal = ({
                 completions={completions}
               />
 
-              <Divider />
-
               {/* Selected date completions */}
               {selectedDate ? (
                 <VStack spacing={3} align="stretch">
-                  <Text fontWeight="bold">
-                    {selectedDate.toLocaleDateString("en-AU")}
-                  </Text>
-
                   {completionsForSelectedDate.length === 0 ? (
                     <Text color="gray.500">No completions for this day</Text>
                   ) : (
@@ -464,50 +494,30 @@ const CompletionHistoryModal = ({
                         p={2}
                         borderWidth={1}
                         borderRadius="md"
+                        cursor="pointer"
+                        _hover={{ bg: "whiteAlpha.100" }}
+                        onClick={() => {
+                          setEditingCompletion(completion)
+                          setEditDateTime(
+                            toDateTimeLocalString(completion.completedAt),
+                          )
+                        }}
                       >
                         <Text>{formatDateTime(completion.completedAt)}</Text>
-                        <HStack>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingCompletion(completion)
-                              setEditDateTime(
-                                toDateTimeLocalString(completion.completedAt),
-                              )
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <IconButton
-                            aria-label="Delete"
-                            icon={<DeleteIcon />}
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setCompletionToDelete(completion.id)}
-                          />
-                        </HStack>
+                        <IconButton
+                          aria-label="Delete"
+                          icon={<DeleteIcon />}
+                          size="sm"
+                          variant="ghost"
+                          onClick={e => {
+                            e.stopPropagation()
+                            setCompletionToDelete(completion.id)
+                          }}
+                        />
                       </HStack>
                     ))
                   )}
 
-                  {/* Add completion button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      // Default to selected date at current time
-                      const defaultDate = selectedDate || new Date()
-                      defaultDate.setHours(new Date().getHours())
-                      defaultDate.setMinutes(new Date().getMinutes())
-                      setAddDateTime(
-                        toDateTimeLocalString(defaultDate.toISOString()),
-                      )
-                      setIsAddingCompletion(true)
-                    }}
-                  >
-                    Add completion
-                  </Button>
                 </VStack>
               ) : (
                 <Text color="gray.500" textAlign="center">
@@ -517,7 +527,25 @@ const CompletionHistoryModal = ({
             </VStack>
           </ModalBody>
 
-          <ModalFooter>
+          <ModalFooter mt={4}>
+            <Button
+              colorScheme="teal"
+              onClick={() => {
+                if (!selectedDate) return
+                // Create new date to avoid mutating selectedDate
+                const defaultDate = new Date(selectedDate)
+                defaultDate.setHours(new Date().getHours())
+                defaultDate.setMinutes(new Date().getMinutes())
+                setAddDateTime(
+                  toDateTimeLocalString(defaultDate.toISOString()),
+                )
+                setIsAddingCompletion(true)
+              }}
+              isDisabled={!selectedDate}
+              mr={3}
+            >
+              Add
+            </Button>
             <Button onClick={onClose}>Close</Button>
           </ModalFooter>
         </ModalContent>

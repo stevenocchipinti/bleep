@@ -75,14 +75,26 @@ const CompletionHeatmap = ({
 
   // Count completions per date
   const countCompletionsByDate = (date: Date): number => {
-    const dateStr = date.toISOString().split("T")[0] // YYYY-MM-DD
-    return programCompletions.filter(c => c.completedAt.startsWith(dateStr))
-      .length
+    // Compare using local date strings (YYYY-MM-DD) to avoid timezone issues
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, "0")
+    const day = String(date.getDate()).padStart(2, "0")
+    const dateStr = `${year}-${month}-${day}`
+    
+    return programCompletions.filter(c => {
+      // Parse the stored ISO timestamp and convert to local date string
+      const completionDate = new Date(c.completedAt)
+      const compYear = completionDate.getFullYear()
+      const compMonth = String(completionDate.getMonth() + 1).padStart(2, "0")
+      const compDay = String(completionDate.getDate()).padStart(2, "0")
+      const compDateStr = `${compYear}-${compMonth}-${compDay}`
+      return compDateStr === dateStr
+    }).length
   }
 
   // Get color based on completion count
   const getHeatColor = (count: number): string => {
-    if (count === 0) return theme.colors.gray[600]
+    if (count === 0) return theme.colors.gray[800]
     if (count === 1) return theme.colors.blue[300]
     if (count === 2) return theme.colors.blue[400]
     if (count === 3) return theme.colors.blue[500]
@@ -117,14 +129,6 @@ const CompletionHeatmap = ({
       w="full"
       overflowX="auto"
       overflowY="hidden"
-      onTouchStart={e => {
-        // Prevent parent swipe gesture when touching heatmap
-        e.stopPropagation()
-      }}
-      onTouchMove={e => {
-        // Prevent parent swipe gesture when scrolling heatmap
-        e.stopPropagation()
-      }}
       sx={{
         // Hide scrollbar with modern CSS
         scrollbarWidth: "none", // Firefox
@@ -144,7 +148,6 @@ const CompletionHeatmap = ({
         {dates.map((date, index) => {
           const count = countCompletionsByDate(date)
           const color = getHeatColor(count)
-          const today = isToday(date)
           const future = isFuture(date)
 
           return (
@@ -152,10 +155,9 @@ const CompletionHeatmap = ({
               key={index}
               w="0.5rem"
               h="0.5rem"
-              bg={future ? theme.colors.gray[700] : color}
+              bg={future ? theme.colors.gray[900] : color}
               borderRadius="2px"
-              boxShadow={today ? `inset 0 0 0 1px ${theme.colors.gray[400]}` : undefined}
-              opacity={future ? 0.3 : 1}
+              opacity={future ? 0.25 : 1}
             />
           )
         })}
