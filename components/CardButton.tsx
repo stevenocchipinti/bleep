@@ -12,6 +12,7 @@ import {
 import { CSS } from "@dnd-kit/utilities"
 import { useSortable } from "@dnd-kit/sortable"
 
+import { CheckIcon } from "@/components/icons"
 import { ErrorChip, MessageChip, PauseChip, TimerChip } from "@/components/Chip"
 
 interface CardButtonProps {
@@ -29,6 +30,8 @@ interface CardButtonProps {
   style?: any
   isExpanded?: boolean
   heatmapContent?: React.ReactNode
+  trackableType?: "program" | "habit"
+  isCompletedToday?: boolean
 }
 
 const CardButton = ({
@@ -45,6 +48,8 @@ const CardButton = ({
   onClick,
   innerButtonOnClick,
   heatmapContent,
+  trackableType = "program",
+  isCompletedToday = false,
   ...props
 }: CardButtonProps) => {
   const transforms = {
@@ -106,21 +111,29 @@ const CardButton = ({
           <IconButton
             display="flex"
             variant="ghost"
-            aria-label="Toggle body"
+            aria-label={trackableType === "habit" ? "Toggle completion" : "Toggle body"}
             m={1}
             onClick={
               typeof isExpanded === "boolean" ? undefined : innerButtonOnClick
             }
             icon={
-              <ChevronRightIcon
-                transition="0.2s"
-                transform={
-                  typeof isExpanded === "boolean"
-                    ? transforms[isExpanded ? "up" : "down"]
-                    : undefined
-                }
-                boxSize={5}
-              />
+              trackableType === "habit" ? (
+                <CheckIcon
+                  filled={isCompletedToday}
+                  boxSize={5}
+                  color={isCompletedToday ? "green.400" : undefined}
+                />
+              ) : (
+                <ChevronRightIcon
+                  transition="0.2s"
+                  transform={
+                    typeof isExpanded === "boolean"
+                      ? transforms[isExpanded ? "up" : "down"]
+                      : undefined
+                  }
+                  boxSize={5}
+                />
+              )
             }
           />
         </CardHeader>

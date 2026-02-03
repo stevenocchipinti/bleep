@@ -1,22 +1,26 @@
 import { Box, useTheme } from "@chakra-ui/react"
-import { ProgramCompletion } from "lib/types"
+import { Completion } from "lib/types"
 import { useEffect, useRef, useState } from "react"
 
 interface CompletionHeatmapProps {
-  completions: ProgramCompletion[]
-  programId: string
+  completions: Completion[]
+  trackableId: string
+  trackableType: "program" | "habit"
 }
 
 const CompletionHeatmap = ({
   completions,
-  programId,
+  trackableId,
+  trackableType,
 }: CompletionHeatmapProps) => {
   const theme = useTheme()
   const containerRef = useRef<HTMLDivElement>(null)
   const [numColumns, setNumColumns] = useState(52)
 
-  // Filter completions for this program
-  const programCompletions = completions.filter(c => c.programId === programId)
+  // Filter completions for this trackable
+  const trackableCompletions = completions.filter(
+    c => c.trackableId === trackableId && c.trackableType === trackableType,
+  )
 
   // Get Monday of the current week
   const getMondayOfWeek = (date: Date): Date => {
@@ -33,16 +37,16 @@ const CompletionHeatmap = ({
     const dates: Date[] = []
     const today = new Date()
     const mondayOfCurrentWeek = getMondayOfWeek(today)
-    
+
     // Generate dates for each week, 7 days per week (Monday to Sunday)
     for (let week = weeks - 1; week >= 0; week--) {
       for (let day = 0; day < 7; day++) {
         const date = new Date(mondayOfCurrentWeek)
-        date.setDate(mondayOfCurrentWeek.getDate() - (week * 7) + day)
+        date.setDate(mondayOfCurrentWeek.getDate() - week * 7 + day)
         dates.push(date)
       }
     }
-    
+
     return dates
   }
 
@@ -50,14 +54,17 @@ const CompletionHeatmap = ({
   useEffect(() => {
     const calculateColumns = () => {
       if (!containerRef.current) return
-      
+
       const containerWidth = containerRef.current.offsetWidth
       const cellSize = 8 // 0.5rem = 8px
       const gapSize = 2 // 2px
       const columnWidth = cellSize + gapSize
-      
+
       // Calculate columns needed to fill width, minimum 52 weeks
-      const calculatedColumns = Math.max(52, Math.ceil(containerWidth / columnWidth))
+      const calculatedColumns = Math.max(
+        52,
+        Math.ceil(containerWidth / columnWidth),
+      )
       setNumColumns(calculatedColumns)
     }
 
@@ -80,8 +87,8 @@ const CompletionHeatmap = ({
     const month = String(date.getMonth() + 1).padStart(2, "0")
     const day = String(date.getDate()).padStart(2, "0")
     const dateStr = `${year}-${month}-${day}`
-    
-    return programCompletions.filter(c => {
+
+    return trackableCompletions.filter(c => {
       // Parse the stored ISO timestamp and convert to local date string
       const completionDate = new Date(c.completedAt)
       const compYear = completionDate.getFullYear()

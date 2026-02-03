@@ -27,13 +27,14 @@ import {
 } from "@chakra-ui/react"
 import { ChevronLeftIcon, ChevronRightIcon, DeleteIcon } from "@chakra-ui/icons"
 import { useTimerActor } from "lib/useTimerMachine"
-import { ProgramCompletion, ProgramCompletionSchema } from "lib/types"
+import { Completion, CompletionSchema } from "lib/types"
 
 interface CompletionHistoryModalProps {
   isOpen: boolean
   onClose: () => void
-  programId: string
-  programName: string
+  trackableId: string
+  trackableName: string
+  trackableType: "program" | "habit"
 }
 
 // Helper functions for calendar operations
@@ -61,7 +62,7 @@ const getDaysInMonth = (date: Date): (Date | null)[] => {
 
 const hasCompletions = (
   date: Date | null,
-  completions: ProgramCompletion[],
+  completions: Completion[],
 ): boolean => {
   if (!date) return false
   // Compare using local date strings (YYYY-MM-DD) to avoid timezone issues
@@ -69,7 +70,7 @@ const hasCompletions = (
   const month = String(date.getMonth() + 1).padStart(2, "0")
   const day = String(date.getDate()).padStart(2, "0")
   const dateStr = `${year}-${month}-${day}`
-  
+
   return completions.some(c => {
     // Parse the stored ISO timestamp and convert to local date string
     const completionDate = new Date(c.completedAt)
@@ -104,7 +105,7 @@ const fromDateTimeLocalString = (localString: string) => {
   const [datePart, timePart] = localString.split("T")
   const [year, month, day] = datePart.split("-")
   const [hours, minutes] = timePart.split(":")
-  
+
   // Create date in local timezone
   const date = new Date(
     parseInt(year),
@@ -112,9 +113,9 @@ const fromDateTimeLocalString = (localString: string) => {
     parseInt(day),
     parseInt(hours),
     parseInt(minutes),
-    0
+    0,
   )
-  
+
   return date.toISOString()
 }
 
@@ -122,7 +123,7 @@ interface MonthCalendarProps {
   month: Date
   selectedDate: Date | null
   onSelectDate: (date: Date) => void
-  completions: ProgramCompletion[]
+  completions: Completion[]
 }
 
 const MonthCalendar = ({
@@ -200,18 +201,19 @@ const MonthCalendar = ({
 const CompletionHistoryModal = ({
   isOpen,
   onClose,
-  programId,
-  programName,
+  trackableId,
+  trackableName,
+  trackableType,
 }: CompletionHistoryModalProps) => {
-  const { state, send } = useTimerActor()
+   const { state, send } = useTimerActor()
 
-  // Filter completions for current program
-  const completions = state.context.programCompletions
-    .filter(c => c.programId === programId)
-    .sort(
-      (a, b) =>
-        new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime(),
-    )
+   // Filter completions for current trackable (program or habit)
+   const completions = state.context.completions
+     .filter(c => c.trackableId === trackableId && c.trackableType === trackableType)
+     .sort(
+       (a, b) =>
+         new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime(),
+     )
 
   // Calendar state
   const [selectedMonth, setSelectedMonth] = useState(new Date())
@@ -223,9 +225,9 @@ const CompletionHistoryModal = ({
   )
   const deleteCancelRef = useRef<any>()
 
-  // Edit completion state
-  const [editingCompletion, setEditingCompletion] =
-    useState<ProgramCompletion | null>(null)
+   // Edit completion state
+   const [editingCompletion, setEditingCompletion] =
+     useState<Completion | null>(null)
   const [editDateTime, setEditDateTime] = useState("")
   const editCancelRef = useRef<any>()
 
@@ -420,15 +422,16 @@ const CompletionHistoryModal = ({
               <Button
                 colorScheme="teal"
                 onClick={() => {
-                  if (addDateTime) {
-                    send({
-                      type: "ADD_COMPLETION",
-                      completion: ProgramCompletionSchema.parse({
-                        programId,
-                        programName,
-                        completedAt: fromDateTimeLocalString(addDateTime),
-                      }),
-                    })
+                   if (addDateTime) {
+                     send({
+                       type: "ADD_COMPLETION",
+                       completion: CompletionSchema.parse({
+                         trackableId,
+                         trackableType,
+                         trackableName,
+                         completedAt: fromDateTimeLocalString(addDateTime),
+                       }),
+                     })
                   }
                   setIsAddingCompletion(false)
                   setAddDateTime("")
@@ -447,7 +450,7 @@ const CompletionHistoryModal = ({
       <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
         <ModalOverlay />
         <ModalContent mx={4}>
-          <ModalHeader>{programName}</ModalHeader>
+           <ModalHeader>{trackableName}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={6} align="stretch">
@@ -517,7 +520,6 @@ const CompletionHistoryModal = ({
                       </HStack>
                     ))
                   )}
-
                 </VStack>
               ) : (
                 <Text color="gray.500" textAlign="center">
@@ -536,9 +538,7 @@ const CompletionHistoryModal = ({
                 const defaultDate = new Date(selectedDate)
                 defaultDate.setHours(new Date().getHours())
                 defaultDate.setMinutes(new Date().getMinutes())
-                setAddDateTime(
-                  toDateTimeLocalString(defaultDate.toISOString()),
-                )
+                setAddDateTime(toDateTimeLocalString(defaultDate.toISOString()))
                 setIsAddingCompletion(true)
               }}
               isDisabled={!selectedDate}

@@ -64,6 +64,7 @@ import DndContext from "@/components/DndContext"
 import CompletionHistoryModal from "@/components/CompletionHistoryModal"
 
 import CardButton from "@/components/CardButton"
+import CategoryAutocomplete from "@/components/CategoryAutocomplete"
 import { ChipTab } from "@/components/Chip"
 import { DurationInput } from "@/components/DurationInput"
 import { SwipeableChild, FooterButton } from "@/components/SwipeableView"
@@ -192,6 +193,7 @@ const ConfigScreen = ({
   // Program
   const { state, send } = useTimerActor()
   const { program, blocks } = currentProgramFrom(state.context)
+  const { allPrograms, allHabits } = state.context
   const isValid = ProgramSchema.safeParse(program).success
 
    // Sharing
@@ -568,6 +570,25 @@ const ConfigScreen = ({
           </Editable>
         </Box>
         <Flex direction="column" gap={4} p={4} pb={0}>
+          <CategoryAutocomplete
+            value={program.category || ""}
+            allCategories={[
+              ...allPrograms
+                .filter(p => p.category)
+                .map(p => p.category!)
+                .filter((cat, idx, arr) => arr.indexOf(cat) === idx),
+              ...allHabits
+                .filter(h => h.category)
+                .map(h => h.category!)
+                .filter((cat, idx, arr) => arr.indexOf(cat) === idx),
+            ]}
+            onChange={(category: string) =>
+              debouncedSend({
+                type: "UPDATE_PROGRAM_CATEGORY",
+                category,
+              })
+            }
+          />
           <DndContext
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
@@ -903,8 +924,9 @@ const ConfigScreen = ({
        <CompletionHistoryModal
          isOpen={historyModalIsOpen}
          onClose={() => setHistoryModalIsOpen(false)}
-         programId={program.id}
-         programName={program.name}
+         trackableId={program.id}
+         trackableName={program.name}
+         trackableType="program"
        />
      </>
    )

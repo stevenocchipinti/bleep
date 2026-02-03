@@ -35,7 +35,7 @@ import {
   Divider,
 } from "@chakra-ui/react"
 import { useVoices } from "lib/audio"
-import { AllPrograms, AllProgramsSchema, AllProgramCompletions, AllProgramCompletionsSchema } from "lib/types"
+import { AllPrograms, AllProgramsSchema, AllCompletions, AllCompletionsSchema } from "lib/types"
 import { useTimerActor } from "lib/useTimerMachine"
 import { useEffect, useRef, useState } from "react"
 
@@ -63,26 +63,26 @@ const SettingsModal = ({ isOpen, onClose, ...props }: SettingsModalProps) => {
     // invalid
   }
 
-  let allCompletions: AllProgramCompletions = []
-  let isCompletionDataValid = false
+   let allCompletions: AllCompletions = []
+   let isCompletionDataValid = false
 
-  try {
-    const parsed = AllProgramCompletionsSchema.safeParse(JSON.parse(completionData))
-    if (parsed.success) {
-      allCompletions = parsed.data
-      isCompletionDataValid = true
-    }
-  } catch (e) {
-    // invalid
-  }
+   try {
+     const parsed = AllCompletionsSchema.safeParse(JSON.parse(completionData))
+     if (parsed.success) {
+       allCompletions = parsed.data
+       isCompletionDataValid = true
+     }
+   } catch (e) {
+     // invalid
+   }
 
-  useEffect(() => {
-    setData(JSON.stringify(state.context.allPrograms))
-  }, [state.context.allPrograms, isOpen])
+   useEffect(() => {
+     setData(JSON.stringify(state.context.allPrograms))
+   }, [state.context.allPrograms, isOpen])
 
-  useEffect(() => {
-    setCompletionData(JSON.stringify(state.context.programCompletions))
-  }, [state.context.programCompletions, isOpen])
+   useEffect(() => {
+     setCompletionData(JSON.stringify(state.context.completions))
+   }, [state.context.completions, isOpen])
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} {...props}>
