@@ -3,102 +3,236 @@
 exports[`renders homepage unchanged 1`] = `
 <div>
   <div
-    class="container"
+    class="css-1g4yje1"
   >
-    <main>
-      <h1
-        class="title"
-      >
-        Welcome to 
-        <a
-          href="https://nextjs.org"
-        >
-          Next.js!
-        </a>
-      </h1>
-      <p
-        class="description"
-      >
-        Get started by editing 
-        <code>
-          pages/index.js
-        </code>
-      </p>
-      <div
-        class="grid"
-      >
-        <a
-          class="card"
-          href="https://nextjs.org/docs"
-        >
-          <h3>
-            Documentation →
-          </h3>
-          <p>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-        <a
-          class="card"
-          href="https://nextjs.org/learn"
-        >
-          <h3>
-            Learn →
-          </h3>
-          <p>
-            Learn about Next.js in an interactive course with quizzes!
-          </p>
-        </a>
-        <a
-          class="card"
-          href="https://github.com/vercel/next.js/tree/canary/examples"
-        >
-          <h3>
-            Examples →
-          </h3>
-          <p>
-            Discover and deploy boilerplate example Next.js projects.
-          </p>
-        </a>
-        <a
-          class="card"
-          href="https://vercel.com/new"
-        >
-          <h3>
-            Deploy →
-          </h3>
-          <p>
-            Instantly deploy your Next.js site to a public URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-    <footer
-      class="footer"
+    <div
+      class="css-zw965d"
+      style="overflow-x: hidden;"
     >
-      <a
-        href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-        rel="noopener noreferrer"
-        target="_blank"
+      <div
+        class="react-swipeable-view-container"
+        style="flex-direction: row; transition: all 0s ease 0s; direction: ltr; display: flex; will-change: transform;"
       >
-        Powered by
-         
-        <span
-          class="logo"
+        <div
+          aria-hidden="false"
+          data-swipeable="true"
+          style="width: 100%; flex-shrink: 0; overflow: auto;"
         >
-          <img
-            alt="Vercel Logo"
-            data-nimg="1"
-            decoding="async"
-            height="16"
-            loading="lazy"
-            src="/vercel.svg"
-            style="color: transparent;"
-            width="72"
-          />
-        </span>
-      </a>
-    </footer>
+          <div
+            class="css-ixlb4"
+          >
+            <div>
+              <div
+                class="css-cmguxq"
+              >
+                <div
+                  class="css-17xejub"
+                />
+                <button
+                  aria-label="Settings"
+                  class="chakra-button css-11gr3oc"
+                  type="button"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="chakra-icon css-onkibi"
+                    focusable="false"
+                    viewBox="0 0 14 14"
+                  >
+                    <path
+                      d="M14,7.77 L14,6.17 L12.06,5.53 L11.61,4.44 L12.49,2.6 L11.36,1.47 L9.55,2.38 L8.46,1.93 L7.77,0.01 L6.17,0.01 L5.54,1.95 L4.43,2.4 L2.59,1.52 L1.46,2.65 L2.37,4.46 L1.92,5.55 L0,6.23 L0,7.82 L1.94,8.46 L2.39,9.55 L1.51,11.39 L2.64,12.52 L4.45,11.61 L5.54,12.06 L6.23,13.98 L7.82,13.98 L8.45,12.04 L9.56,11.59 L11.4,12.47 L12.53,11.34 L11.61,9.53 L12.08,8.44 L14,7.75 L14,7.77 Z M7,10 C5.34,10 4,8.66 4,7 C4,5.34 5.34,4 7,4 C8.66,4 10,5.34 10,7 C10,8.66 8.66,10 7,10 Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div
+                class="chakra-collapse"
+                style="overflow: hidden; display: none; opacity: 0; height: 0px;"
+              >
+                <div
+                  class="css-l24wf3"
+                >
+                  <svg
+                    class="css-iy9op8"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                   
+                  <div
+                    class="css-y1r8b4"
+                  >
+                    <p
+                      class="chakra-text css-0"
+                    >
+                      Use voice recognition?
+                    </p>
+                    <div
+                      class="css-1vakbk4"
+                    >
+                      <button
+                        class="chakra-button css-1jo2po0"
+                        type="button"
+                      >
+                        No
+                      </button>
+                      <button
+                        class="chakra-button css-1jo2po0"
+                        type="button"
+                      >
+                        Yes
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="chakra-collapse"
+                style="overflow: hidden; display: none; opacity: 0; height: 0px;"
+              >
+                <div
+                  class="css-l24wf3"
+                >
+                  <svg
+                    class="css-iy9op8"
+                    stroke-width="1.5"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                   
+                  <p
+                    class="chakra-text css-0"
+                  >
+                    Listening for 
+                    <span
+                      class="css-qtdsmw"
+                    >
+                      continue
+                    </span>
+                     
+                    <span
+                      class="css-qtdsmw"
+                    >
+                      next
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div
+              class="css-6vq36j"
+            >
+              <div
+                class="css-ry0stf"
+              >
+                <svg
+                  class="css-b1mix"
+                  viewBox="0 0 325 325"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="162"
+                    cy="162"
+                    r="158.5"
+                    stroke="currentColor"
+                    stroke-width="7"
+                  />
+                  <path
+                    class="css-pldd83"
+                    d="M65 258.874a137.087 137.087 0 0057.135 34.227 137.153 137.153 0 0066.533 3.267 137.11 137.11 0 0060.217-28.466 137.01 137.01 0 0039.681-53.474 136.945 136.945 0 00-12.667-128.541 137.052 137.052 0 00-49.357-44.71A137.13 137.13 0 00161.926 25"
+                    stroke-linecap="round"
+                    stroke-width="14"
+                    style="transform-origin: center 0px;"
+                    transform-origin="center 0px"
+                  />
+                  <path
+                    d="M156.121 78.181L77.454 156.85M162.357 246.882l78.667-78.667"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-width="23"
+                  />
+                  <path
+                    d="M117.965 82.976l-37.624 37.623M202.829 241.77l37.624-37.624"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-width="18"
+                  />
+                  <path
+                    d="M100.843 102.072l119.711 119.711"
+                    stroke="currentColor"
+                    stroke-linecap="square"
+                    stroke-width="12"
+                  />
+                </svg>
+                <h1
+                  class="chakra-heading css-cp9por"
+                >
+                  Bleep!
+                </h1>
+              </div>
+              <h2
+                class="chakra-heading css-bv7il7"
+              >
+                Create your first program or habit below
+              </h2>
+              <div
+                class="chakra-stack css-a820u"
+              >
+                <div
+                  class="chakra-stack css-v5ln1y"
+                />
+                <div
+                  id="DndDescribedBy-0"
+                  style="display: none;"
+                >
+                  
+    To pick up a draggable item, press the space bar.
+    While dragging, use the arrow keys to move the item.
+    Press space again to drop the item in its new position, or press escape to cancel.
+  
+                </div>
+                <div
+                  aria-atomic="true"
+                  aria-live="assertive"
+                  id="DndLiveRegion-0"
+                  role="status"
+                  style="position: fixed; width: 1px; height: 1px; margin: -1px; border: 0px; padding: 0px; overflow: hidden; clip-path: inset(100%); white-space: nowrap;"
+                />
+                <button
+                  class="chakra-button css-pmna7d"
+                  type="button"
+                >
+                  New program
+                </button>
+                <button
+                  class="chakra-button css-pmna7d"
+                  type="button"
+                >
+                  New habit
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+  <span
+    hidden=""
+    id="__chakra_env"
+  />
 </div>
 `;
