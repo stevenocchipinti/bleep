@@ -241,7 +241,6 @@ const HomeScreen = ({
                               id={program.id}
                               text={program.name}
                               trackableType="program"
-                              selected={selectedProgramId === program.id}
                               onClick={() => selectProgramById(program.id)}
                               error={!isValid}
                               innerButtonOnClick={e => {
@@ -267,7 +266,6 @@ const HomeScreen = ({
                               text={habit.name}
                               trackableType="habit"
                               isCompletedToday={isCompletedToday(habit.id)}
-                              selected={selectedHabitId === habit.id}
                               onClick={() => selectHabitById(habit.id)}
                               error={!isValid}
                               innerButtonOnClick={e => {
@@ -308,7 +306,6 @@ const HomeScreen = ({
                       id={program.id}
                       text={program.name}
                       trackableType="program"
-                      selected={selectedProgramId === program.id}
                       onClick={() => selectProgramById(program.id)}
                       error={!isValid}
                       innerButtonOnClick={e => {
@@ -334,7 +331,6 @@ const HomeScreen = ({
                       text={habit.name}
                       trackableType="habit"
                       isCompletedToday={isCompletedToday(habit.id)}
-                      selected={selectedHabitId === habit.id}
                       onClick={() => selectHabitById(habit.id)}
                       error={!isValid}
                       innerButtonOnClick={e => {

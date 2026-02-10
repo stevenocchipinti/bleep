@@ -38,12 +38,6 @@ const Page = () => {
   }, [program, habit])
 
   const selectProgramById = (id: string, skip: boolean = false) => {
-    if (state.context.selectedProgramId === id) {
-      send({ type: "DESELECT_PROGRAM" })
-      history.replaceState({ slide: 0 }, "")
-      return
-    }
-
     send({ type: "SELECT_PROGRAM", id })
     setSlideIndex(skip ? 2 : 1)
 
@@ -58,13 +52,6 @@ const Page = () => {
     // Deselect any selected program first
     if (state.context.selectedProgramId) {
       send({ type: "DESELECT_PROGRAM" })
-    }
-
-    if (state.context.selectedHabitId === id) {
-      send({ type: "DESELECT_HABIT" })
-      history.replaceState({ slide: 0 }, "")
-      setSlideIndex(0)
-      return
     }
 
     send({ type: "SELECT_HABIT", id })
