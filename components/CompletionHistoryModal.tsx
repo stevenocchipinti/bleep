@@ -164,6 +164,10 @@ const MonthCalendar = ({
               h="40px"
               borderWidth={isSelected ? "2px" : "0"}
               borderColor={isSelected ? "teal.400" : "transparent"}
+              bg={isToday ? "whiteAlpha.200" : undefined}
+              _hover={{
+                bg: isToday ? "whiteAlpha.300" : undefined,
+              }}
             >
               {date ? (
                 <>
