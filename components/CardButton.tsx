@@ -20,6 +20,7 @@ interface CardButtonProps {
   text: string
   seconds?: number
   reps?: number
+  sequence?: "once" | "each side"
   message?: boolean
   disabled?: boolean
   error?: boolean
@@ -39,6 +40,7 @@ const CardButton = ({
   text,
   seconds,
   reps,
+  sequence,
   message,
   error,
   disabled,
@@ -97,7 +99,11 @@ const CardButton = ({
                 <TimerChip disabled={disabled} seconds={seconds} />
               )}
               {typeof reps === "number" && (
-                <PauseChip disabled={disabled} reps={reps} />
+                <PauseChip
+                  disabled={disabled}
+                  reps={reps}
+                  sequence={sequence}
+                />
               )}
             </>
           )}
@@ -111,7 +117,9 @@ const CardButton = ({
           <IconButton
             display="flex"
             variant="ghost"
-            aria-label={trackableType === "habit" ? "Toggle completion" : "Toggle body"}
+            aria-label={
+              trackableType === "habit" ? "Toggle completion" : "Toggle body"
+            }
             m={1}
             onClick={
               typeof isExpanded === "boolean" ? undefined : innerButtonOnClick

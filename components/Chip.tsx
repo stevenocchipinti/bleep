@@ -11,7 +11,7 @@ interface ChipProps extends TextProps {
 const Chip = React.forwardRef(
   (
     { children, colorScheme, isSelected, ...props }: ChipProps,
-    ref: React.Ref<any>
+    ref: React.Ref<any>,
   ) => {
     return (
       <Text
@@ -33,7 +33,7 @@ const Chip = React.forwardRef(
         {children}
       </Text>
     )
-  }
+  },
 )
 Chip.displayName = "Chip"
 
@@ -71,12 +71,25 @@ const TimerChip = (props: { seconds: number; disabled?: boolean }) => {
 const PauseChip = ({
   reps,
   disabled,
+  sequence,
 }: {
   reps: number
   disabled?: boolean
+  sequence?: "once" | "each side"
 }) => (
   <Chip colorScheme={disabled ? "gray" : "purple"}>
-    {reps === 0 ? <PauseIcon h={5} mx="auto" /> : `${reps}⨯`}
+    {reps === 0 ? (
+      <PauseIcon h={5} mx="auto" />
+    ) : sequence === "each side" ? (
+      <>
+        {reps}
+        <Text as="span" fontSize="0.5rem">
+          es
+        </Text>
+      </>
+    ) : (
+      `${reps}⨯`
+    )}
   </Chip>
 )
 

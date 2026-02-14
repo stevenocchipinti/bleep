@@ -100,7 +100,10 @@ type DenyListeningEvent = { type: "DENY_LISTENING" }
 type AllowListeningEvent = { type: "ALLOW_LISTENING" }
 
 // Completions
-type AllCompletionsLoadedEvent = { type: "COMPLETIONS_LOADED"; data: AllCompletions }
+type AllCompletionsLoadedEvent = {
+  type: "COMPLETIONS_LOADED"
+  data: AllCompletions
+}
 type AddCompletionEvent = {
   type: "ADD_COMPLETION"
   completion: Completion
@@ -123,7 +126,10 @@ type DeselectHabitEvent = { type: "DESELECT_HABIT" }
 type NewHabitEvent = { type: "NEW_HABIT" }
 type MoveHabitEvent = { type: "MOVE_HABIT"; fromIndex: number; toIndex: number }
 type RenameHabitEvent = { type: "RENAME_HABIT"; name: string }
-type UpdateHabitCategoryEvent = { type: "UPDATE_HABIT_CATEGORY"; category: string }
+type UpdateHabitCategoryEvent = {
+  type: "UPDATE_HABIT_CATEGORY"
+  category: string
+}
 type DeleteHabitEvent = { type: "DELETE_HABIT" }
 type ToggleHabitCompletionEvent = {
   type: "TOGGLE_HABIT_COMPLETION"
@@ -197,6 +203,7 @@ type Context = {
   currentBlockIndex: number
   secondsRemaining: number
   leadSecondsRemaining: number
+  currentSide: "left" | "right" | null
 }
 
 // Helpers
@@ -267,6 +274,7 @@ const timerMachine = createMachine(
       currentBlockIndex: 0,
       secondsRemaining: 0,
       leadSecondsRemaining: 0,
+      currentSide: null,
     },
 
     states: {
@@ -491,10 +499,17 @@ const timerMachine = createMachine(
 
                       "Awaiting continue": {
                         on: {
-                          CONTINUE: {
-                            target: "Announcing block",
-                            actions: "nextBlock",
-                          },
+                          CONTINUE: [
+                            {
+                              target: "Announcing block",
+                              cond: "shouldSwitchSides",
+                              actions: "switchSides",
+                            },
+                            {
+                              target: "Announcing block",
+                              actions: ["resetRepCounter", "nextBlock"],
+                            },
+                          ],
                         },
 
                         entry: "startListening",
@@ -726,25 +741,25 @@ const timerMachine = createMachine(
         initial: "not listening",
       },
 
-       completions: {
-         states: {
-           loading: {
-             invoke: {
-               src: "loadCompletions",
-               onDone: {
-                 target: "loaded",
-                 actions: assign({
-                   completions: (_, event) => event.data,
-                 }),
-               },
-               onError: {
-                 target: "loaded",
-                 actions: assign({
-                   completions: () => [],
-                 }),
-               },
-             },
-           },
+      completions: {
+        states: {
+          loading: {
+            invoke: {
+              src: "loadCompletions",
+              onDone: {
+                target: "loaded",
+                actions: assign({
+                  completions: (_, event) => event.data,
+                }),
+              },
+              onError: {
+                target: "loaded",
+                actions: assign({
+                  completions: () => [],
+                }),
+              },
+            },
+          },
 
           loaded: {
             on: {
@@ -908,7 +923,20 @@ const timerMachine = createMachine(
       nextBlockAvailable: context => {
         const { program, blocks, currentBlockIndex } =
           currentProgramFrom(context)
-        return !!program && currentBlockIndex < blocks.length - 1
+         return !!program && currentBlockIndex < blocks.length - 1
+       },
+       shouldSwitchSides: context => {
+        const { currentBlock } = currentProgramFrom(context)
+        if (
+          currentBlock?.type === "pause" &&
+          currentBlock.sequence === "each side" &&
+          currentBlock.reps
+        ) {
+          const { currentSide } = context
+          // If currentSide is null we haven't switched yet — treat as "left"
+          return currentSide === "left" || currentSide === null
+        }
+        return false
       },
       isValid: context => {
         const { program } = currentProgramFrom(context)
@@ -940,45 +968,90 @@ const timerMachine = createMachine(
         const speak = speakerFrom(context)
         speak(`${context.leadSecondsRemaining}`)
       },
-      nextBlock: assign({
-        currentBlockIndex: ({ currentBlockIndex }) => currentBlockIndex + 1,
-        leadSecondsRemaining: context => {
-          const { blocks, currentBlockIndex } = currentProgramFrom(context)
-          const block = blocks[currentBlockIndex + 1]
-          return block?.type === "timer" ? block.leadSeconds : 0
-        },
-        secondsRemaining: context => {
-          const { blocks, currentBlockIndex } = currentProgramFrom(context)
-          const block = blocks[currentBlockIndex + 1]
-          return block?.type === "timer" ? block.seconds : 0
-        },
-      }),
-      previousBlock: assign({
-        currentBlockIndex: ({ currentBlockIndex }) => currentBlockIndex - 1,
-        leadSecondsRemaining: context => {
-          const { blocks, currentBlockIndex } = currentProgramFrom(context)
-          const block = blocks[currentBlockIndex - 1]
-          return block?.type === "timer" ? block.leadSeconds : 0
-        },
-        secondsRemaining: context => {
-          const { blocks, currentBlockIndex } = currentProgramFrom(context)
-          const block = blocks[currentBlockIndex - 1]
-          return block?.type === "timer" ? block.seconds : 0
-        },
-      }),
-      resetTimer: assign({
-        currentBlockIndex: 0,
-        leadSecondsRemaining: context => {
-          const { blocks } = currentProgramFrom(context)
-          const block = blocks[0]
-          return block?.type === "timer" ? block.leadSeconds : 0
-        },
-        secondsRemaining: context => {
-          const { blocks } = currentProgramFrom(context)
-          const block = blocks[0]
-          return block?.type === "timer" ? block.seconds : 0
-        },
-      }),
+       nextBlock: assign({
+         currentBlockIndex: ({ currentBlockIndex }) => currentBlockIndex + 1,
+         currentSide: context => {
+           const { blocks, currentBlockIndex } = currentProgramFrom(context)
+           const block = blocks[currentBlockIndex + 1]
+           // Initialize to "left" if entering a pause with "each side" sequence
+           if (
+             block?.type === "pause" &&
+             block.sequence === "each side" &&
+             block.reps
+           ) {
+             return "left" as const
+           }
+           return null
+         },
+         leadSecondsRemaining: context => {
+           const { blocks, currentBlockIndex } = currentProgramFrom(context)
+           const block = blocks[currentBlockIndex + 1]
+           return block?.type === "timer" ? block.leadSeconds : 0
+         },
+         secondsRemaining: context => {
+           const { blocks, currentBlockIndex } = currentProgramFrom(context)
+           const block = blocks[currentBlockIndex + 1]
+           return block?.type === "timer" ? block.seconds : 0
+         },
+       }),
+       previousBlock: assign({
+         currentBlockIndex: ({ currentBlockIndex }) => currentBlockIndex - 1,
+         currentSide: context => {
+           const { blocks, currentBlockIndex } = currentProgramFrom(context)
+           const block = blocks[currentBlockIndex - 1]
+           // Initialize to "left" if entering a pause with "each side" sequence
+           if (
+             block?.type === "pause" &&
+             block.sequence === "each side" &&
+             block.reps
+           ) {
+             return "left" as const
+           }
+           return null
+         },
+         leadSecondsRemaining: context => {
+           const { blocks, currentBlockIndex } = currentProgramFrom(context)
+           const block = blocks[currentBlockIndex - 1]
+           return block?.type === "timer" ? block.leadSeconds : 0
+         },
+         secondsRemaining: context => {
+           const { blocks, currentBlockIndex } = currentProgramFrom(context)
+           const block = blocks[currentBlockIndex - 1]
+           return block?.type === "timer" ? block.seconds : 0
+         },
+       }),
+       resetTimer: assign({
+         currentBlockIndex: 0,
+         currentSide: null,
+         leadSecondsRemaining: context => {
+           const { blocks } = currentProgramFrom(context)
+           const block = blocks[0]
+           return block?.type === "timer" ? block.leadSeconds : 0
+         },
+         secondsRemaining: context => {
+           const { blocks } = currentProgramFrom(context)
+           const block = blocks[0]
+           return block?.type === "timer" ? block.seconds : 0
+         },
+       }),
+       switchSides: assign({
+         currentSide: () => "right" as const,
+       }),
+       resetRepCounter: assign({
+         currentSide: context => {
+           const { blocks, currentBlockIndex } = currentProgramFrom(context)
+           const nextBlock = blocks[currentBlockIndex + 1]
+           // Initialize to "left" if next block is a pause with "each side" sequence
+           if (
+             nextBlock?.type === "pause" &&
+             nextBlock.sequence === "each side" &&
+             nextBlock.reps
+           ) {
+             return "left" as const
+           }
+           return null
+         },
+       }),
       stopTalking: () => {
         speechSynthesis.cancel()
       },
@@ -1127,56 +1200,56 @@ const timerMachine = createMachine(
         },
       ),
 
-       // Completion actions
-       recordCompletion: immerAssign(context => {
-         const program = context.allPrograms.find(
-           p => p.id === context.selectedProgramId,
-         )
-         if (!program) return
+      // Completion actions
+      recordCompletion: immerAssign(context => {
+        const program = context.allPrograms.find(
+          p => p.id === context.selectedProgramId,
+        )
+        if (!program) return
 
-         const completion = CompletionSchema.parse({
-           trackableId: context.selectedProgramId,
-           trackableType: "program",
-           trackableName: program.name,
-           completedAt: new Date().toISOString(),
-         })
-         context.completions.push(completion)
-       }),
+        const completion = CompletionSchema.parse({
+          trackableId: context.selectedProgramId,
+          trackableType: "program",
+          trackableName: program.name,
+          completedAt: new Date().toISOString(),
+        })
+        context.completions.push(completion)
+      }),
 
-       addCompletion: immerAssign((context, event: AddCompletionEvent) => {
-         context.completions.push(event.completion)
-       }),
+      addCompletion: immerAssign((context, event: AddCompletionEvent) => {
+        context.completions.push(event.completion)
+      }),
 
-       updateCompletion: immerAssign((context, event: UpdateCompletionEvent) => {
-         const completion = context.completions.find(
-           c => c.id === event.completionId,
-         )
-         if (completion) {
-           completion.completedAt = event.completedAt
-         }
-       }),
+      updateCompletion: immerAssign((context, event: UpdateCompletionEvent) => {
+        const completion = context.completions.find(
+          c => c.id === event.completionId,
+        )
+        if (completion) {
+          completion.completedAt = event.completedAt
+        }
+      }),
 
-       deleteCompletion: immerAssign((context, event: DeleteCompletionEvent) => {
-         context.completions = context.completions.filter(
-           c => c.id !== event.completionId,
-         )
-       }),
+      deleteCompletion: immerAssign((context, event: DeleteCompletionEvent) => {
+        context.completions = context.completions.filter(
+          c => c.id !== event.completionId,
+        )
+      }),
 
-       deleteCompletionsForProgram: immerAssign(context => {
-         context.completions = context.completions.filter(
-           c =>
-             !(
-               c.trackableId === context.selectedProgramId &&
-               c.trackableType === "program"
-             ),
-         )
-       }),
+      deleteCompletionsForProgram: immerAssign(context => {
+        context.completions = context.completions.filter(
+          c =>
+            !(
+              c.trackableId === context.selectedProgramId &&
+              c.trackableType === "program"
+            ),
+        )
+      }),
 
-       setAllCompletions: immerAssign(
-         (context, event: SetAllCompletionsEvent) => {
-           context.completions = event.completions
-         },
-       ),
+      setAllCompletions: immerAssign(
+        (context, event: SetAllCompletionsEvent) => {
+          context.completions = event.completions
+        },
+      ),
 
       // Habit actions
       selectHabit: assign({
@@ -1228,45 +1301,45 @@ const timerMachine = createMachine(
         },
       ),
 
-       deleteCompletionsForHabit: immerAssign(context => {
-         context.completions = context.completions.filter(
-           c =>
-             !(
-               c.trackableId === context.selectedHabitId &&
-               c.trackableType === "habit"
-             ),
-         )
-       }),
+      deleteCompletionsForHabit: immerAssign(context => {
+        context.completions = context.completions.filter(
+          c =>
+            !(
+              c.trackableId === context.selectedHabitId &&
+              c.trackableType === "habit"
+            ),
+        )
+      }),
 
-       toggleHabitCompletion: immerAssign(
-         (context, event: ToggleHabitCompletionEvent) => {
-           const habit = context.allHabits.find(h => h.id === event.habitId)
-           if (!habit) return
+      toggleHabitCompletion: immerAssign(
+        (context, event: ToggleHabitCompletionEvent) => {
+          const habit = context.allHabits.find(h => h.id === event.habitId)
+          if (!habit) return
 
-           // Check if there's a completion for this habit today
-           const today = new Date().toISOString().split("T")[0]
-           const existingCompletionIndex = context.completions.findIndex(
-             c =>
-               c.trackableId === event.habitId &&
-               c.trackableType === "habit" &&
-               c.completedAt.startsWith(today),
-           )
+          // Check if there's a completion for this habit today
+          const today = new Date().toISOString().split("T")[0]
+          const existingCompletionIndex = context.completions.findIndex(
+            c =>
+              c.trackableId === event.habitId &&
+              c.trackableType === "habit" &&
+              c.completedAt.startsWith(today),
+          )
 
-           if (existingCompletionIndex >= 0) {
-             // Remove the completion (toggle off)
-             context.completions.splice(existingCompletionIndex, 1)
-           } else {
-             // Add a new completion (toggle on)
-             const completion = CompletionSchema.parse({
-               trackableId: event.habitId,
-               trackableType: "habit",
-               trackableName: habit.name,
-               completedAt: new Date().toISOString(),
-             })
-             context.completions.push(completion)
-           }
-         },
-       ),
+          if (existingCompletionIndex >= 0) {
+            // Remove the completion (toggle off)
+            context.completions.splice(existingCompletionIndex, 1)
+          } else {
+            // Add a new completion (toggle on)
+            const completion = CompletionSchema.parse({
+              trackableId: event.habitId,
+              trackableType: "habit",
+              trackableName: habit.name,
+              completedAt: new Date().toISOString(),
+            })
+            context.completions.push(completion)
+          }
+        },
+      ),
     },
 
     services: {
@@ -1311,11 +1384,19 @@ const timerMachine = createMachine(
           return speak(
             `${block.pronunciation ?? block.name} for ${block.seconds} seconds`,
           )
-        else if (block?.type === "pause" && block?.reps && block.reps > 0)
+        else if (block?.type === "pause" && block?.reps && block.reps > 0) {
+          // Handle "each side" sequence
+          if (block.sequence === "each side") {
+            const side = context.currentSide || "left"
+            return speak(
+              `${block.pronunciation ?? block.name} for ${block.reps} reps on the ${side} side`,
+            )
+          }
+          // Default "once" behavior
           return speak(
             `${block.pronunciation ?? block.name} for ${block.reps} reps`,
           )
-        else if (block?.type === "pause")
+        } else if (block?.type === "pause")
           return speak(block.pronunciation ?? block.name)
         else return Promise.resolve()
       },
@@ -1376,17 +1457,17 @@ const timerMachine = createMachine(
           }
         },
 
-       // Completions
-       loadCompletions: () =>
-         localforage.getItem("completions").then(data => {
-           // Clean up old storage key from development (one-time migration)
-           localforage.removeItem("programCompletions")
-           if (data) return AllCompletionsSchema.parse(data)
-           return []
-         }),
+      // Completions
+      loadCompletions: () =>
+        localforage.getItem("completions").then(data => {
+          // Clean up old storage key from development (one-time migration)
+          localforage.removeItem("programCompletions")
+          if (data) return AllCompletionsSchema.parse(data)
+          return []
+        }),
 
-       saveCompletions: ({ completions }) =>
-         localforage.setItem("completions", completions),
+      saveCompletions: ({ completions }) =>
+        localforage.setItem("completions", completions),
 
       // Habits
       loadHabits: () =>

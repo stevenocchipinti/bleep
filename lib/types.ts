@@ -26,6 +26,7 @@ export const PauseBlockSchema = z.object({
   ...commonBlockProperties,
   type: z.literal("pause"),
   reps: z.number().positive().optional(),
+  sequence: z.enum(["once", "each side"]).default("once").optional(),
 })
 
 export const MessageBlockSchema = z.object({
