@@ -1,8 +1,9 @@
 import { useEffect } from "react"
 import CircularProgressBar from "components/CircularProgressBar"
+import ContinueButton from "components/ContinueButton"
 import { SwipeableChild, FooterButton } from "components/SwipeableView"
 import { ArrowBackIcon, LockIcon, UnlockIcon } from "@chakra-ui/icons"
-import { IconButton, Heading, Text, Flex, Button } from "@chakra-ui/react"
+import { IconButton, Heading, Text, Flex } from "@chakra-ui/react"
 
 import { Block, ProgramSchema } from "lib/types"
 import useWakeLock from "lib/useWakeLock"
@@ -140,24 +141,13 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
             {currentBlock.type === "timer" && <CircularProgressBar />}
 
             {currentBlock.type === "pause" && (
-              <Button
-                onClick={() => send("CONTINUE")}
-                isDisabled={!state.can({ type: "CONTINUE" })}
-                variant="unstyled"
-                borderRadius="50%"
-                mx="auto"
-                h="300px"
-                w="300px"
-                fontSize="3xl"
-                borderWidth={4}
-                borderColor="teal.200"
-                bgColor="teal.900"
-                _active={{
-                  bgColor: "teal.600",
-                }}
-              >
-                Continue
-              </Button>
+              <ContinueButton
+                showSideIndicators={
+                  currentBlock.sequence === "each side" && !!currentBlock.reps
+                }
+                currentSide={state.context.currentSide}
+                size={300}
+              />
             )}
 
             <Heading
