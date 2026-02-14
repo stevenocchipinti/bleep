@@ -21,7 +21,7 @@ const SegmentedControl = ({
       borderRadius="md"
       p={0.5}
       gap={1}
-      height="44px"
+      height="40px"
       alignItems="center"
     >
       {options.map(option => (
