@@ -7,6 +7,7 @@ import {
   CopyIcon,
   SettingsIcon,
   ArrowForwardIcon,
+  CalendarIcon,
 } from "@chakra-ui/icons"
 import {
   IconButton,
@@ -60,11 +61,14 @@ import QRCode from "react-qr-code"
 import { useDebouncedCallback } from "use-debounce"
 
 import DndContext from "@/components/DndContext"
+import CompletionHistoryModal from "@/components/CompletionHistoryModal"
 
 import CardButton from "@/components/CardButton"
+import CategoryAutocomplete from "@/components/CategoryAutocomplete"
 import { ChipTab } from "@/components/Chip"
 import { DurationInput } from "@/components/DurationInput"
 import { SwipeableChild, FooterButton } from "@/components/SwipeableView"
+import SegmentedControl from "@/components/SegmentedControl"
 import { useTimerActor } from "lib/useTimerMachine"
 import { currentProgramFrom, speakerFrom } from "lib/timerMachine"
 import { ChatBubbleIcon, ShareIcon, SpeakerIcon } from "@/components/icons"
@@ -190,6 +194,7 @@ const ConfigScreen = ({
   // Program
   const { state, send } = useTimerActor()
   const { program, blocks } = currentProgramFrom(state.context)
+  const { allPrograms, allHabits } = state.context
   const isValid = ProgramSchema.safeParse(program).success
 
   // Sharing
@@ -202,6 +207,9 @@ const ConfigScreen = ({
   const [shareModalIsOpen, setShareModalIsOpen] = useState(false)
   const [canUseShareAPI, setCanUseShareAPI] = useState(false)
   const shareCancelRef = React.useRef<any>()
+
+  // History modal
+  const [historyModalIsOpen, setHistoryModalIsOpen] = useState(false)
   useEffect(() => {
     setCanUseShareAPI(!!window.navigator?.share)
 
@@ -491,6 +499,12 @@ const ConfigScreen = ({
                     Share
                   </MenuItem>
                   <MenuItem
+                    icon={<CalendarIcon />}
+                    onClick={() => setHistoryModalIsOpen(true)}
+                  >
+                    History
+                  </MenuItem>
+                  <MenuItem
                     icon={<CopyIcon />}
                     onClick={() => send({ type: "DUPLICATE_PROGRAM" })}
                   >
@@ -557,6 +571,25 @@ const ConfigScreen = ({
           </Editable>
         </Box>
         <Flex direction="column" gap={4} p={4} pb={0}>
+          <CategoryAutocomplete
+            value={program.category || ""}
+            allCategories={[
+              ...allPrograms
+                .filter(p => p.category)
+                .map(p => p.category!)
+                .filter((cat, idx, arr) => arr.indexOf(cat) === idx),
+              ...allHabits
+                .filter(h => h.category)
+                .map(h => h.category!)
+                .filter((cat, idx, arr) => arr.indexOf(cat) === idx),
+            ]}
+            onChange={(category: string) =>
+              debouncedSend({
+                type: "UPDATE_PROGRAM_CATEGORY",
+                category,
+              })
+            }
+          />
           <DndContext
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
@@ -649,8 +682,24 @@ const ConfigScreen = ({
                   })
               }
 
+              const onSequenceChange = (sequence: string) => {
+                if (
+                  block.type === "pause" &&
+                  sequence !== (block.sequence || "once")
+                )
+                  send({
+                    type: "UPDATE_BLOCK",
+                    index,
+                    block: {
+                      ...block,
+                      type: "pause",
+                      sequence: sequence as "once" | "each side",
+                    },
+                  })
+              }
+
               const onMessageChange = (
-                e: React.ChangeEvent<HTMLTextAreaElement>
+                e: React.ChangeEvent<HTMLTextAreaElement>,
               ) => {
                 const message = e.target.value
                 if (block.type === "message" && message !== block.message)
@@ -666,7 +715,7 @@ const ConfigScreen = ({
               }
 
               const onDisabledChange = (
-                e: React.ChangeEvent<HTMLInputElement>
+                e: React.ChangeEvent<HTMLInputElement>,
               ) => {
                 const checked = e.target.checked
                 send({
@@ -686,6 +735,7 @@ const ConfigScreen = ({
                   text={block.name}
                   seconds={block.type === "timer" ? block.seconds : undefined}
                   reps={block.type === "pause" ? block?.reps || 0 : undefined}
+                  sequence={block.type === "pause" ? block.sequence : undefined}
                   message={block.type === "message"}
                   error={Object.keys(errors).length > 0}
                   disabled={block.disabled}
@@ -780,26 +830,45 @@ const ConfigScreen = ({
                             {errors?.name?.join(" and ")}
                           </FormErrorMessage>
                         </FormControl>
-                        <FormControl
-                          isDisabled={block.disabled}
-                          isInvalid={!!errors?.reps}
-                        >
-                          <FormLabel optionalIndicator={<OptionalIndicator />}>
-                            Reps
-                          </FormLabel>
-                          <Input
-                            defaultValue={
-                              block.type === "pause" ? block.reps || "" : ""
-                            }
-                            type="number"
-                            placeholder="Reps"
-                            variant="filled"
-                            onChange={onRepsChange}
-                          />
-                          <FormErrorMessage>
-                            {errors?.reps?.join(" and ")}
-                          </FormErrorMessage>
-                        </FormControl>
+                        <Grid templateColumns="1fr 1fr" gap={6}>
+                          <FormControl
+                            isDisabled={block.disabled}
+                            isInvalid={!!errors?.reps}
+                          >
+                            <FormLabel
+                              optionalIndicator={<OptionalIndicator />}
+                            >
+                              Reps
+                            </FormLabel>
+                            <Input
+                              defaultValue={
+                                block.type === "pause" ? block.reps || "" : ""
+                              }
+                              type="number"
+                              placeholder="Reps"
+                              variant="filled"
+                              onChange={onRepsChange}
+                            />
+                            <FormErrorMessage>
+                              {errors?.reps?.join(" and ")}
+                            </FormErrorMessage>
+                          </FormControl>
+                          <FormControl isDisabled={block.disabled}>
+                            <FormLabel>Sequence</FormLabel>
+                            <SegmentedControl
+                              value={
+                                block.type === "pause"
+                                  ? block.sequence || "once"
+                                  : "once"
+                              }
+                              options={[
+                                { value: "once", label: "once" },
+                                { value: "each side", label: "each side" },
+                              ]}
+                              onChange={onSequenceChange}
+                            />
+                          </FormControl>
+                        </Grid>
                       </FlexTabPanel>
 
                       <FlexTabPanel>
@@ -888,6 +957,14 @@ const ConfigScreen = ({
           </DndContext>
         </Flex>
       </SwipeableChild>
+
+      <CompletionHistoryModal
+        isOpen={historyModalIsOpen}
+        onClose={() => setHistoryModalIsOpen(false)}
+        trackableId={program.id}
+        trackableName={program.name}
+        trackableType="program"
+      />
     </>
   )
 }

@@ -12,6 +12,7 @@ import {
 import { CSS } from "@dnd-kit/utilities"
 import { useSortable } from "@dnd-kit/sortable"
 
+import { CheckIcon } from "@/components/icons"
 import { ErrorChip, MessageChip, PauseChip, TimerChip } from "@/components/Chip"
 
 interface CardButtonProps {
@@ -19,6 +20,7 @@ interface CardButtonProps {
   text: string
   seconds?: number
   reps?: number
+  sequence?: "once" | "each side"
   message?: boolean
   disabled?: boolean
   error?: boolean
@@ -28,6 +30,9 @@ interface CardButtonProps {
   children?: React.ReactNode
   style?: any
   isExpanded?: boolean
+  heatmapContent?: React.ReactNode
+  trackableType?: "program" | "habit"
+  isCompletedToday?: boolean
 }
 
 const CardButton = ({
@@ -35,6 +40,7 @@ const CardButton = ({
   text,
   seconds,
   reps,
+  sequence,
   message,
   error,
   disabled,
@@ -43,6 +49,9 @@ const CardButton = ({
   isExpanded,
   onClick,
   innerButtonOnClick,
+  heatmapContent,
+  trackableType = "program",
+  isCompletedToday = false,
   ...props
 }: CardButtonProps) => {
   const transforms = {
@@ -63,10 +72,10 @@ const CardButton = ({
     <div style={style} {...attributes}>
       <Card
         transition="0.2s"
-        transform={selected ? "scale(1.05)" : undefined}
         opacity={disabled ? 0.7 : 1}
         variant={selected ? "filled" : undefined}
-        bg={selected ? "gray.600" : undefined}
+        borderWidth={"2px"}
+        borderColor={selected ? "gray.400" : "gray.700"}
         ref={setNodeRef}
         {...props}
       >
@@ -90,7 +99,11 @@ const CardButton = ({
                 <TimerChip disabled={disabled} seconds={seconds} />
               )}
               {typeof reps === "number" && (
-                <PauseChip disabled={disabled} reps={reps} />
+                <PauseChip
+                  disabled={disabled}
+                  reps={reps}
+                  sequence={sequence}
+                />
               )}
             </>
           )}
@@ -104,24 +117,40 @@ const CardButton = ({
           <IconButton
             display="flex"
             variant="ghost"
-            aria-label="Toggle body"
+            aria-label={
+              trackableType === "habit" ? "Toggle completion" : "Toggle body"
+            }
             m={1}
             onClick={
               typeof isExpanded === "boolean" ? undefined : innerButtonOnClick
             }
             icon={
-              <ChevronRightIcon
-                transition="0.2s"
-                transform={
-                  typeof isExpanded === "boolean"
-                    ? transforms[isExpanded ? "up" : "down"]
-                    : undefined
-                }
-                boxSize={5}
-              />
+              trackableType === "habit" ? (
+                <CheckIcon
+                  filled={isCompletedToday}
+                  boxSize={5}
+                  color={isCompletedToday ? "green.400" : undefined}
+                />
+              ) : (
+                <ChevronRightIcon
+                  transition="0.2s"
+                  transform={
+                    typeof isExpanded === "boolean"
+                      ? transforms[isExpanded ? "up" : "down"]
+                      : undefined
+                  }
+                  boxSize={5}
+                />
+              )
             }
           />
         </CardHeader>
+
+        {heatmapContent && (
+          <CardBody p={2} pt={0} onClick={onClick} cursor="pointer">
+            {heatmapContent}
+          </CardBody>
+        )}
 
         <Collapse in={isExpanded} animateOpacity>
           <CardBody p={4} pt={0}>
