@@ -6,7 +6,6 @@ import {
   Text,
   useOutsideClick,
   FormControl,
-  FormLabel,
   Button,
   IconButton,
   Flex,
@@ -18,14 +17,12 @@ interface CategoryButtonProps {
   value?: string
   onChange: (category: string) => void
   allCategories: string[]
-  label?: string
 }
 
 const CategoryButton = ({
   value = "",
   onChange,
   allCategories,
-  label = "Category (optional)",
 }: CategoryButtonProps) => {
   const [isExpanded, setIsExpanded] = useState(false)
   const [inputValue, setInputValue] = useState(value)
@@ -123,7 +120,6 @@ const CategoryButton = ({
 
   return (
     <FormControl>
-      <FormLabel fontSize="sm">{label}</FormLabel>
       <Flex gap={2} align="center">
         <Box
           as={motion.div}
@@ -166,6 +162,7 @@ const CategoryButton = ({
                     onFocus={handleInputFocus}
                     onBlur={handleInputBlur}
                     autoComplete="off"
+                    aria-label="Category"
                   />
 
                   {/* Autocomplete suggestions */}
@@ -240,6 +237,7 @@ const CategoryButton = ({
                     leftIcon={<FolderIcon boxSize={4} />}
                     justifyContent="flex-start"
                     size="md"
+                    aria-label="Edit category"
                     _hover={{
                       borderColor: "gray.500",
                     }}
