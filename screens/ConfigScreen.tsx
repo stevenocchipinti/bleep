@@ -64,7 +64,7 @@ import DndContext from "@/components/DndContext"
 import CompletionHistoryModal from "@/components/CompletionHistoryModal"
 
 import CardButton from "@/components/CardButton"
-import CategoryAutocomplete from "@/components/CategoryAutocomplete"
+import CategoryButton from "@/components/CategoryButton"
 import { ChipTab } from "@/components/Chip"
 import { DurationInput } from "@/components/DurationInput"
 import { SwipeableChild, FooterButton } from "@/components/SwipeableView"
@@ -571,7 +571,7 @@ const ConfigScreen = ({
           </Editable>
         </Box>
         <Flex direction="column" gap={4} p={4} pb={0}>
-          <CategoryAutocomplete
+          <CategoryButton
             value={program.category || ""}
             allCategories={[
               ...allPrograms

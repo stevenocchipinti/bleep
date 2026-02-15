@@ -27,7 +27,7 @@ import {
 import { useDebouncedCallback } from "use-debounce"
 
 import CompletionHistoryModal from "@/components/CompletionHistoryModal"
-import CategoryAutocomplete from "@/components/CategoryAutocomplete"
+import CategoryButton from "@/components/CategoryButton"
 import { SwipeableChild } from "@/components/SwipeableView"
 import { useTimerActor } from "lib/useTimerMachine"
 import { currentHabitFrom } from "lib/timerMachine"
@@ -163,7 +163,7 @@ const HabitConfigScreen = ({ goBack }: HabitConfigScreenProps) => {
           p={8}
           gap={6}
         >
-          <CategoryAutocomplete
+          <CategoryButton
             value={habit.category || ""}
             allCategories={[
               ...allPrograms
