@@ -923,9 +923,9 @@ const timerMachine = createMachine(
       nextBlockAvailable: context => {
         const { program, blocks, currentBlockIndex } =
           currentProgramFrom(context)
-         return !!program && currentBlockIndex < blocks.length - 1
-       },
-       shouldSwitchSides: context => {
+        return !!program && currentBlockIndex < blocks.length - 1
+      },
+      shouldSwitchSides: context => {
         const { currentBlock } = currentProgramFrom(context)
         if (
           currentBlock?.type === "pause" &&
@@ -968,90 +968,102 @@ const timerMachine = createMachine(
         const speak = speakerFrom(context)
         speak(`${context.leadSecondsRemaining}`)
       },
-       nextBlock: assign({
-         currentBlockIndex: ({ currentBlockIndex }) => currentBlockIndex + 1,
-         currentSide: context => {
-           const { blocks, currentBlockIndex } = currentProgramFrom(context)
-           const block = blocks[currentBlockIndex + 1]
-           // Initialize to "left" if entering a pause with "each side" sequence
-           if (
-             block?.type === "pause" &&
-             block.sequence === "each side" &&
-             block.reps
-           ) {
-             return "left" as const
-           }
-           return null
-         },
-         leadSecondsRemaining: context => {
-           const { blocks, currentBlockIndex } = currentProgramFrom(context)
-           const block = blocks[currentBlockIndex + 1]
-           return block?.type === "timer" ? block.leadSeconds : 0
-         },
-         secondsRemaining: context => {
-           const { blocks, currentBlockIndex } = currentProgramFrom(context)
-           const block = blocks[currentBlockIndex + 1]
-           return block?.type === "timer" ? block.seconds : 0
-         },
-       }),
-       previousBlock: assign({
-         currentBlockIndex: ({ currentBlockIndex }) => currentBlockIndex - 1,
-         currentSide: context => {
-           const { blocks, currentBlockIndex } = currentProgramFrom(context)
-           const block = blocks[currentBlockIndex - 1]
-           // Initialize to "left" if entering a pause with "each side" sequence
-           if (
-             block?.type === "pause" &&
-             block.sequence === "each side" &&
-             block.reps
-           ) {
-             return "left" as const
-           }
-           return null
-         },
-         leadSecondsRemaining: context => {
-           const { blocks, currentBlockIndex } = currentProgramFrom(context)
-           const block = blocks[currentBlockIndex - 1]
-           return block?.type === "timer" ? block.leadSeconds : 0
-         },
-         secondsRemaining: context => {
-           const { blocks, currentBlockIndex } = currentProgramFrom(context)
-           const block = blocks[currentBlockIndex - 1]
-           return block?.type === "timer" ? block.seconds : 0
-         },
-       }),
-       resetTimer: assign({
-         currentBlockIndex: 0,
-         currentSide: null,
-         leadSecondsRemaining: context => {
-           const { blocks } = currentProgramFrom(context)
-           const block = blocks[0]
-           return block?.type === "timer" ? block.leadSeconds : 0
-         },
-         secondsRemaining: context => {
-           const { blocks } = currentProgramFrom(context)
-           const block = blocks[0]
-           return block?.type === "timer" ? block.seconds : 0
-         },
-       }),
-       switchSides: assign({
-         currentSide: () => "right" as const,
-       }),
-       resetRepCounter: assign({
-         currentSide: context => {
-           const { blocks, currentBlockIndex } = currentProgramFrom(context)
-           const nextBlock = blocks[currentBlockIndex + 1]
-           // Initialize to "left" if next block is a pause with "each side" sequence
-           if (
-             nextBlock?.type === "pause" &&
-             nextBlock.sequence === "each side" &&
-             nextBlock.reps
-           ) {
-             return "left" as const
-           }
-           return null
-         },
-       }),
+      nextBlock: assign({
+        currentBlockIndex: ({ currentBlockIndex }) => currentBlockIndex + 1,
+        currentSide: context => {
+          const { blocks, currentBlockIndex } = currentProgramFrom(context)
+          const block = blocks[currentBlockIndex + 1]
+          // Initialize to "left" if entering a pause with "each side" sequence
+          if (
+            block?.type === "pause" &&
+            block.sequence === "each side" &&
+            block.reps
+          ) {
+            return "left" as const
+          }
+          return null
+        },
+        leadSecondsRemaining: context => {
+          const { blocks, currentBlockIndex } = currentProgramFrom(context)
+          const block = blocks[currentBlockIndex + 1]
+          return block?.type === "timer" ? block.leadSeconds : 0
+        },
+        secondsRemaining: context => {
+          const { blocks, currentBlockIndex } = currentProgramFrom(context)
+          const block = blocks[currentBlockIndex + 1]
+          return block?.type === "timer" ? block.seconds : 0
+        },
+      }),
+      previousBlock: assign({
+        currentBlockIndex: ({ currentBlockIndex }) => currentBlockIndex - 1,
+        currentSide: context => {
+          const { blocks, currentBlockIndex } = currentProgramFrom(context)
+          const block = blocks[currentBlockIndex - 1]
+          // Initialize to "left" if entering a pause with "each side" sequence
+          if (
+            block?.type === "pause" &&
+            block.sequence === "each side" &&
+            block.reps
+          ) {
+            return "left" as const
+          }
+          return null
+        },
+        leadSecondsRemaining: context => {
+          const { blocks, currentBlockIndex } = currentProgramFrom(context)
+          const block = blocks[currentBlockIndex - 1]
+          return block?.type === "timer" ? block.leadSeconds : 0
+        },
+        secondsRemaining: context => {
+          const { blocks, currentBlockIndex } = currentProgramFrom(context)
+          const block = blocks[currentBlockIndex - 1]
+          return block?.type === "timer" ? block.seconds : 0
+        },
+      }),
+      resetTimer: assign({
+        currentBlockIndex: 0,
+        currentSide: context => {
+          const { blocks } = currentProgramFrom(context)
+          const block = blocks[0]
+          // Initialize to "left" if first block is a pause with "each side" sequence
+          if (
+            block?.type === "pause" &&
+            block.sequence === "each side" &&
+            block.reps
+          ) {
+            return "left" as const
+          }
+          return null
+        },
+        leadSecondsRemaining: context => {
+          const { blocks } = currentProgramFrom(context)
+          const block = blocks[0]
+          return block?.type === "timer" ? block.leadSeconds : 0
+        },
+        secondsRemaining: context => {
+          const { blocks } = currentProgramFrom(context)
+          const block = blocks[0]
+          return block?.type === "timer" ? block.seconds : 0
+        },
+      }),
+      switchSides: assign({
+        currentSide: () => "right" as const,
+      }),
+      resetRepCounter: assign({
+        currentSide: context => {
+          const { blocks, currentBlockIndex } = currentProgramFrom(context)
+          const nextBlock = blocks[currentBlockIndex + 1]
+          // Initialize to "left" if next block is a pause with "each side" sequence
+          if (
+            nextBlock?.type === "pause" &&
+            nextBlock.sequence === "each side" &&
+            nextBlock.reps
+          ) {
+            return "left" as const
+          }
+          return null
+        },
+      }),
       stopTalking: () => {
         speechSynthesis.cancel()
       },
