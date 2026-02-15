@@ -40,7 +40,7 @@ const CategoryAutocomplete = ({
 
     const lowerInput = inputValue.toLowerCase()
     const matching = allCategories.filter(cat =>
-      cat.toLowerCase().includes(lowerInput)
+      cat.toLowerCase().includes(lowerInput),
     )
 
     // Count occurrences of each category
@@ -104,9 +104,9 @@ const CategoryAutocomplete = ({
           left={0}
           right={0}
           zIndex={10}
-          bg="white"
+          bg="gray.800"
           border="1px solid"
-          borderColor="gray.200"
+          borderColor="gray.700"
           borderRadius="md"
           boxShadow="md"
           mt={1}
@@ -114,9 +114,7 @@ const CategoryAutocomplete = ({
           <VStack
             spacing={0}
             align="stretch"
-            divider={
-              <Box borderBottom="1px solid" borderColor="gray.100" />
-            }
+            divider={<Box borderBottom="1px solid" borderColor="gray.700" />}
           >
             {suggestions.map(suggestion => (
               <Box
@@ -124,14 +122,16 @@ const CategoryAutocomplete = ({
                 px={3}
                 py={2}
                 cursor="pointer"
-                _hover={{ bg: "gray.100" }}
+                _hover={{ bg: "gray.700" }}
                 onClick={() => handleSuggestionClick(suggestion.name)}
                 display="flex"
                 justifyContent="space-between"
                 alignItems="center"
               >
-                <Text fontSize="sm">{suggestion.name}</Text>
-                <Text fontSize="xs" color="gray.500">
+                <Text fontSize="sm" color="white">
+                  {suggestion.name}
+                </Text>
+                <Text fontSize="xs" color="gray.400">
                   {suggestion.count}
                 </Text>
               </Box>
