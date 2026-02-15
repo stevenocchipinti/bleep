@@ -37,7 +37,6 @@ const HomeScreen = ({
   selectHabitById,
 }: HomeScreenProps) => {
   const [hasNewProgram, setHasNewProgram] = useState(false)
-  // Initialize with all groups expanded
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
 
   const { state, send } = useTimerActor()
@@ -150,13 +149,7 @@ const HomeScreen = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasNewProgram])
 
-  // Auto-expand all groups when categories appear
-  useEffect(() => {
-    if (groupedTrackables.length > 0 && expandedGroups.size === 0) {
-      const allCategories = new Set(groupedTrackables.map(g => g.category))
-      setExpandedGroups(allCategories)
-    }
-  }, [groupedTrackables, expandedGroups.size])
+
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (active?.id && over?.id && active.id !== over?.id) {
