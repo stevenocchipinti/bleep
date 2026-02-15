@@ -2,7 +2,11 @@ import CardButton from "@/components/CardButton"
 import CompletionHeatmap from "@/components/CompletionHeatmap"
 import Logo from "@/components/Logo"
 import { SwipeableChild } from "@/components/SwipeableView"
-import { SettingsIcon, ChevronDownIcon, ChevronRightIcon } from "@chakra-ui/icons"
+import {
+  SettingsIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+} from "@chakra-ui/icons"
 import {
   Spacer,
   IconButton,
@@ -89,18 +93,28 @@ const HomeScreen = ({
       groups.get(category)!.push(t)
     })
 
-    // Convert to array and sort alphabetically
+    // Convert to array and sort: archive categories last, others alphabetically
     const result = Array.from(groups.entries())
       .map(([category, items]) => ({
         category,
         trackables: items,
       }))
-      .sort((a, b) => a.category.localeCompare(b.category))
+      .sort((a, b) => {
+        const aIsArchive = a.category.toLowerCase().includes("archive")
+        const bIsArchive = b.category.toLowerCase().includes("archive")
 
-    // Add Uncategorized group only if there are trackables without categories
+        // If one is archive and the other isn't, archive goes last
+        if (aIsArchive && !bIsArchive) return 1
+        if (!aIsArchive && bIsArchive) return -1
+
+        // Otherwise sort alphabetically
+        return a.category.localeCompare(b.category)
+      })
+
+    // Add uncategorized items at the beginning (without a header)
     if (trackablesWithoutCategory.length > 0) {
-      result.push({
-        category: "Uncategorized",
+      result.unshift({
+        category: "__uncategorized__",
         trackables: trackablesWithoutCategory,
       })
     }
@@ -205,36 +219,40 @@ const HomeScreen = ({
           // Grouped view (categories exist)
           groupedTrackables.map(group => {
             const isExpanded = expandedGroups.has(group.category)
+            const isUncategorized = group.category === "__uncategorized__"
             return (
               <Box key={group.category}>
-                {/* Group header */}
-                <Button
-                  variant="ghost"
-                  width="100%"
-                  justifyContent="flex-start"
-                  leftIcon={
-                    isExpanded ? <ChevronDownIcon /> : <ChevronRightIcon />
-                  }
-                  onClick={() => toggleGroup(group.category)}
-                  fontSize="lg"
-                  fontWeight="semibold"
-                  px={4}
-                >
-                  {group.category}
-                </Button>
+                {/* Group header - hide for uncategorized */}
+                {!isUncategorized && (
+                  <Button
+                    variant="ghost"
+                    width="100%"
+                    justifyContent="flex-start"
+                    leftIcon={
+                      isExpanded ? <ChevronDownIcon /> : <ChevronRightIcon />
+                    }
+                    onClick={() => toggleGroup(group.category)}
+                    fontSize="lg"
+                    fontWeight="semibold"
+                    px={2}
+                    _hover={{}}
+                  >
+                    {group.category}
+                  </Button>
+                )}
 
-                {/* Collapse animation */}
-                <Collapse in={isExpanded} animateOpacity>
+                {/* Collapse animation - always show for uncategorized */}
+                <Collapse in={isUncategorized || isExpanded} animateOpacity>
                   <DndContext
                     onDragEnd={onDragEnd}
                     items={group.trackables.map(t => t.id)}
                   >
-                    <VStack spacing={3} alignItems="stretch" pl={2}>
+                    <VStack spacing={3} alignItems="stretch">
                       {group.trackables.map(trackable => {
                         if (trackable.type === "program") {
                           const program = trackable.data as Program
-                          const isValid = ProgramSchema.safeParse(program)
-                            .success
+                          const isValid =
+                            ProgramSchema.safeParse(program).success
                           return (
                             <CardButton
                               key={program.id}
@@ -355,29 +373,31 @@ const HomeScreen = ({
           </DndContext>
         )}
 
-        <Button
-          variant="outline"
-          onClick={() => {
-            send({ type: "NEW_PROGRAM" })
-            setHasNewProgram(true)
-          }}
-        >
-          New program
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => {
-            send({ type: "NEW_HABIT" })
-            // Select the newly created habit after a short delay
-            setTimeout(() => {
-              const newHabit =
-                state.context.allHabits[state.context.allHabits.length - 1]
-              if (newHabit) selectHabitById(newHabit.id)
-            }, 100)
-          }}
-        >
-          New habit
-        </Button>
+        <Box display="grid" gridTemplateColumns="1fr 1fr" gap={4} pt={8}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              send({ type: "NEW_PROGRAM" })
+              setHasNewProgram(true)
+            }}
+          >
+            New program
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              send({ type: "NEW_HABIT" })
+              // Select the newly created habit after a short delay
+              setTimeout(() => {
+                const newHabit =
+                  state.context.allHabits[state.context.allHabits.length - 1]
+                if (newHabit) selectHabitById(newHabit.id)
+              }, 100)
+            }}
+          >
+            New habit
+          </Button>
+        </Box>
       </VStack>
     </SwipeableChild>
   )
