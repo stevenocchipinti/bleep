@@ -1,9 +1,9 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import CircularProgressBar from "components/CircularProgressBar"
 import ContinueButton from "components/ContinueButton"
 import { SwipeableChild, FooterButton } from "components/SwipeableView"
 import { ArrowBackIcon, LockIcon, UnlockIcon } from "@chakra-ui/icons"
-import { IconButton, Heading, Text, Flex } from "@chakra-ui/react"
+import { IconButton, Heading, Text, Flex, Box, Button } from "@chakra-ui/react"
 
 import { Block, ProgramSchema } from "lib/types"
 import useWakeLock from "lib/useWakeLock"
@@ -15,9 +15,11 @@ import {
   RewindIcon,
   FastForwardIcon,
   ExclamationIcon,
+  NotesIcon,
 } from "components/icons"
 import { currentProgramFrom } from "lib/timerMachine"
 import { motion } from "framer-motion"
+import NotesModal from "components/NotesModal"
 
 const Body = motion(Flex)
 
@@ -25,6 +27,8 @@ interface TimerScreenProps {
   goBack: () => void
 }
 const TimerScreen = ({ goBack }: TimerScreenProps) => {
+  const [notesModalOpen, setNotesModalOpen] = useState(false)
+
   const {
     wakeLockEnabled,
     wakeLockSupported,
@@ -135,6 +139,7 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
         flex={1}
         gap={12}
         p={8}
+        position="relative"
       >
         {currentBlock && isValid ? (
           <>
@@ -191,11 +196,38 @@ const TimerScreen = ({ goBack }: TimerScreenProps) => {
                 {currentBlock.message}
               </Text>
             )}
+
+            <Box display="flex" justifyContent="end" minH="2rem">
+              {currentBlock.notes && (
+                <Button
+                  aria-label="View block notes"
+                  leftIcon={<NotesIcon />}
+                  onClick={() => setNotesModalOpen(true)}
+                  variant="outline"
+                  size="sm"
+                >
+                  Notes
+                </Button>
+              )}
+            </Box>
           </>
         ) : (
           <ExclamationIcon stroke="red.200" />
         )}
       </Body>
+      <NotesModal
+        isOpen={notesModalOpen}
+        onClose={() => setNotesModalOpen(false)}
+        notes={currentBlock?.notes}
+        onSave={(notes) => {
+          send({
+            type: "UPDATE_BLOCK_NOTES",
+            index: currentBlockIndex,
+            notes,
+          })
+        }}
+        blockName={currentBlock?.name}
+      />
     </SwipeableChild>
   )
 }

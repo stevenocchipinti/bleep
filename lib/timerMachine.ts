@@ -70,6 +70,11 @@ type UpdateBlockEvent = {
 }
 type DeleteBlockEvent = { type: "DELETE_BLOCK"; index: number }
 type DuplicateBlockEvent = { type: "DUPLICATE_BLOCK"; index: number }
+type UpdateBlockNotesEvent = {
+  type: "UPDATE_BLOCK_NOTES"
+  index: number
+  notes: string
+}
 
 // Timer events
 type StartEvent = { type: "START" }
@@ -154,6 +159,7 @@ type Events =
   | UpdateBlockEvent
   | DeleteBlockEvent
   | DuplicateBlockEvent
+  | UpdateBlockNotesEvent
   // Timer events
   | StartEvent
   | ResetEvent
@@ -375,6 +381,11 @@ const timerMachine = createMachine(
                           UPDATE_BLOCK: {
                             target: "saving",
                             actions: "updateBlock",
+                          },
+
+                          UPDATE_BLOCK_NOTES: {
+                            target: "saving",
+                            actions: "updateBlockNotes",
                           },
                         },
 
@@ -1152,6 +1163,14 @@ const timerMachine = createMachine(
       updateBlock: immerAssign(
         (context, { index, block }: UpdateBlockEvent) => {
           currentProgramFrom(context).blocks[index] = block
+        },
+      ),
+      updateBlockNotes: immerAssign(
+        (context, { index, notes }: UpdateBlockNotesEvent) => {
+          const block = currentProgramFrom(context).blocks[index]
+          if (block) {
+            block.notes = notes || undefined
+          }
         },
       ),
       addBlock: immerAssign(context => {

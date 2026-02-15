@@ -13,6 +13,7 @@ const commonBlockProperties = {
   name: z.string().nonempty(),
   pronunciation: z.string().optional(),
   disabled: z.boolean().default(false).optional(),
+  notes: z.string().optional(),
 }
 
 export const TimerBlockSchema = z.object({

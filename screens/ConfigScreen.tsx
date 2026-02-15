@@ -62,6 +62,7 @@ import { useDebouncedCallback } from "use-debounce"
 
 import DndContext from "@/components/DndContext"
 import CompletionHistoryModal from "@/components/CompletionHistoryModal"
+import NotesModal from "@/components/NotesModal"
 
 import CardButton from "@/components/CardButton"
 import CategoryButton from "@/components/CategoryButton"
@@ -71,7 +72,12 @@ import { SwipeableChild, FooterButton } from "@/components/SwipeableView"
 import SegmentedControl from "@/components/SegmentedControl"
 import { useTimerActor } from "lib/useTimerMachine"
 import { currentProgramFrom, speakerFrom } from "lib/timerMachine"
-import { ChatBubbleIcon, ShareIcon, SpeakerIcon } from "@/components/icons"
+import {
+  ChatBubbleIcon,
+  ShareIcon,
+  SpeakerIcon,
+  NotesIcon,
+} from "@/components/icons"
 
 const OptionalIndicator = () => (
   <Text color="gray.400" fontSize="xs" ml={2} as="span">
@@ -182,6 +188,10 @@ const ConfigScreen = ({
   >(null)
   const pronunciationCancelRef = React.useRef<any>()
   const [pronunciation, setPronunciation] = useState("")
+
+  // Notes modal
+  const [indexToSetNotes, setIndexToSetNotes] = useState<null | number>(null)
+  const [notes, setNotes] = useState("")
 
   // Delete modal
   type ThingToDelete =
@@ -924,6 +934,15 @@ const ConfigScreen = ({
                               send({ type: "DUPLICATE_BLOCK", index })
                             }}
                           />
+                          <IconButton
+                            variant="outline"
+                            aria-label="Edit block notes"
+                            icon={<NotesIcon />}
+                            onClick={() => {
+                              setIndexToSetNotes(index)
+                              setNotes(block.notes || "")
+                            }}
+                          />
                         </Flex>
                         <FormControl
                           display="flex"
@@ -964,6 +983,29 @@ const ConfigScreen = ({
         trackableId={program.id}
         trackableName={program.name}
         trackableType="program"
+      />
+
+      <NotesModal
+        isOpen={indexToSetNotes !== null}
+        onClose={() => {
+          setIndexToSetNotes(null)
+          setNotes("")
+        }}
+        notes={notes}
+        onSave={notes => {
+          if (indexToSetNotes !== null) {
+            send({
+              type: "UPDATE_BLOCK_NOTES",
+              index: indexToSetNotes,
+              notes,
+            })
+          }
+        }}
+        blockName={
+          indexToSetNotes !== null
+            ? program.blocks[indexToSetNotes]?.name
+            : undefined
+        }
       />
     </>
   )
