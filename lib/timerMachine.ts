@@ -123,6 +123,7 @@ type SetAllCompletionsEvent = {
   type: "SET_ALL_COMPLETIONS"
   completions: AllCompletions
 }
+type SaveCompletionsEvent = { type: "SAVE_COMPLETIONS" }
 
 // Habit events
 type AllHabitsLoadedEvent = { type: "HABITS_LOADED"; data: Habit[] }
@@ -188,6 +189,7 @@ type Events =
   | UpdateCompletionEvent
   | DeleteCompletionEvent
   | SetAllCompletionsEvent
+  | SaveCompletionsEvent
   // Habit events
   | AllHabitsLoadedEvent
   | SelectHabitEvent
@@ -549,7 +551,11 @@ const timerMachine = createMachine(
                     always: {
                       target: "stopped",
                       cond: "timerFinished",
-                      actions: ["celebration", "recordCompletion"],
+                      actions: [
+                        "celebration",
+                        "recordCompletion",
+                        raise("SAVE_COMPLETIONS"),
+                      ],
                     },
                   },
 
@@ -790,6 +796,9 @@ const timerMachine = createMachine(
                 target: "saving",
                 actions: "setAllCompletions",
               },
+              SAVE_COMPLETIONS: {
+                target: "saving",
+              },
             },
           },
 
@@ -859,8 +868,7 @@ const timerMachine = createMachine(
               },
               TOGGLE_HABIT_COMPLETION: {
                 target: "loaded",
-                actions: "toggleHabitCompletion",
-                internal: true,
+                actions: ["toggleHabitCompletion", raise("SAVE_COMPLETIONS")],
               },
             },
           },
