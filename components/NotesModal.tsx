@@ -9,6 +9,7 @@ import {
   ModalFooter,
   Button,
   Textarea,
+  FormLabel,
 } from "@chakra-ui/react"
 
 interface NotesModalProps {
@@ -48,12 +49,10 @@ const NotesModal = ({
     <Modal isOpen={isOpen} onClose={handleClose} size="lg">
       <ModalOverlay />
       <ModalContent mx={4}>
-        <ModalHeader>
-          Edit Block Notes
-          {blockName && ` - ${blockName}`}
-        </ModalHeader>
+        <ModalHeader>{blockName || "Notes"}</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
+          <FormLabel color="gray.400">Notes</FormLabel>
           <Textarea
             value={localNotes}
             onChange={e => setLocalNotes(e.target.value)}
@@ -64,9 +63,13 @@ const NotesModal = ({
         </ModalBody>
         <ModalFooter>
           <Button variant="ghost" mr={3} onClick={handleClose}>
-            Cancel
+            Close
           </Button>
-          <Button colorScheme="blue" onClick={handleSave}>
+          <Button
+            isDisabled={notes === localNotes}
+            colorScheme="blue"
+            onClick={handleSave}
+          >
             Save
           </Button>
         </ModalFooter>

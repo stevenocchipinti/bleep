@@ -958,7 +958,7 @@ const ConfigScreen = ({
                           <IconButton
                             variant="outline"
                             aria-label="Edit block notes"
-                            icon={<NotesIcon />}
+                            icon={<NotesIcon hasNotes={!!block.notes} />}
                             onClick={() => {
                               setIndexToSetNotes(index)
                               setNotes(block.notes || "")
