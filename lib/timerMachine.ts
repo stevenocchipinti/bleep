@@ -127,6 +127,7 @@ type SaveCompletionsEvent = { type: "SAVE_COMPLETIONS" }
 
 // Habit events
 type AllHabitsLoadedEvent = { type: "HABITS_LOADED"; data: Habit[] }
+type SetAllHabitsEvent = { type: "SET_ALL_HABITS"; allHabits: Habit[] }
 type SelectHabitEvent = { type: "SELECT_HABIT"; id: string }
 type DeselectHabitEvent = { type: "DESELECT_HABIT" }
 type NewHabitEvent = { type: "NEW_HABIT" }
@@ -192,6 +193,7 @@ type Events =
   | SaveCompletionsEvent
   // Habit events
   | AllHabitsLoadedEvent
+  | SetAllHabitsEvent
   | SelectHabitEvent
   | DeselectHabitEvent
   | NewHabitEvent
@@ -866,6 +868,10 @@ const timerMachine = createMachine(
                 target: "saving",
                 actions: "moveHabit",
               },
+              SET_ALL_HABITS: {
+                target: "saving",
+                actions: "setAllHabits",
+              },
               TOGGLE_HABIT_COMPLETION: {
                 target: "loaded",
                 actions: ["toggleHabitCompletion", raise("SAVE_COMPLETIONS")],
@@ -1339,6 +1345,10 @@ const timerMachine = createMachine(
           allHabits.splice(toIndex, 0, allHabits.splice(fromIndex, 1)[0])
         },
       ),
+      setAllHabits: assign({
+        allHabits: (_, { allHabits }: SetAllHabitsEvent) =>
+          AllHabitsSchema.parse(allHabits),
+      }),
 
       deleteCompletionsForHabit: immerAssign(context => {
         context.completions = context.completions.filter(

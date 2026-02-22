@@ -149,8 +149,6 @@ const HomeScreen = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasNewProgram])
 
-
-
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (active?.id && over?.id && active.id !== over?.id) {
       const activeTrackable = trackables.find(t => t.id === active.id)
@@ -161,19 +159,87 @@ const HomeScreen = ({
         activeTrackable?.type === "program" &&
         overTrackable?.type === "program"
       ) {
+        // Build a flat list of program IDs in visual order (respecting category grouping)
+        const visualProgramOrder: string[] = []
+        if (groupedTrackables.length > 0) {
+          // When categories exist, flatten in the order they're rendered
+          groupedTrackables.forEach(group => {
+            group.trackables.forEach(t => {
+              if (t.type === "program") {
+                visualProgramOrder.push(t.id)
+              }
+            })
+          })
+        } else {
+          // When no categories, use trackables order
+          trackables.forEach(t => {
+            if (t.type === "program") {
+              visualProgramOrder.push(t.id)
+            }
+          })
+        }
+
+        // Find visual indices (where they are in the visual order)
+        const visualFromIndex = visualProgramOrder.indexOf(active.id as string)
+        const visualToIndex = visualProgramOrder.indexOf(over.id as string)
+
+        // Simulate the drag to get the new desired visual order
+        const newVisualOrder = [...visualProgramOrder]
+        const [moved] = newVisualOrder.splice(visualFromIndex, 1)
+        newVisualOrder.splice(visualToIndex, 0, moved)
+
+        // Rebuild allPrograms array to match the new visual order
+        const reorderedPrograms = newVisualOrder.map(
+          id => allPrograms.find(p => p.id === id)!,
+        )
+
+        // Use SET_ALL_PROGRAMS to replace the entire array
         send({
-          type: "MOVE_PROGRAM",
-          fromIndex: allPrograms.findIndex(p => p.id === active.id),
-          toIndex: allPrograms.findIndex(p => p.id === over.id),
+          type: "SET_ALL_PROGRAMS",
+          allPrograms: reorderedPrograms,
         })
       } else if (
         activeTrackable?.type === "habit" &&
         overTrackable?.type === "habit"
       ) {
+        // Build a flat list of habit IDs in visual order (respecting category grouping)
+        const visualHabitOrder: string[] = []
+        if (groupedTrackables.length > 0) {
+          // When categories exist, flatten in the order they're rendered
+          groupedTrackables.forEach(group => {
+            group.trackables.forEach(t => {
+              if (t.type === "habit") {
+                visualHabitOrder.push(t.id)
+              }
+            })
+          })
+        } else {
+          // When no categories, use trackables order
+          trackables.forEach(t => {
+            if (t.type === "habit") {
+              visualHabitOrder.push(t.id)
+            }
+          })
+        }
+
+        // Find visual indices
+        const visualFromIndex = visualHabitOrder.indexOf(active.id as string)
+        const visualToIndex = visualHabitOrder.indexOf(over.id as string)
+
+        // Simulate the drag to get the new desired visual order
+        const newVisualOrder = [...visualHabitOrder]
+        const [moved] = newVisualOrder.splice(visualFromIndex, 1)
+        newVisualOrder.splice(visualToIndex, 0, moved)
+
+        // Rebuild allHabits array to match the new visual order
+        const reorderedHabits = newVisualOrder.map(
+          id => allHabits.find(h => h.id === id)!,
+        )
+
+        // Use SET_ALL_HABITS to replace the entire array
         send({
-          type: "MOVE_HABIT",
-          fromIndex: allHabits.findIndex(h => h.id === active.id),
-          toIndex: allHabits.findIndex(h => h.id === over.id),
+          type: "SET_ALL_HABITS",
+          allHabits: reorderedHabits,
         })
       }
     }
