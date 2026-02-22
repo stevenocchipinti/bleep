@@ -15,7 +15,7 @@ const Import = () => {
     if (data) {
       try {
         const decompressed = lzString.decompressFromEncodedURIComponent(data)
-        const decoded = JSON.parse(decompressed)
+        const decoded = JSON.parse(decompressed ?? decodeURIComponent(data))
         delete decoded.id
         const newProgram = ProgramSchema.parse(decoded)
 
@@ -31,7 +31,7 @@ const Import = () => {
               } else {
                 draft.push(newProgram)
               }
-            }
+            },
           )
 
           localforage.setItem("allPrograms", newPrograms).then(() => {
