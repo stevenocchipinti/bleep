@@ -2,6 +2,7 @@ import CardButton from "@/components/CardButton"
 import CompletionHeatmap from "@/components/CompletionHeatmap"
 import Logo from "@/components/Logo"
 import { SwipeableChild } from "@/components/SwipeableView"
+import { SparklesIcon } from "@/components/icons"
 import {
   SettingsIcon,
   ChevronDownIcon,
@@ -84,7 +85,10 @@ const HomeScreen = ({
       })
 
     if (withoutCategory.length > 0) {
-      result.unshift({ category: "__uncategorized__", programs: withoutCategory })
+      result.unshift({
+        category: "__uncategorized__",
+        programs: withoutCategory,
+      })
     }
 
     return result
@@ -157,7 +161,10 @@ const HomeScreen = ({
           isHabitStyle
             ? e => {
                 e.stopPropagation()
-                send({ type: "TOGGLE_PROGRAM_COMPLETION", programId: program.id })
+                send({
+                  type: "TOGGLE_PROGRAM_COMPLETION",
+                  programId: program.id,
+                })
               }
             : e => {
                 e.stopPropagation()
@@ -165,10 +172,7 @@ const HomeScreen = ({
               }
         }
         heatmapContent={
-          <CompletionHeatmap
-            completions={completions}
-            programId={program.id}
-          />
+          <CompletionHeatmap completions={completions} programId={program.id} />
         }
       />
     )
@@ -248,16 +252,28 @@ const HomeScreen = ({
         )}
 
         <Box pt={8}>
-          <Button
-            variant="outline"
-            width="full"
-            onClick={() => {
-              send({ type: "NEW_PROGRAM" })
-              setHasNewProgram(true)
-            }}
-          >
-            New program
-          </Button>
+          <Flex gap={3} width="full">
+            <Button
+              variant="outline"
+              flex="1"
+              onClick={() => {
+                send({ type: "NEW_PROGRAM" })
+                setHasNewProgram(true)
+              }}
+            >
+              New program
+            </Button>
+            <IconButton
+              as="a"
+              href="https://gemini.google.com/gem/1oFUSgMNfEIpFR2iIkYgA051cSdrRpI65?usp=sharing"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="AI suggestions"
+              variant="outline"
+              icon={<SparklesIcon />}
+              p={2}
+            />
+          </Flex>
         </Box>
       </VStack>
     </SwipeableChild>
