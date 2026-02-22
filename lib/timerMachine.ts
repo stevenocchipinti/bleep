@@ -10,15 +10,11 @@ import {
   SettingsSchema,
   AllCompletionsSchema,
   CompletionSchema,
-  HabitSchema,
-  AllHabitsSchema,
 } from "./types"
 import type {
   Block,
   Program,
   Settings,
-  Habit,
-  AllHabits,
   Completion,
   AllCompletions,
 } from "./types"
@@ -124,23 +120,9 @@ type SetAllCompletionsEvent = {
   completions: AllCompletions
 }
 type SaveCompletionsEvent = { type: "SAVE_COMPLETIONS" }
-
-// Habit events
-type AllHabitsLoadedEvent = { type: "HABITS_LOADED"; data: Habit[] }
-type SetAllHabitsEvent = { type: "SET_ALL_HABITS"; allHabits: Habit[] }
-type SelectHabitEvent = { type: "SELECT_HABIT"; id: string }
-type DeselectHabitEvent = { type: "DESELECT_HABIT" }
-type NewHabitEvent = { type: "NEW_HABIT" }
-type MoveHabitEvent = { type: "MOVE_HABIT"; fromIndex: number; toIndex: number }
-type RenameHabitEvent = { type: "RENAME_HABIT"; name: string }
-type UpdateHabitCategoryEvent = {
-  type: "UPDATE_HABIT_CATEGORY"
-  category: string
-}
-type DeleteHabitEvent = { type: "DELETE_HABIT" }
-type ToggleHabitCompletionEvent = {
-  type: "TOGGLE_HABIT_COMPLETION"
-  habitId: string
+type ToggleProgramCompletionEvent = {
+  type: "TOGGLE_PROGRAM_COMPLETION"
+  programId: string
 }
 
 type Events =
@@ -191,25 +173,13 @@ type Events =
   | DeleteCompletionEvent
   | SetAllCompletionsEvent
   | SaveCompletionsEvent
-  // Habit events
-  | AllHabitsLoadedEvent
-  | SetAllHabitsEvent
-  | SelectHabitEvent
-  | DeselectHabitEvent
-  | NewHabitEvent
-  | MoveHabitEvent
-  | RenameHabitEvent
-  | UpdateHabitCategoryEvent
-  | DeleteHabitEvent
-  | ToggleHabitCompletionEvent
+  | ToggleProgramCompletionEvent
 
 type Context = {
   allPrograms: Program[]
-  allHabits: Habit[]
   completions: Completion[]
   settings: Settings
   selectedProgramId: string | null
-  selectedHabitId: string | null
   currentBlockIndex: number
   secondsRemaining: number
   leadSecondsRemaining: number
@@ -254,8 +224,24 @@ export const currentProgramFrom = (context: Context): CurrentProgram => {
   }
 }
 
-export const currentHabitFrom = (context: Context): Habit | null => {
-  return context.allHabits.find(h => h.id === context.selectedHabitId) || null
+/**
+ * TEMPORARY MIGRATION — added 2026-02-22
+ *
+ * Renames old completion fields to new names introduced in the habit→program
+ * refactor. Safe to remove once this has been in the wild for a while and
+ * users are unlikely to still have the old data format in LocalForage.
+ *
+ * Old shape: { trackableId, trackableName, trackableType, ... }
+ * New shape: { programId, programName, ... }
+ */
+function migrateCompletions(data: unknown[]): unknown[] {
+  return data.map(c => {
+    if (c && typeof c === "object" && "trackableId" in c) {
+      const { trackableId, trackableName, trackableType, ...rest } = c as any
+      return { ...rest, programId: trackableId, programName: trackableName }
+    }
+    return c
+  })
 }
 
 const timerMachine = createMachine(
@@ -270,7 +256,6 @@ const timerMachine = createMachine(
 
     context: {
       allPrograms: [],
-      allHabits: [],
       completions: [],
       // Settings
       settings: {
@@ -280,7 +265,6 @@ const timerMachine = createMachine(
       },
       // Timer
       selectedProgramId: null,
-      selectedHabitId: null,
       currentBlockIndex: 0,
       secondsRemaining: 0,
       leadSecondsRemaining: 0,
@@ -801,87 +785,16 @@ const timerMachine = createMachine(
               SAVE_COMPLETIONS: {
                 target: "saving",
               },
+              TOGGLE_PROGRAM_COMPLETION: {
+                target: "saving",
+                actions: ["toggleProgramCompletion"],
+              },
             },
           },
 
           saving: {
             invoke: {
               src: "saveCompletions",
-              onDone: "loaded",
-              onError: "loaded",
-            },
-          },
-        },
-
-        initial: "loading",
-      },
-
-      habits: {
-        states: {
-          loading: {
-            invoke: {
-              src: "loadHabits",
-              onDone: {
-                target: "loaded",
-                actions: assign({
-                  allHabits: (_, event) => event.data,
-                }),
-              },
-              onError: {
-                target: "loaded",
-                actions: assign({
-                  allHabits: () => [],
-                }),
-              },
-            },
-          },
-
-          loaded: {
-            on: {
-              SELECT_HABIT: {
-                target: "loaded",
-                actions: "selectHabit",
-                internal: true,
-              },
-              DESELECT_HABIT: {
-                target: "loaded",
-                actions: "deselectHabit",
-                internal: true,
-              },
-              NEW_HABIT: {
-                target: "saving",
-                actions: "newHabit",
-              },
-              RENAME_HABIT: {
-                target: "saving",
-                actions: "renameHabit",
-              },
-              UPDATE_HABIT_CATEGORY: {
-                target: "saving",
-                actions: "updateHabitCategory",
-              },
-              DELETE_HABIT: {
-                target: "saving",
-                actions: ["deleteHabit", "deleteCompletionsForHabit"],
-              },
-              MOVE_HABIT: {
-                target: "saving",
-                actions: "moveHabit",
-              },
-              SET_ALL_HABITS: {
-                target: "saving",
-                actions: "setAllHabits",
-              },
-              TOGGLE_HABIT_COMPLETION: {
-                target: "loaded",
-                actions: ["toggleHabitCompletion", raise("SAVE_COMPLETIONS")],
-              },
-            },
-          },
-
-          saving: {
-            invoke: {
-              src: "saveHabits",
               onDone: "loaded",
               onError: "loaded",
             },
@@ -1118,14 +1031,8 @@ const timerMachine = createMachine(
         context.allPrograms.push(
           ProgramSchema.parse({
             name: "Untitled program",
-            description: "A new program",
-            blocks: [
-              {
-                type: "message",
-                name: "Welcome",
-                message: "Welcome to your new Bleep program!",
-              },
-            ],
+            description: "",
+            blocks: [],
           }),
         )
       }),
@@ -1253,9 +1160,8 @@ const timerMachine = createMachine(
         if (!program) return
 
         const completion = CompletionSchema.parse({
-          trackableId: context.selectedProgramId,
-          trackableType: "program",
-          trackableName: program.name,
+          programId: context.selectedProgramId,
+          programName: program.name,
           completedAt: new Date().toISOString(),
         })
         context.completions.push(completion)
@@ -1282,11 +1188,7 @@ const timerMachine = createMachine(
 
       deleteCompletionsForProgram: immerAssign(context => {
         context.completions = context.completions.filter(
-          c =>
-            !(
-              c.trackableId === context.selectedProgramId &&
-              c.trackableType === "program"
-            ),
+          c => c.programId !== context.selectedProgramId,
         )
       }),
 
@@ -1296,81 +1198,18 @@ const timerMachine = createMachine(
         },
       ),
 
-      // Habit actions
-      selectHabit: assign({
-        selectedHabitId: (_, event: SelectHabitEvent) => event.id,
-      }),
-
-      deselectHabit: assign({
-        selectedHabitId: null,
-      }),
-
-      newHabit: immerAssign(context => {
-        context.allHabits.push(
-          HabitSchema.parse({
-            name: "New habit",
-          }),
-        )
-      }),
-
-      renameHabit: immerAssign((context, event: RenameHabitEvent) => {
-        const habit = context.allHabits.find(
-          h => h.id === context.selectedHabitId,
-        )
-        if (habit) {
-          habit.name = event.name
-        }
-      }),
-
-      updateHabitCategory: immerAssign(
-        (context, event: UpdateHabitCategoryEvent) => {
-          const habit = context.allHabits.find(
-            h => h.id === context.selectedHabitId,
+      toggleProgramCompletion: immerAssign(
+        (context, event: ToggleProgramCompletionEvent) => {
+          const program = context.allPrograms.find(
+            p => p.id === event.programId,
           )
-          if (habit) {
-            habit.category = event.category || undefined
-          }
-        },
-      ),
+          if (!program) return
 
-      deleteHabit: immerAssign(context => {
-        context.allHabits = context.allHabits.filter(
-          h => h.id !== context.selectedHabitId,
-        )
-        context.selectedHabitId = null
-      }),
-
-      moveHabit: immerAssign(
-        ({ allHabits }, { fromIndex, toIndex }: MoveHabitEvent) => {
-          allHabits.splice(toIndex, 0, allHabits.splice(fromIndex, 1)[0])
-        },
-      ),
-      setAllHabits: assign({
-        allHabits: (_, { allHabits }: SetAllHabitsEvent) =>
-          AllHabitsSchema.parse(allHabits),
-      }),
-
-      deleteCompletionsForHabit: immerAssign(context => {
-        context.completions = context.completions.filter(
-          c =>
-            !(
-              c.trackableId === context.selectedHabitId &&
-              c.trackableType === "habit"
-            ),
-        )
-      }),
-
-      toggleHabitCompletion: immerAssign(
-        (context, event: ToggleHabitCompletionEvent) => {
-          const habit = context.allHabits.find(h => h.id === event.habitId)
-          if (!habit) return
-
-          // Check if there's a completion for this habit today
+          // Check if there's a completion for this program today
           const today = new Date().toISOString().split("T")[0]
           const existingCompletionIndex = context.completions.findIndex(
             c =>
-              c.trackableId === event.habitId &&
-              c.trackableType === "habit" &&
+              c.programId === event.programId &&
               c.completedAt.startsWith(today),
           )
 
@@ -1380,9 +1219,8 @@ const timerMachine = createMachine(
           } else {
             // Add a new completion (toggle on)
             const completion = CompletionSchema.parse({
-              trackableId: event.habitId,
-              trackableType: "habit",
-              trackableName: habit.name,
+              programId: event.programId,
+              programName: program.name,
               completedAt: new Date().toISOString(),
             })
             context.completions.push(completion)
@@ -1509,23 +1347,21 @@ const timerMachine = createMachine(
       // Completions
       loadCompletions: () =>
         localforage.getItem("completions").then(data => {
-          // Clean up old storage key from development (one-time migration)
-          localforage.removeItem("programCompletions")
-          if (data) return AllCompletionsSchema.parse(data)
-          return []
+          if (!data) return []
+          const migrated = migrateCompletions(data as unknown[])
+          const result = AllCompletionsSchema.safeParse(migrated)
+          if (!result.success) {
+            console.warn(
+              "Failed to parse completions after migration, resetting",
+              result.error,
+            )
+            return []
+          }
+          return result.data
         }),
 
       saveCompletions: ({ completions }) =>
         localforage.setItem("completions", completions),
-
-      // Habits
-      loadHabits: () =>
-        localforage.getItem("habits").then(data => {
-          if (data) return AllHabitsSchema.parse(data)
-          return []
-        }),
-
-      saveHabits: ({ allHabits }) => localforage.setItem("habits", allHabits),
     },
   },
 )

@@ -55,14 +55,6 @@ export const ProgramSchema = z.object({
 
 export const AllProgramsSchema = z.array(ProgramSchema)
 
-export const HabitSchema = z.object({
-  id: z.string().default(() => generateId(6)),
-  name: z.string().nonempty(),
-  category: z.string().optional(),
-})
-
-export const AllHabitsSchema = z.array(HabitSchema)
-
 export const SettingsSchema = z.object({
   voiceURI: z.string().nullable().default(null),
   soundEnabled: z.boolean().default(true),
@@ -71,9 +63,8 @@ export const SettingsSchema = z.object({
 
 export const CompletionSchema = z.object({
   id: z.string().default(() => generateId(6)),
-  trackableId: z.string(),
-  trackableType: z.enum(["program", "habit"]),
-  trackableName: z.string(),
+  programId: z.string(),
+  programName: z.string(),
   completedAt: z.string(),
 })
 
@@ -86,7 +77,5 @@ export type Block = z.infer<typeof BlockSchema>
 export type Program = z.infer<typeof ProgramSchema>
 export type AllPrograms = z.infer<typeof AllProgramsSchema>
 export type Settings = z.infer<typeof SettingsSchema>
-export type Habit = z.infer<typeof HabitSchema>
-export type AllHabits = z.infer<typeof AllHabitsSchema>
 export type Completion = z.infer<typeof CompletionSchema>
 export type AllCompletions = z.infer<typeof AllCompletionsSchema>

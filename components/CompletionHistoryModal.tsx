@@ -32,9 +32,8 @@ import { Completion, CompletionSchema } from "lib/types"
 interface CompletionHistoryModalProps {
   isOpen: boolean
   onClose: () => void
-  trackableId: string
-  trackableName: string
-  trackableType: "program" | "habit"
+  programId: string
+  programName: string
 }
 
 // Helper functions for calendar operations
@@ -205,15 +204,14 @@ const MonthCalendar = ({
 const CompletionHistoryModal = ({
   isOpen,
   onClose,
-  trackableId,
-  trackableName,
-  trackableType,
+  programId,
+  programName,
 }: CompletionHistoryModalProps) => {
    const { state, send } = useTimerActor()
 
-   // Filter completions for current trackable (program or habit)
+   // Filter completions for current program
    const completions = state.context.completions
-     .filter(c => c.trackableId === trackableId && c.trackableType === trackableType)
+     .filter(c => c.programId === programId)
      .sort(
        (a, b) =>
          new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime(),
@@ -427,15 +425,14 @@ const CompletionHistoryModal = ({
                 colorScheme="teal"
                 onClick={() => {
                    if (addDateTime) {
-                     send({
-                       type: "ADD_COMPLETION",
-                       completion: CompletionSchema.parse({
-                         trackableId,
-                         trackableType,
-                         trackableName,
-                         completedAt: fromDateTimeLocalString(addDateTime),
-                       }),
-                     })
+                      send({
+                        type: "ADD_COMPLETION",
+                        completion: CompletionSchema.parse({
+                          programId,
+                          programName,
+                          completedAt: fromDateTimeLocalString(addDateTime),
+                        }),
+                      })
                   }
                   setIsAddingCompletion(false)
                   setAddDateTime("")
@@ -454,7 +451,7 @@ const CompletionHistoryModal = ({
       <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
         <ModalOverlay />
         <ModalContent mx={4}>
-           <ModalHeader>{trackableName}</ModalHeader>
+           <ModalHeader>{programName}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={6} align="stretch">

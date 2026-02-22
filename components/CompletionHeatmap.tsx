@@ -4,22 +4,20 @@ import { useEffect, useRef, useState } from "react"
 
 interface CompletionHeatmapProps {
   completions: Completion[]
-  trackableId: string
-  trackableType: "program" | "habit"
+  programId: string
 }
 
 const CompletionHeatmap = ({
   completions,
-  trackableId,
-  trackableType,
+  programId,
 }: CompletionHeatmapProps) => {
   const theme = useTheme()
   const containerRef = useRef<HTMLDivElement>(null)
   const [numColumns, setNumColumns] = useState(52)
 
-  // Filter completions for this trackable
+  // Filter completions for this program
   const trackableCompletions = completions.filter(
-    c => c.trackableId === trackableId && c.trackableType === trackableType,
+    c => c.programId === programId,
   )
 
   // Get Monday of the current week

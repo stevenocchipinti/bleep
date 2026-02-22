@@ -21,105 +21,74 @@ import {
 import DndContext from "@/components/DndContext"
 import { DragEndEvent } from "@dnd-kit/core"
 
-import { Program, ProgramSchema, Habit, HabitSchema } from "lib/types"
+import { Program, ProgramSchema } from "lib/types"
 import { useTimerActor } from "lib/useTimerMachine"
 import { useEffect, useState, useMemo } from "react"
 
 interface HomeScreenProps {
   openSettingsModal: () => void
   selectProgramById: (id: string, skip?: boolean) => void
-  selectHabitById: (id: string) => void
 }
 
 const HomeScreen = ({
   openSettingsModal,
   selectProgramById,
-  selectHabitById,
 }: HomeScreenProps) => {
   const [hasNewProgram, setHasNewProgram] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
 
   const { state, send } = useTimerActor()
-  const {
-    allPrograms,
-    allHabits,
-    selectedProgramId,
-    selectedHabitId,
-    completions,
-  } = state.context
+  const { allPrograms, completions } = state.context
 
-  type Trackable =
-    | { type: "program"; id: string; data: Program }
-    | { type: "habit"; id: string; data: Habit }
+  const programIds = allPrograms.map(p => p.id)
 
-  const trackables: Trackable[] = [
-    ...allPrograms.map(p => ({ type: "program" as const, id: p.id, data: p })),
-    ...allHabits.map(h => ({ type: "habit" as const, id: h.id, data: h })),
-  ]
-
-  const trackableIds = trackables.map(t => t.id)
-
-  // Group trackables by category
-  type TrackableGroup = {
+  // Group programs by category
+  type ProgramGroup = {
     category: string
-    trackables: Trackable[]
+    programs: Program[]
   }
 
-  const groupedTrackables: TrackableGroup[] = useMemo(() => {
-    const groups = new Map<string, Trackable[]>()
+  const groupedPrograms: ProgramGroup[] = useMemo(() => {
+    const groups = new Map<string, Program[]>()
 
-    // Separate trackables with and without categories
-    const trackablesWithCategory: Trackable[] = []
-    const trackablesWithoutCategory: Trackable[] = []
+    const withCategory: Program[] = []
+    const withoutCategory: Program[] = []
 
-    trackables.forEach(t => {
-      if (t.data.category) {
-        trackablesWithCategory.push(t)
+    allPrograms.forEach(p => {
+      if (p.category) {
+        withCategory.push(p)
       } else {
-        trackablesWithoutCategory.push(t)
+        withoutCategory.push(p)
       }
     })
 
-    // If no trackables have categories, return flat list (no grouping)
-    if (trackablesWithCategory.length === 0) {
+    // If no programs have categories, return flat list (no grouping)
+    if (withCategory.length === 0) {
       return []
     }
 
-    // Build groups from trackables with categories
-    trackablesWithCategory.forEach(t => {
-      const category = t.data.category!
+    withCategory.forEach(p => {
+      const category = p.category!
       if (!groups.has(category)) groups.set(category, [])
-      groups.get(category)!.push(t)
+      groups.get(category)!.push(p)
     })
 
-    // Convert to array and sort: archive categories last, others alphabetically
     const result = Array.from(groups.entries())
-      .map(([category, items]) => ({
-        category,
-        trackables: items,
-      }))
+      .map(([category, items]) => ({ category, programs: items }))
       .sort((a, b) => {
         const aIsArchive = a.category.toLowerCase().includes("archive")
         const bIsArchive = b.category.toLowerCase().includes("archive")
-
-        // If one is archive and the other isn't, archive goes last
         if (aIsArchive && !bIsArchive) return 1
         if (!aIsArchive && bIsArchive) return -1
-
-        // Otherwise sort alphabetically
         return a.category.localeCompare(b.category)
       })
 
-    // Add uncategorized items at the beginning (without a header)
-    if (trackablesWithoutCategory.length > 0) {
-      result.unshift({
-        category: "__uncategorized__",
-        trackables: trackablesWithoutCategory,
-      })
+    if (withoutCategory.length > 0) {
+      result.unshift({ category: "__uncategorized__", programs: withoutCategory })
     }
 
     return result
-  }, [trackables])
+  }, [allPrograms])
 
   const toggleGroup = (category: string) => {
     const updated = new Set(expandedGroups)
@@ -131,13 +100,10 @@ const HomeScreen = ({
     setExpandedGroups(updated)
   }
 
-  const isCompletedToday = (habitId: string): boolean => {
+  const isCompletedToday = (programId: string): boolean => {
     const today = new Date().toISOString().split("T")[0]
     return completions.some(
-      c =>
-        c.trackableId === habitId &&
-        c.trackableType === "habit" &&
-        c.completedAt.startsWith(today),
+      c => c.programId === programId && c.completedAt.startsWith(today),
     )
   }
 
@@ -150,99 +116,62 @@ const HomeScreen = ({
   }, [hasNewProgram])
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
-    if (active?.id && over?.id && active.id !== over?.id) {
-      const activeTrackable = trackables.find(t => t.id === active.id)
-      const overTrackable = trackables.find(t => t.id === over.id)
+    if (!active?.id || !over?.id || active.id === over.id) return
 
-      // Only allow reordering within the same type for now
-      if (
-        activeTrackable?.type === "program" &&
-        overTrackable?.type === "program"
-      ) {
-        // Build a flat list of program IDs in visual order (respecting category grouping)
-        const visualProgramOrder: string[] = []
-        if (groupedTrackables.length > 0) {
-          // When categories exist, flatten in the order they're rendered
-          groupedTrackables.forEach(group => {
-            group.trackables.forEach(t => {
-              if (t.type === "program") {
-                visualProgramOrder.push(t.id)
-              }
-            })
-          })
-        } else {
-          // When no categories, use trackables order
-          trackables.forEach(t => {
-            if (t.type === "program") {
-              visualProgramOrder.push(t.id)
-            }
-          })
-        }
-
-        // Find visual indices (where they are in the visual order)
-        const visualFromIndex = visualProgramOrder.indexOf(active.id as string)
-        const visualToIndex = visualProgramOrder.indexOf(over.id as string)
-
-        // Simulate the drag to get the new desired visual order
-        const newVisualOrder = [...visualProgramOrder]
-        const [moved] = newVisualOrder.splice(visualFromIndex, 1)
-        newVisualOrder.splice(visualToIndex, 0, moved)
-
-        // Rebuild allPrograms array to match the new visual order
-        const reorderedPrograms = newVisualOrder.map(
-          id => allPrograms.find(p => p.id === id)!,
-        )
-
-        // Use SET_ALL_PROGRAMS to replace the entire array
-        send({
-          type: "SET_ALL_PROGRAMS",
-          allPrograms: reorderedPrograms,
-        })
-      } else if (
-        activeTrackable?.type === "habit" &&
-        overTrackable?.type === "habit"
-      ) {
-        // Build a flat list of habit IDs in visual order (respecting category grouping)
-        const visualHabitOrder: string[] = []
-        if (groupedTrackables.length > 0) {
-          // When categories exist, flatten in the order they're rendered
-          groupedTrackables.forEach(group => {
-            group.trackables.forEach(t => {
-              if (t.type === "habit") {
-                visualHabitOrder.push(t.id)
-              }
-            })
-          })
-        } else {
-          // When no categories, use trackables order
-          trackables.forEach(t => {
-            if (t.type === "habit") {
-              visualHabitOrder.push(t.id)
-            }
-          })
-        }
-
-        // Find visual indices
-        const visualFromIndex = visualHabitOrder.indexOf(active.id as string)
-        const visualToIndex = visualHabitOrder.indexOf(over.id as string)
-
-        // Simulate the drag to get the new desired visual order
-        const newVisualOrder = [...visualHabitOrder]
-        const [moved] = newVisualOrder.splice(visualFromIndex, 1)
-        newVisualOrder.splice(visualToIndex, 0, moved)
-
-        // Rebuild allHabits array to match the new visual order
-        const reorderedHabits = newVisualOrder.map(
-          id => allHabits.find(h => h.id === id)!,
-        )
-
-        // Use SET_ALL_HABITS to replace the entire array
-        send({
-          type: "SET_ALL_HABITS",
-          allHabits: reorderedHabits,
-        })
-      }
+    // Build visual order of program IDs
+    const visualOrder: string[] = []
+    if (groupedPrograms.length > 0) {
+      groupedPrograms.forEach(group => {
+        group.programs.forEach(p => visualOrder.push(p.id))
+      })
+    } else {
+      allPrograms.forEach(p => visualOrder.push(p.id))
     }
+
+    const fromIndex = visualOrder.indexOf(active.id as string)
+    const toIndex = visualOrder.indexOf(over.id as string)
+    if (fromIndex === -1 || toIndex === -1) return
+
+    const newOrder = [...visualOrder]
+    const [moved] = newOrder.splice(fromIndex, 1)
+    newOrder.splice(toIndex, 0, moved)
+
+    const reordered = newOrder.map(id => allPrograms.find(p => p.id === id)!)
+    send({ type: "SET_ALL_PROGRAMS", allPrograms: reordered })
+  }
+
+  const renderProgramCard = (program: Program) => {
+    const isValid = ProgramSchema.safeParse(program).success
+    const isHabitStyle = program.blocks.length === 0
+
+    return (
+      <CardButton
+        key={program.id}
+        id={program.id}
+        text={program.name}
+        showCompletionToggle={isHabitStyle}
+        isCompletedToday={isHabitStyle ? isCompletedToday(program.id) : false}
+        onClick={() => selectProgramById(program.id)}
+        error={!isValid}
+        innerButtonOnClick={
+          isHabitStyle
+            ? e => {
+                e.stopPropagation()
+                send({ type: "TOGGLE_PROGRAM_COMPLETION", programId: program.id })
+              }
+            : e => {
+                e.stopPropagation()
+                selectProgramById(program.id, isValid)
+              }
+        }
+        heatmapContent={
+          <CompletionHeatmap
+            completions={completions}
+            programId={program.id}
+          />
+        }
+      />
+    )
   }
 
   return (
@@ -268,20 +197,17 @@ const HomeScreen = ({
       </Flex>
 
       <Heading as="h2" textAlign="center" px={8} size="xl">
-        {allPrograms.length === 0 &&
-          allHabits.length === 0 &&
-          "Create your first program or habit below"}
+        {allPrograms.length === 0 && "Create your first program below"}
       </Heading>
 
       <VStack spacing={4} alignItems="stretch" p={6}>
-        {groupedTrackables.length > 0 ? (
+        {groupedPrograms.length > 0 ? (
           // Grouped view (categories exist)
-          groupedTrackables.map(group => {
+          groupedPrograms.map(group => {
             const isExpanded = expandedGroups.has(group.category)
             const isUncategorized = group.category === "__uncategorized__"
             return (
               <Box key={group.category}>
-                {/* Group header - hide for uncategorized */}
                 {!isUncategorized && (
                   <Button
                     variant="ghost"
@@ -299,70 +225,13 @@ const HomeScreen = ({
                     {group.category}
                   </Button>
                 )}
-
-                {/* Collapse animation - always show for uncategorized */}
                 <Collapse in={isUncategorized || isExpanded} animateOpacity>
                   <DndContext
                     onDragEnd={onDragEnd}
-                    items={group.trackables.map(t => t.id)}
+                    items={group.programs.map(p => p.id)}
                   >
                     <VStack spacing={3} alignItems="stretch">
-                      {group.trackables.map(trackable => {
-                        if (trackable.type === "program") {
-                          const program = trackable.data as Program
-                          const isValid =
-                            ProgramSchema.safeParse(program).success
-                          return (
-                            <CardButton
-                              key={program.id}
-                              id={program.id}
-                              text={program.name}
-                              trackableType="program"
-                              onClick={() => selectProgramById(program.id)}
-                              error={!isValid}
-                              innerButtonOnClick={e => {
-                                e.stopPropagation()
-                                selectProgramById(program.id, isValid)
-                              }}
-                              heatmapContent={
-                                <CompletionHeatmap
-                                  completions={completions}
-                                  trackableId={program.id}
-                                  trackableType="program"
-                                />
-                              }
-                            />
-                          )
-                        } else {
-                          const habit = trackable.data as Habit
-                          const isValid = HabitSchema.safeParse(habit).success
-                          return (
-                            <CardButton
-                              key={habit.id}
-                              id={habit.id}
-                              text={habit.name}
-                              trackableType="habit"
-                              isCompletedToday={isCompletedToday(habit.id)}
-                              onClick={() => selectHabitById(habit.id)}
-                              error={!isValid}
-                              innerButtonOnClick={e => {
-                                e.stopPropagation()
-                                send({
-                                  type: "TOGGLE_HABIT_COMPLETION",
-                                  habitId: habit.id,
-                                })
-                              }}
-                              heatmapContent={
-                                <CompletionHeatmap
-                                  completions={completions}
-                                  trackableId={habit.id}
-                                  trackableType="habit"
-                                />
-                              }
-                            />
-                          )
-                        }
-                      })}
+                      {group.programs.map(renderProgramCard)}
                     </VStack>
                   </DndContext>
                 </Collapse>
@@ -371,90 +240,23 @@ const HomeScreen = ({
           })
         ) : (
           // Flat view (no categories)
-          <DndContext onDragEnd={onDragEnd} items={trackableIds}>
+          <DndContext onDragEnd={onDragEnd} items={programIds}>
             <VStack spacing={3} alignItems="stretch">
-              {trackables.map(trackable => {
-                if (trackable.type === "program") {
-                  const program = trackable.data as Program
-                  const isValid = ProgramSchema.safeParse(program).success
-                  return (
-                    <CardButton
-                      key={program.id}
-                      id={program.id}
-                      text={program.name}
-                      trackableType="program"
-                      onClick={() => selectProgramById(program.id)}
-                      error={!isValid}
-                      innerButtonOnClick={e => {
-                        e.stopPropagation()
-                        selectProgramById(program.id, isValid)
-                      }}
-                      heatmapContent={
-                        <CompletionHeatmap
-                          completions={completions}
-                          trackableId={program.id}
-                          trackableType="program"
-                        />
-                      }
-                    />
-                  )
-                } else {
-                  const habit = trackable.data as Habit
-                  const isValid = HabitSchema.safeParse(habit).success
-                  return (
-                    <CardButton
-                      key={habit.id}
-                      id={habit.id}
-                      text={habit.name}
-                      trackableType="habit"
-                      isCompletedToday={isCompletedToday(habit.id)}
-                      onClick={() => selectHabitById(habit.id)}
-                      error={!isValid}
-                      innerButtonOnClick={e => {
-                        e.stopPropagation()
-                        send({
-                          type: "TOGGLE_HABIT_COMPLETION",
-                          habitId: habit.id,
-                        })
-                      }}
-                      heatmapContent={
-                        <CompletionHeatmap
-                          completions={completions}
-                          trackableId={habit.id}
-                          trackableType="habit"
-                        />
-                      }
-                    />
-                  )
-                }
-              })}
+              {allPrograms.map(renderProgramCard)}
             </VStack>
           </DndContext>
         )}
 
-        <Box display="grid" gridTemplateColumns="1fr 1fr" gap={4} pt={8}>
+        <Box pt={8}>
           <Button
             variant="outline"
+            width="full"
             onClick={() => {
               send({ type: "NEW_PROGRAM" })
               setHasNewProgram(true)
             }}
           >
             New program
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              send({ type: "NEW_HABIT" })
-              // Select the newly created habit after a short delay
-              setTimeout(() => {
-                const newHabit =
-                  state.context.allHabits[state.context.allHabits.length - 1]
-                if (newHabit) selectHabitById(newHabit.id)
-              }, 100)
-            }}
-          >
-            New habit
           </Button>
         </Box>
       </VStack>

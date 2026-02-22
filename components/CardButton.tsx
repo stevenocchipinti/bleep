@@ -31,7 +31,7 @@ interface CardButtonProps {
   style?: any
   isExpanded?: boolean
   heatmapContent?: React.ReactNode
-  trackableType?: "program" | "habit"
+  showCompletionToggle?: boolean
   isCompletedToday?: boolean
 }
 
@@ -50,7 +50,7 @@ const CardButton = ({
   onClick,
   innerButtonOnClick,
   heatmapContent,
-  trackableType = "program",
+  showCompletionToggle = false,
   isCompletedToday = false,
   ...props
 }: CardButtonProps) => {
@@ -118,14 +118,14 @@ const CardButton = ({
             display="flex"
             variant="ghost"
             aria-label={
-              trackableType === "habit" ? "Toggle completion" : "Toggle body"
+              showCompletionToggle ? "Toggle completion" : "Toggle body"
             }
             m={1}
             onClick={
               typeof isExpanded === "boolean" ? undefined : innerButtonOnClick
             }
             icon={
-              trackableType === "habit" ? (
+              showCompletionToggle ? (
                 <CheckIcon
                   filled={isCompletedToday}
                   boxSize={5}

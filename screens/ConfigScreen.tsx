@@ -77,6 +77,7 @@ import {
   ShareIcon,
   SpeakerIcon,
   NotesIcon,
+  CheckIcon,
 } from "@/components/icons"
 
 const OptionalIndicator = () => (
@@ -204,8 +205,14 @@ const ConfigScreen = ({
   // Program
   const { state, send } = useTimerActor()
   const { program, blocks } = currentProgramFrom(state.context)
-  const { allPrograms, allHabits } = state.context
+  const { allPrograms, completions } = state.context
   const isValid = ProgramSchema.safeParse(program).success
+  const today = new Date().toISOString().split("T")[0]
+  const isCompletedToday = program
+    ? completions.some(
+        c => c.programId === program.id && c.completedAt.startsWith(today),
+      )
+    : false
 
   // Sharing
   interface ShareData {
@@ -538,14 +545,32 @@ const ConfigScreen = ({
           </>
         }
         footer={
-          <FooterButton
-            variant="brand"
-            span={4}
-            onClick={goForward}
-            rightIcon={<ArrowForwardIcon />}
-          >
-            Go
-          </FooterButton>
+          blocks.length === 0 ? (
+            <FooterButton
+              variant="brand"
+              span={4}
+              onClick={() =>
+                send({
+                  type: "TOGGLE_PROGRAM_COMPLETION",
+                  programId: program.id,
+                })
+              }
+              leftIcon={
+                isCompletedToday ? <CheckIcon filled boxSize={5} /> : undefined
+              }
+            >
+              {isCompletedToday ? "Completed today" : "Mark complete"}
+            </FooterButton>
+          ) : (
+            <FooterButton
+              variant="brand"
+              span={4}
+              onClick={goForward}
+              rightIcon={<ArrowForwardIcon />}
+            >
+              Go
+            </FooterButton>
+          )
         }
       >
         <Box my="auto">
@@ -587,10 +612,6 @@ const ConfigScreen = ({
               ...allPrograms
                 .filter(p => p.category)
                 .map(p => p.category!)
-                .filter((cat, idx, arr) => arr.indexOf(cat) === idx),
-              ...allHabits
-                .filter(h => h.category)
-                .map(h => h.category!)
                 .filter((cat, idx, arr) => arr.indexOf(cat) === idx),
             ]}
             onChange={(category: string) =>
@@ -964,6 +985,24 @@ const ConfigScreen = ({
                 </CardButton>
               )
             })}
+            {blocks.length === 0 && (
+              <Flex
+                direction="column"
+                align="center"
+                justify="center"
+                gap={3}
+                py={10}
+                px={4}
+              >
+                <Text fontSize="lg" fontWeight="500" color="gray.600">
+                  No blocks yet
+                </Text>
+                <Text fontSize="md" textAlign="center" color="gray.500">
+                  This program works as a habit tracker. Add blocks to build out
+                  your full routine.
+                </Text>
+              </Flex>
+            )}
             <Button
               variant="outline"
               onClick={() => {
@@ -980,9 +1019,8 @@ const ConfigScreen = ({
       <CompletionHistoryModal
         isOpen={historyModalIsOpen}
         onClose={() => setHistoryModalIsOpen(false)}
-        trackableId={program.id}
-        trackableName={program.name}
-        trackableType="program"
+        programId={program.id}
+        programName={program.name}
       />
 
       <NotesModal
