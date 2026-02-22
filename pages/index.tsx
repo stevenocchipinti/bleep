@@ -14,7 +14,8 @@ const Page = () => {
   const [slideIndex, setSlideIndex] = useState(0)
 
   const { state, is, send } = useTimerActor()
-  const { program } = currentProgramFrom(state.context)
+  const { program, blocks } = currentProgramFrom(state.context)
+  const hasBlocks = (blocks?.length ?? 0) > 0
 
   // Setting modal
   const { isOpen, onOpen, onClose } = useDisclosure()
@@ -34,15 +35,35 @@ const Page = () => {
     if (!program) setSlideIndex(0)
   }, [program])
 
-  const selectProgramById = (id: string, skip: boolean = false) => {
-    send({ type: "SELECT_PROGRAM", id })
-    setSlideIndex(skip ? 2 : 1)
+  // Clamp slideIndex to valid range when blocks change
+  useEffect(() => {
+    const maxSlide = hasBlocks ? 2 : 1
+    if (slideIndex > maxSlide) {
+      setSlideIndex(maxSlide)
+    }
+  }, [hasBlocks, slideIndex])
 
-    // Set up a history stack for the 3 slides
-    history.replaceState({ slide: 0 }, "")
-    history.pushState({ slide: 1 }, "")
-    history.pushState({ slide: 2 }, "")
-    if (!skip) history.go(-1)
+  const selectProgramById = (id: string, skip: boolean = false) => {
+    const selectedProgram = state.context.allPrograms.find(p => p.id === id)
+    const selectedHasBlocks = (selectedProgram?.blocks.length ?? 0) > 0
+
+    send({ type: "SELECT_PROGRAM", id })
+
+    // For habit-only programs (no blocks), there are only 2 slides (home & config)
+    // For programs with blocks, there are 3 slides (home & config & timer)
+    if (selectedHasBlocks) {
+      setSlideIndex(skip ? 2 : 1)
+      // Set up a history stack for the 3 slides
+      history.replaceState({ slide: 0 }, "")
+      history.pushState({ slide: 1 }, "")
+      history.pushState({ slide: 2 }, "")
+      if (!skip) history.go(-1)
+    } else {
+      setSlideIndex(1)
+      // Set up a history stack for the 2 slides (no timer)
+      history.replaceState({ slide: 0 }, "")
+      history.pushState({ slide: 1 }, "")
+    }
   }
 
   return (
