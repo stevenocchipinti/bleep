@@ -9,8 +9,9 @@ import {
   Button,
   IconButton,
   Flex,
+  InputGroup,
+  InputRightElement,
 } from "@chakra-ui/react"
-import { motion, AnimatePresence } from "framer-motion"
 import { FolderIcon, ArchiveIcon } from "./icons"
 
 interface CategoryButtonProps {
@@ -27,10 +28,12 @@ const CategoryButton = ({
   const [isExpanded, setIsExpanded] = useState(false)
   const [inputValue, setInputValue] = useState(value)
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [isFocused, setIsFocused] = useState(false)
   const [buttonWidth, setButtonWidth] = useState<number | undefined>(undefined)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
+  const isSelectingSuggestion = useRef(false)
 
   // Update input when value prop changes (from outside)
   useEffect(() => {
@@ -69,7 +72,10 @@ const CategoryButton = ({
       setShowSuggestions(false)
       if (isExpanded) {
         setIsExpanded(false)
-        onChange(inputValue)
+        if (!isSelectingSuggestion.current) {
+          onChange(inputValue)
+        }
+        isSelectingSuggestion.current = false
       }
     },
   })
@@ -89,26 +95,32 @@ const CategoryButton = ({
   }
 
   const handleInputBlur = () => {
-    // Close suggestions immediately
+    setIsFocused(false)
     setShowSuggestions(false)
-    // Delay collapse slightly to allow smooth animation
     setTimeout(() => {
       setIsExpanded(false)
       onChange(inputValue)
     }, 100)
   }
 
+  const handleInputFocus = () => {
+    setIsFocused(true)
+    if (suggestions.length > 0) {
+      setShowSuggestions(true)
+    }
+  }
+
+  const handleClear = () => {
+    setInputValue("")
+    onChange("")
+  }
+
   const handleSuggestionClick = (suggestion: string) => {
+    isSelectingSuggestion.current = true
     setInputValue(suggestion)
     onChange(suggestion)
     setShowSuggestions(false)
     setIsExpanded(false)
-  }
-
-  const handleInputFocus = () => {
-    if (suggestions.length > 0) {
-      setShowSuggestions(true)
-    }
   }
 
   const handleArchiveClick = () => {
@@ -122,48 +134,50 @@ const CategoryButton = ({
     <FormControl>
       <Flex gap={2} align="center">
         <Box
-          as={motion.div}
-          initial={false}
-          animate={{
-            flex: isExpanded ? 1 : "0 1 auto",
-            width: isExpanded ? undefined : buttonWidth,
-          }}
-          // @ts-ignore - framer-motion transition
-          transition={{
-            duration: 0.2,
-            ease: "easeInOut",
-          }}
+          transition="all 0.2s ease-in-out"
+          flex={isExpanded ? 1 : "0 1 auto"}
+          width={isExpanded ? undefined : buttonWidth}
           ref={containerRef}
           position="relative"
           minWidth={0}
         >
           <Box position="relative" height="40px" width="100%">
-            <AnimatePresence initial={false}>
-              {isExpanded ? (
-                <Box
-                  as={motion.div}
-                  key="input"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  // @ts-ignore - framer-motion transition
-                  transition={{ duration: 0.1 }}
-                  position="absolute"
-                  top={0}
-                  left={0}
-                  right={0}
-                >
-                  <Input
-                    ref={inputRef}
-                    type="text"
-                    placeholder="Category (optional)"
-                    value={inputValue}
-                    onChange={handleInputChange}
-                    onFocus={handleInputFocus}
-                    onBlur={handleInputBlur}
-                    autoComplete="off"
-                    aria-label="Category"
-                  />
+            {isExpanded ? (
+              <Box
+                transition="opacity 0.15s ease-in-out"
+                opacity={1}
+                position="absolute"
+                top={0}
+                left={0}
+                right={0}
+              >
+                  <InputGroup>
+                    <Input
+                      ref={inputRef}
+                      type="text"
+                      placeholder="Category (optional)"
+                      value={inputValue}
+                      onChange={handleInputChange}
+                      onFocus={handleInputFocus}
+                      onBlur={handleInputBlur}
+                      autoComplete="off"
+                      aria-label="Category"
+                    />
+                    {isFocused && inputValue && (
+                      <InputRightElement h="40px">
+                        <IconButton
+                          aria-label="Clear category"
+                          icon={<Text fontSize="lg">×</Text>}
+                          size="sm"
+                          variant="ghost"
+                          onMouseDown={handleClear}
+                          opacity={0.6}
+                          _hover={{ opacity: 1 }}
+                          transition="opacity 0.15s ease-in-out"
+                        />
+                      </InputRightElement>
+                    )}
+                  </InputGroup>
 
                   {/* Autocomplete suggestions */}
                   {showSuggestions && suggestions.length > 0 && (
@@ -218,13 +232,8 @@ const CategoryButton = ({
                 </Box>
               ) : (
                 <Box
-                  as={motion.div}
-                  key="button"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  // @ts-ignore - framer-motion transition
-                  transition={{ duration: 0.1 }}
+                  transition="opacity 0.15s ease-in-out"
+                  opacity={1}
                   position="absolute"
                   top={0}
                   left={0}
@@ -258,7 +267,6 @@ const CategoryButton = ({
                   </Button>
                 </Box>
               )}
-            </AnimatePresence>
           </Box>
         </Box>
 
