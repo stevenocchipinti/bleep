@@ -142,131 +142,131 @@ const CategoryButton = ({
           minWidth={0}
         >
           <Box position="relative" height="40px" width="100%">
-            {isExpanded ? (
-              <Box
-                transition="opacity 0.15s ease-in-out"
-                opacity={1}
-                position="absolute"
-                top={0}
-                left={0}
-                right={0}
-              >
-                  <InputGroup>
-                    <Input
-                      ref={inputRef}
-                      type="text"
-                      placeholder="Category (optional)"
-                      value={inputValue}
-                      onChange={handleInputChange}
-                      onFocus={handleInputFocus}
-                      onBlur={handleInputBlur}
-                      autoComplete="off"
-                      aria-label="Category"
+            <Box
+              transition="opacity 0.15s ease-in-out"
+              opacity={isExpanded ? 1 : 0}
+              position="absolute"
+              top={0}
+              left={0}
+              right={0}
+              pointerEvents={isExpanded ? "auto" : "none"}
+            >
+              <InputGroup>
+                <Input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="Category (optional)"
+                  value={inputValue}
+                  onChange={handleInputChange}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
+                  autoComplete="off"
+                  aria-label="Category"
+                />
+                {isFocused && inputValue && (
+                  <InputRightElement h="40px">
+                    <IconButton
+                      aria-label="Clear category"
+                      icon={<Text fontSize="lg">×</Text>}
+                      size="sm"
+                      variant="ghost"
+                      onMouseDown={handleClear}
+                      opacity={0.6}
+                      _hover={{ opacity: 1 }}
+                      transition="opacity 0.15s ease-in-out"
                     />
-                    {isFocused && inputValue && (
-                      <InputRightElement h="40px">
-                        <IconButton
-                          aria-label="Clear category"
-                          icon={<Text fontSize="lg">×</Text>}
-                          size="sm"
-                          variant="ghost"
-                          onMouseDown={handleClear}
-                          opacity={0.6}
-                          _hover={{ opacity: 1 }}
-                          transition="opacity 0.15s ease-in-out"
-                        />
-                      </InputRightElement>
-                    )}
-                  </InputGroup>
+                  </InputRightElement>
+                )}
+              </InputGroup>
 
-                  {/* Autocomplete suggestions */}
-                  {showSuggestions && suggestions.length > 0 && (
-                    <Box
-                      position="absolute"
-                      top="100%"
-                      left={0}
-                      right={0}
-                      zIndex={10}
-                      bg="gray.800"
-                      border="1px solid"
-                      borderColor="gray.700"
-                      borderRadius="md"
-                      boxShadow="md"
-                      mt={1}
-                    >
-                      <VStack
-                        spacing={0}
-                        align="stretch"
-                        divider={
-                          <Box
-                            borderBottom="1px solid"
-                            borderColor="gray.700"
-                          />
-                        }
-                      >
-                        {suggestions.map(suggestion => (
-                          <Box
-                            key={suggestion.name}
-                            px={3}
-                            py={2}
-                            cursor="pointer"
-                            _hover={{ bg: "gray.700" }}
-                            onMouseDown={() =>
-                              handleSuggestionClick(suggestion.name)
-                            }
-                            display="flex"
-                            justifyContent="space-between"
-                            alignItems="center"
-                          >
-                            <Text fontSize="sm" color="white">
-                              {suggestion.name}
-                            </Text>
-                            <Text fontSize="xs" color="gray.400">
-                              {suggestion.count}
-                            </Text>
-                          </Box>
-                        ))}
-                      </VStack>
-                    </Box>
-                  )}
-                </Box>
-              ) : (
+              {/* Autocomplete suggestions */}
+              {showSuggestions && suggestions.length > 0 && (
                 <Box
-                  transition="opacity 0.15s ease-in-out"
-                  opacity={1}
                   position="absolute"
-                  top={0}
+                  top="100%"
                   left={0}
-                  whiteSpace="nowrap"
+                  right={0}
+                  zIndex={10}
+                  bg="gray.800"
+                  border="1px solid"
+                  borderColor="gray.700"
+                  borderRadius="md"
+                  boxShadow="md"
+                  mt={1}
                 >
-                  <Button
-                    ref={buttonRef}
-                    variant="outline"
-                    onClick={handleButtonClick}
-                    leftIcon={<FolderIcon boxSize={4} />}
-                    justifyContent="flex-start"
-                    size="md"
-                    aria-label="Edit category"
-                    _hover={{
-                      borderColor: "gray.500",
-                    }}
-                    sx={{
-                      "@media(hover: none)": {
-                        _hover: {
-                          borderColor: "gray.600",
-                        },
-                        _active: {
-                          borderColor: "gray.500",
-                        },
-                      },
-                    }}
+                  <VStack
+                    spacing={0}
+                    align="stretch"
+                    divider={
+                      <Box
+                        borderBottom="1px solid"
+                        borderColor="gray.700"
+                      />
+                    }
                   >
-                    <Text color={value ? "whiteAlpha.900" : "gray.500"}>
-                      {value || "No category"}
-                    </Text>
-                  </Button>
+                    {suggestions.map(suggestion => (
+                      <Box
+                        key={suggestion.name}
+                        px={3}
+                        py={2}
+                        cursor="pointer"
+                        _hover={{ bg: "gray.700" }}
+                        onMouseDown={() =>
+                          handleSuggestionClick(suggestion.name)
+                        }
+                        display="flex"
+                        justifyContent="space-between"
+                        alignItems="center"
+                      >
+                        <Text fontSize="sm" color="white">
+                          {suggestion.name}
+                        </Text>
+                        <Text fontSize="xs" color="gray.400">
+                          {suggestion.count}
+                        </Text>
+                      </Box>
+                    ))}
+                  </VStack>
                 </Box>
               )}
+            </Box>
+
+            <Box
+              transition="opacity 0.15s ease-in-out"
+              opacity={isExpanded ? 0 : 1}
+              position="absolute"
+              top={0}
+              left={0}
+              whiteSpace="nowrap"
+              pointerEvents={isExpanded ? "none" : "auto"}
+            >
+              <Button
+                ref={buttonRef}
+                variant="outline"
+                onClick={handleButtonClick}
+                leftIcon={<FolderIcon boxSize={4} />}
+                justifyContent="flex-start"
+                size="md"
+                aria-label="Edit category"
+                _hover={{
+                  borderColor: "gray.500",
+                }}
+                sx={{
+                  "@media(hover: none)": {
+                    _hover: {
+                      borderColor: "gray.600",
+                    },
+                    _active: {
+                      borderColor: "gray.500",
+                    },
+                  },
+                }}
+              >
+                <Text color={value ? "whiteAlpha.900" : "gray.500"}>
+                  {value || "No category"}
+                </Text>
+              </Button>
+            </Box>
           </Box>
         </Box>
 
