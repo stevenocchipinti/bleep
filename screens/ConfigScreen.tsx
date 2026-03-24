@@ -562,14 +562,41 @@ const ConfigScreen = ({
               {isCompletedToday ? "Completed today" : "Mark complete"}
             </FooterButton>
           ) : (
-            <FooterButton
-              variant="brand"
-              span={4}
-              onClick={goForward}
-              rightIcon={<ArrowForwardIcon />}
-            >
-              Go
-            </FooterButton>
+            <>
+              <FooterButton
+                variant="brand"
+                span={3}
+                onClick={goForward}
+                rightIcon={<ArrowForwardIcon />}
+              >
+                Go
+              </FooterButton>
+              <FooterButton
+                variant="outline"
+                aria-label={
+                  isCompletedToday ? "Completed today" : "Mark complete"
+                }
+                borderColor={isCompletedToday ? "green.400" : "whiteAlpha.300"}
+                color={isCompletedToday ? "green.300" : "gray.300"}
+                _hover={{
+                  borderColor: isCompletedToday
+                    ? "green.300"
+                    : "whiteAlpha.500",
+                }}
+                onClick={() =>
+                  send({
+                    type: "TOGGLE_PROGRAM_COMPLETION",
+                    programId: program.id,
+                  })
+                }
+              >
+                <CheckIcon
+                  filled={isCompletedToday}
+                  boxSize={6}
+                  color={isCompletedToday ? "green.400" : undefined}
+                />
+              </FooterButton>
+            </>
           )
         }
       >
