@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { StateFrom } from "xstate"
 import { ArrowBackIcon, ChevronDownIcon } from "@chakra-ui/icons"
 import {
@@ -25,9 +25,11 @@ import {
 } from "lib/breathingPatterns"
 import { FooterButton, SwipeableChild } from "components/SwipeableView"
 import { Segment, SegmentedBar } from "components/SegmentedProgressBar"
-import { CheckIcon, PauseIcon, PlayIcon } from "components/icons"
+import { CheckIcon, PauseIcon, PlayIcon, VibrateIcon } from "components/icons"
+import { useTimerActor } from "lib/useTimerMachine"
 
 import BreathingCircle from "./BreathingCircle"
+import useBreathingHaptics, { canVibrate } from "./useBreathingHaptics"
 
 interface BreathingSessionProps {
   state: StateFrom<typeof breathingMachine>
@@ -78,6 +80,20 @@ const BreathingSession = ({
   const complete = state.matches("complete")
   const status = running ? "running" : paused ? "paused" : "idle"
 
+  const phaseKey = `${cycles}:${phaseIndex}`
+
+  const { state: appState, send: appSend } = useTimerActor()
+  const hapticsEnabled = appState.context.settings.breathingHapticsEnabled
+  // Checked after mount so the server and first client render agree
+  const [hapticsSupported, setHapticsSupported] = useState(false)
+  useEffect(() => setHapticsSupported(canVibrate()), [])
+  useBreathingHaptics({
+    enabled: hapticsEnabled,
+    status,
+    phaseKey,
+    kind: phase.kind,
+  })
+
   const toggle = () =>
     send({ type: running ? "PAUSE" : paused ? "RESUME" : "START" })
 
@@ -109,7 +125,25 @@ const BreathingSession = ({
       >
         {pattern.name}
       </Heading>
-      <Flex boxSize={10} flexShrink={0} />
+      {hapticsSupported ? (
+        <IconButton
+          aria-label={
+            hapticsEnabled ? "Turn vibration off" : "Turn vibration on"
+          }
+          aria-pressed={hapticsEnabled}
+          variant="ghost"
+          color={hapticsEnabled ? undefined : "gray.500"}
+          icon={<VibrateIcon off={!hapticsEnabled} boxSize={6} />}
+          onClick={() =>
+            appSend({
+              type: "SET_BREATHING_HAPTICS_ENABLED",
+              enabled: !hapticsEnabled,
+            })
+          }
+        />
+      ) : (
+        <Flex boxSize={10} flexShrink={0} />
+      )}
     </>
   )
 
@@ -188,7 +222,7 @@ const BreathingSession = ({
         p={8}
       >
         <BreathingCircle
-          phaseKey={`${cycles}:${phaseIndex}`}
+          phaseKey={phaseKey}
           kind={phase.kind}
           endLevel={phaseEndLevel(pattern, phaseIndex)}
           secondsRemaining={phaseSecondsRemaining}

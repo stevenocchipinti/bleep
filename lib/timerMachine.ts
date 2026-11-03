@@ -87,6 +87,10 @@ type PreviousEvent = { type: "PREVIOUS" }
 type AllSettingsLoadedEvent = { type: "SETTINGS_LOADED"; data: Settings }
 type SetVoiceEvent = { type: "SET_VOICE"; voiceURI: string }
 type SetSoundEnabledEvent = { type: "SET_SOUND_ENABLED"; enabled: boolean }
+type SetBreathingHapticsEnabledEvent = {
+  type: "SET_BREATHING_HAPTICS_ENABLED"
+  enabled: boolean
+}
 type SetVoiceRecognitionEnabledEvent = {
   type: "SET_VOICE_RECOGNITION_ENABLED"
   enabled: boolean
@@ -165,6 +169,7 @@ type Events =
   | ResetAllProgramsEvent
   | SetVoiceEvent
   | SetSoundEnabledEvent
+  | SetBreathingHapticsEnabledEvent
   | SetVoiceRecognitionEnabledEvent
   // Voice recognition
   | StartListeningEvent
@@ -267,6 +272,7 @@ const timerMachine = createMachine(
         voiceURI: null,
         soundEnabled: true,
         voiceRecognitionEnabled: null,
+        breathingHapticsEnabled: true,
       },
       // Timer
       selectedProgramId: null,
@@ -646,6 +652,11 @@ const timerMachine = createMachine(
               SET_SOUND_ENABLED: {
                 target: "saving settings",
                 actions: "setSoundEnabled",
+              },
+
+              SET_BREATHING_HAPTICS_ENABLED: {
+                target: "saving settings",
+                actions: "setBreathingHapticsEnabled",
               },
 
               RESET_ALL_PROGRAMS: "resetting programs",
@@ -1151,6 +1162,11 @@ const timerMachine = createMachine(
       setSoundEnabled: immerAssign((context, event: SetSoundEnabledEvent) => {
         context.settings.soundEnabled = event.enabled
       }),
+      setBreathingHapticsEnabled: immerAssign(
+        (context, event: SetBreathingHapticsEnabledEvent) => {
+          context.settings.breathingHapticsEnabled = event.enabled
+        },
+      ),
       setVoiceRecognitionEnabled: immerAssign(
         (context, event: SetVoiceRecognitionEnabledEvent) => {
           context.settings.voiceRecognitionEnabled = event.enabled

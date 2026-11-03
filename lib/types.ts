@@ -59,6 +59,7 @@ export const SettingsSchema = z.object({
   voiceURI: z.string().nullable().default(null),
   soundEnabled: z.boolean().default(true),
   voiceRecognitionEnabled: z.boolean().nullable().default(null),
+  breathingHapticsEnabled: z.boolean().default(true),
 })
 
 export const CompletionSchema = z.object({
