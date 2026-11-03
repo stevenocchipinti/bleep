@@ -2,12 +2,12 @@ import { useEffect, useRef } from "react"
 
 import { BreathPhase } from "lib/breathingPatterns"
 
-// The Vibration API is on/off only (no strength control), so a rise or fall is
-// suggested with pulses that lengthen or shorten: [on, off, on, off, ...] ms.
+// The Vibration API is on/off only (no strength control), so direction comes
+// from the order of a short and a long pulse: [on, off, on] ms.
 const PATTERNS: Record<BreathPhase["kind"], number[]> = {
-  inhale: [8, 50, 12, 35, 18, 20, 30],
-  hold: [40],
-  exhale: [30, 20, 18, 35, 12, 50, 8],
+  inhale: [25, 90, 140], // short then long: going up
+  hold: [70], // one even pulse
+  exhale: [140, 90, 25], // long then short: going down
 }
 
 export const canVibrate = () =>
