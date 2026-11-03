@@ -113,6 +113,11 @@ type UpdateCompletionEvent = {
   type: "UPDATE_COMPLETION"
   completionId: string
   completedAt: string
+  // Optional so existing callers that only change the time keep working
+  programId?: string
+  programName?: string
+  /** A number sets the duration, null clears it, undefined leaves it alone. */
+  durationSeconds?: number | null
 }
 type DeleteCompletionEvent = { type: "DELETE_COMPLETION"; completionId: string }
 type SetAllCompletionsEvent = {
@@ -1177,6 +1182,13 @@ const timerMachine = createMachine(
         )
         if (completion) {
           completion.completedAt = event.completedAt
+          if (event.programId !== undefined)
+            completion.programId = event.programId
+          if (event.programName !== undefined)
+            completion.programName = event.programName
+          if (event.durationSeconds === null) delete completion.durationSeconds
+          else if (event.durationSeconds !== undefined)
+            completion.durationSeconds = event.durationSeconds
         }
       }),
 

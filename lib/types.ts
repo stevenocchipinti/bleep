@@ -66,6 +66,8 @@ export const CompletionSchema = z.object({
   programId: z.string(),
   programName: z.string(),
   completedAt: z.string(),
+  /** How long the session lasted, where known (e.g. breathing sessions). */
+  durationSeconds: z.number().int().nonnegative().optional(),
 })
 
 export const AllCompletionsSchema = z.array(CompletionSchema)

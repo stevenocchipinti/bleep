@@ -82,3 +82,70 @@ function waitForMockCall(getMock: () => any, calls = 1, timeout = 2000) {
     })()
   })
 }
+
+describe("timerMachine UPDATE_COMPLETION", () => {
+  const completion = {
+    id: "abc123",
+    programId: "breathe:box",
+    programName: "Box Breathing",
+    completedAt: "2026-11-02T10:00:00.000Z",
+  }
+
+  const startService = async () => {
+    const service = interpret(
+      timerMachine.withConfig({
+        services: {
+          loadData: () => Promise.resolve([]),
+          loadCompletions: () => Promise.resolve([completion]),
+          saveCompletions: () => Promise.resolve(),
+        },
+      }),
+    ).start()
+    await new Promise(r => setTimeout(r, 0))
+    return service
+  }
+
+  it("still updates just the time when only that is given", async () => {
+    const service = await startService()
+    service.send({
+      type: "UPDATE_COMPLETION",
+      completionId: "abc123",
+      completedAt: "2026-11-02T11:00:00.000Z",
+    })
+    expect(service.state.context.completions[0]).toEqual({
+      ...completion,
+      completedAt: "2026-11-02T11:00:00.000Z",
+    })
+    service.stop()
+  })
+
+  it("updates the program and duration, and can clear the duration", async () => {
+    const service = await startService()
+    service.send({
+      type: "UPDATE_COMPLETION",
+      completionId: "abc123",
+      completedAt: completion.completedAt,
+      programId: "breathe:4-7-8",
+      programName: "4-7-8 Breathing",
+      durationSeconds: 300,
+    })
+    // Let the save finish; the machine ignores edits while saving
+    await new Promise(r => setTimeout(r, 0))
+    expect(service.state.context.completions[0]).toMatchObject({
+      programId: "breathe:4-7-8",
+      programName: "4-7-8 Breathing",
+      durationSeconds: 300,
+    })
+
+    service.send({
+      type: "UPDATE_COMPLETION",
+      completionId: "abc123",
+      completedAt: completion.completedAt,
+      durationSeconds: null,
+    })
+    expect(service.state.context.completions[0]).not.toHaveProperty(
+      "durationSeconds",
+    )
+    service.stop()
+  })
+})

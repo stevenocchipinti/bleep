@@ -123,19 +123,19 @@ const Header = ({ children, transparent = false }: HeaderProps) => {
 
 const Footer = ({
   children,
-  showProgress,
+  progress,
 }: {
   children: ReactNode
-  showProgress?: boolean
+  progress?: ReactNode
 }) => {
   return (
     <Flex direction="column" position="sticky" bottom={0} left={0} right={0}>
-      {showProgress && <SegmentedProgressBar />}
+      {progress}
       <Box
         bg="blackAlpha.300"
         backdropFilter="blur(5px)"
         shadow="0 4px 30px rgba(0, 0, 0, 0.1)"
-        borderTop={showProgress ? "none" : "1px solid rgba(255, 255, 255, 0.1)"}
+        borderTop={progress ? "none" : "1px solid rgba(255, 255, 255, 0.1)"}
       >
         <Grid
           templateColumns="1fr 1fr 1fr 1fr"
@@ -178,6 +178,8 @@ interface SwipeableChildProps {
   header?: ReactNode
   footer?: ReactNode
   showProgress?: boolean
+  /** A custom progress bar shown above the footer, in place of the timer's. */
+  progress?: ReactNode
 }
 const SwipeableChild = ({
   children,
@@ -185,6 +187,7 @@ const SwipeableChild = ({
   header,
   footer,
   showProgress,
+  progress,
 }: SwipeableChildProps) => (
   <Flex
     direction="column"
@@ -205,7 +208,11 @@ const SwipeableChild = ({
     >
       {children}
     </Flex>
-    {footer && <Footer showProgress={showProgress}>{footer}</Footer>}
+    {footer && (
+      <Footer progress={progress ?? (showProgress && <SegmentedProgressBar />)}>
+        {footer}
+      </Footer>
+    )}
   </Flex>
 )
 

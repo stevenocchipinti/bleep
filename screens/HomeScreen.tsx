@@ -2,7 +2,7 @@ import CardButton from "@/components/CardButton"
 import CompletionHeatmap from "@/components/CompletionHeatmap"
 import Logo from "@/components/Logo"
 import { SwipeableChild } from "@/components/SwipeableView"
-import { SparklesIcon } from "@/components/icons"
+import { SparklesIcon, BreatheIcon } from "@/components/icons"
 import {
   SettingsIcon,
   ChevronDownIcon,
@@ -29,11 +29,13 @@ import { useEffect, useState, useMemo } from "react"
 interface HomeScreenProps {
   openSettingsModal: () => void
   selectProgramById: (id: string, skip?: boolean) => void
+  openBreathing: () => void
 }
 
 const HomeScreen = ({
   openSettingsModal,
   selectProgramById,
+  openBreathing,
 }: HomeScreenProps) => {
   const [hasNewProgram, setHasNewProgram] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
@@ -253,6 +255,13 @@ const HomeScreen = ({
 
         <Box pt={8}>
           <Flex gap={3} width="full">
+            <IconButton
+              aria-label="Breathe"
+              variant="outline"
+              icon={<BreatheIcon />}
+              p={2}
+              onClick={openBreathing}
+            />
             <Button
               variant="outline"
               flex="1"

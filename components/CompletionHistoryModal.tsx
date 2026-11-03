@@ -24,16 +24,38 @@ import {
   FormControl,
   FormLabel,
   Input,
+  FormHelperText,
+  Select,
 } from "@chakra-ui/react"
 import { ChevronLeftIcon, ChevronRightIcon, DeleteIcon } from "@chakra-ui/icons"
 import { useTimerActor } from "lib/useTimerMachine"
 import { Completion, CompletionSchema } from "lib/types"
+import { DurationInput } from "components/DurationInput"
 
 interface CompletionHistoryModalProps {
   isOpen: boolean
   onClose: () => void
   programId: string
   programName: string
+  /** Which completions to show, if not just those for `programId`. */
+  matches?: (completion: Completion) => boolean
+  /**
+   * Programs a completion can be assigned to (e.g. breathing patterns). When
+   * given, the add and edit forms let you choose one.
+   */
+  programOptions?: ProgramOption[]
+}
+
+interface ProgramOption {
+  id: string
+  name: string
+}
+
+const formatDuration = (seconds: number) => {
+  const minutes = Math.floor(seconds / 60)
+  const rest = seconds % 60
+  if (minutes === 0) return `${rest}s`
+  return rest === 0 ? `${minutes} min` : `${minutes} min ${rest}s`
 }
 
 // Helper functions for calendar operations
@@ -201,21 +223,133 @@ const MonthCalendar = ({
   )
 }
 
+interface CompletionFormValues {
+  programId: string
+  programName: string
+  completedAt: string
+  durationSeconds?: number
+}
+
+interface CompletionFormDialogProps {
+  title: string
+  submitLabel: string
+  initial: CompletionFormValues
+  programOptions?: ProgramOption[]
+  onCancel: () => void
+  onSubmit: (values: CompletionFormValues) => void
+}
+
+/** Add or edit every stored field of a completion. */
+const CompletionFormDialog = ({
+  title,
+  submitLabel,
+  initial,
+  programOptions,
+  onCancel,
+  onSubmit,
+}: CompletionFormDialogProps) => {
+  const cancelRef = useRef<any>()
+  const [programId, setProgramId] = useState(initial.programId)
+  const [dateTime, setDateTime] = useState(
+    toDateTimeLocalString(initial.completedAt),
+  )
+  const [duration, setDuration] = useState(initial.durationSeconds ?? 0)
+
+  return (
+    <AlertDialog
+      isOpen
+      leastDestructiveRef={cancelRef}
+      onClose={onCancel}
+      isCentered
+    >
+      <AlertDialogOverlay>
+        <AlertDialogContent mx={4}>
+          <AlertDialogHeader fontSize="lg" fontWeight="bold">
+            {title}
+          </AlertDialogHeader>
+
+          <AlertDialogBody>
+            <VStack spacing={4} align="stretch">
+              {programOptions && (
+                <FormControl>
+                  <FormLabel>Pattern</FormLabel>
+                  <Select
+                    value={programId}
+                    onChange={e => setProgramId(e.target.value)}
+                  >
+                    {programOptions.map(option => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+
+              <FormControl>
+                <FormLabel>Date and Time</FormLabel>
+                <Input
+                  type="datetime-local"
+                  value={dateTime}
+                  onChange={e => setDateTime(e.target.value)}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Duration</FormLabel>
+                <DurationInput totalSeconds={duration} onChange={setDuration} />
+                <FormHelperText>
+                  Leave at 0 if it wasn&apos;t timed
+                </FormHelperText>
+              </FormControl>
+            </VStack>
+          </AlertDialogBody>
+
+          <AlertDialogFooter>
+            <Button ref={cancelRef} onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="teal"
+              ml={3}
+              isDisabled={!dateTime}
+              onClick={() =>
+                onSubmit({
+                  programId,
+                  programName:
+                    programOptions?.find(option => option.id === programId)
+                      ?.name ?? initial.programName,
+                  completedAt: fromDateTimeLocalString(dateTime),
+                  durationSeconds: duration > 0 ? duration : undefined,
+                })
+              }
+            >
+              {submitLabel}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialogOverlay>
+    </AlertDialog>
+  )
+}
+
 const CompletionHistoryModal = ({
   isOpen,
   onClose,
   programId,
   programName,
+  matches,
+  programOptions,
 }: CompletionHistoryModalProps) => {
-   const { state, send } = useTimerActor()
+  const { state, send } = useTimerActor()
 
-   // Filter completions for current program
-   const completions = state.context.completions
-     .filter(c => c.programId === programId)
-     .sort(
-       (a, b) =>
-         new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime(),
-     )
+  // Filter completions for current program
+  const completions = state.context.completions
+    .filter(matches ?? (c => c.programId === programId))
+    .sort(
+      (a, b) =>
+        new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime(),
+    )
 
   // Calendar state
   const [selectedMonth, setSelectedMonth] = useState(new Date())
@@ -227,16 +361,13 @@ const CompletionHistoryModal = ({
   )
   const deleteCancelRef = useRef<any>()
 
-   // Edit completion state
-   const [editingCompletion, setEditingCompletion] =
-     useState<Completion | null>(null)
-  const [editDateTime, setEditDateTime] = useState("")
-  const editCancelRef = useRef<any>()
+  // Edit completion state
+  const [editingCompletion, setEditingCompletion] = useState<Completion | null>(
+    null,
+  )
 
-  // Add completion state
-  const [isAddingCompletion, setIsAddingCompletion] = useState(false)
-  const [addDateTime, setAddDateTime] = useState("")
-  const addCancelRef = useRef<any>()
+  // Add completion state: the date and time to start the new entry at
+  const [addingAt, setAddingAt] = useState<string | null>(null)
 
   // Get completions for selected date
   const completionsForSelectedDate = selectedDate
@@ -250,15 +381,12 @@ const CompletionHistoryModal = ({
       })
     : []
 
-  // Format date for display (Australian format: YYYY/MM/DD HH:mm)
-  const formatDateTime = (isoString: string) => {
+  // The calendar already shows the day, so entries only need the time (HH:mm)
+  const formatTime = (isoString: string) => {
     const date = new Date(isoString)
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, "0")
-    const day = String(date.getDate()).padStart(2, "0")
     const hours = String(date.getHours()).padStart(2, "0")
     const minutes = String(date.getMinutes()).padStart(2, "0")
-    return `${year}/${month}/${day} ${hours}:${minutes}`
+    return `${hours}:${minutes}`
   }
 
   // Navigate months
@@ -325,133 +453,52 @@ const CompletionHistoryModal = ({
       </AlertDialog>
 
       {/* Edit completion dialog */}
-      <AlertDialog
-        isOpen={!!editingCompletion}
-        leastDestructiveRef={editCancelRef}
-        onClose={() => {
-          setEditingCompletion(null)
-          setEditDateTime("")
-        }}
-        isCentered
-      >
-        <AlertDialogOverlay>
-          <AlertDialogContent mx={4}>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Edit completion
-            </AlertDialogHeader>
-
-            <AlertDialogBody>
-              <FormControl>
-                <FormLabel>Date and Time</FormLabel>
-                <Input
-                  type="datetime-local"
-                  value={editDateTime}
-                  onChange={e => setEditDateTime(e.target.value)}
-                />
-              </FormControl>
-            </AlertDialogBody>
-
-            <AlertDialogFooter>
-              <Button
-                ref={editCancelRef}
-                onClick={() => {
-                  setEditingCompletion(null)
-                  setEditDateTime("")
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                colorScheme="teal"
-                onClick={() => {
-                  if (editingCompletion && editDateTime) {
-                    send({
-                      type: "UPDATE_COMPLETION",
-                      completionId: editingCompletion.id,
-                      completedAt: fromDateTimeLocalString(editDateTime),
-                    })
-                  }
-                  setEditingCompletion(null)
-                  setEditDateTime("")
-                }}
-                ml={3}
-                isDisabled={!editDateTime}
-              >
-                Save
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
+      {editingCompletion && (
+        <CompletionFormDialog
+          title="Edit completion"
+          submitLabel="Save"
+          initial={editingCompletion}
+          programOptions={programOptions}
+          onCancel={() => setEditingCompletion(null)}
+          onSubmit={values => {
+            send({
+              type: "UPDATE_COMPLETION",
+              completionId: editingCompletion.id,
+              ...values,
+              durationSeconds: values.durationSeconds ?? null,
+            })
+            setEditingCompletion(null)
+          }}
+        />
+      )}
 
       {/* Add completion dialog */}
-      <AlertDialog
-        isOpen={isAddingCompletion}
-        leastDestructiveRef={addCancelRef}
-        onClose={() => {
-          setIsAddingCompletion(false)
-          setAddDateTime("")
-        }}
-        isCentered
-      >
-        <AlertDialogOverlay>
-          <AlertDialogContent mx={4}>
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Add completion
-            </AlertDialogHeader>
-
-            <AlertDialogBody>
-              <FormControl>
-                <FormLabel>Date and Time</FormLabel>
-                <Input
-                  type="datetime-local"
-                  value={addDateTime}
-                  onChange={e => setAddDateTime(e.target.value)}
-                />
-              </FormControl>
-            </AlertDialogBody>
-
-            <AlertDialogFooter>
-              <Button
-                ref={addCancelRef}
-                onClick={() => {
-                  setIsAddingCompletion(false)
-                  setAddDateTime("")
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                colorScheme="teal"
-                onClick={() => {
-                   if (addDateTime) {
-                      send({
-                        type: "ADD_COMPLETION",
-                        completion: CompletionSchema.parse({
-                          programId,
-                          programName,
-                          completedAt: fromDateTimeLocalString(addDateTime),
-                        }),
-                      })
-                  }
-                  setIsAddingCompletion(false)
-                  setAddDateTime("")
-                }}
-                ml={3}
-                isDisabled={!addDateTime}
-              >
-                Add
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialogOverlay>
-      </AlertDialog>
+      {addingAt && (
+        <CompletionFormDialog
+          title="Add completion"
+          submitLabel="Add"
+          initial={{
+            programId: programOptions?.[0]?.id ?? programId,
+            programName: programOptions?.[0]?.name ?? programName,
+            completedAt: addingAt,
+          }}
+          programOptions={programOptions}
+          onCancel={() => setAddingAt(null)}
+          onSubmit={values => {
+            send({
+              type: "ADD_COMPLETION",
+              completion: CompletionSchema.parse(values),
+            })
+            setAddingAt(null)
+          }}
+        />
+      )}
 
       {/* Main modal */}
       <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
         <ModalOverlay />
         <ModalContent mx={4}>
-           <ModalHeader>{programName}</ModalHeader>
+          <ModalHeader>{programName}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <VStack spacing={6} align="stretch">
@@ -500,14 +547,14 @@ const CompletionHistoryModal = ({
                         borderRadius="md"
                         cursor="pointer"
                         _hover={{ bg: "whiteAlpha.100" }}
-                        onClick={() => {
-                          setEditingCompletion(completion)
-                          setEditDateTime(
-                            toDateTimeLocalString(completion.completedAt),
-                          )
-                        }}
+                        onClick={() => setEditingCompletion(completion)}
                       >
-                        <Text>{formatDateTime(completion.completedAt)}</Text>
+                        <Text>
+                          {formatTime(completion.completedAt)}
+                          {matches && ` · ${completion.programName}`}
+                          {completion.durationSeconds !== undefined &&
+                            ` · ${formatDuration(completion.durationSeconds)}`}
+                        </Text>
                         <IconButton
                           aria-label="Delete"
                           icon={<DeleteIcon />}
@@ -539,8 +586,7 @@ const CompletionHistoryModal = ({
                 const defaultDate = new Date(selectedDate)
                 defaultDate.setHours(new Date().getHours())
                 defaultDate.setMinutes(new Date().getMinutes())
-                setAddDateTime(toDateTimeLocalString(defaultDate.toISOString()))
-                setIsAddingCompletion(true)
+                setAddingAt(defaultDate.toISOString())
               }}
               isDisabled={!selectedDate}
               mr={3}

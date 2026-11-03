@@ -5,11 +5,14 @@ import { useEffect, useRef, useState } from "react"
 interface CompletionHeatmapProps {
   completions: Completion[]
   programId: string
+  /** Which completions to count, if not just those for `programId`. */
+  matches?: (completion: Completion) => boolean
 }
 
 const CompletionHeatmap = ({
   completions,
   programId,
+  matches,
 }: CompletionHeatmapProps) => {
   const theme = useTheme()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -17,7 +20,7 @@ const CompletionHeatmap = ({
 
   // Filter completions for this program
   const trackableCompletions = completions.filter(
-    c => c.programId === programId,
+    matches ?? (c => c.programId === programId),
   )
 
   // Get Monday of the current week

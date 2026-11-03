@@ -25,8 +25,22 @@ function playTone(frequency: number, duration: number): void {
   )
 }
 
+// Roughly how long speech can take before we stop waiting for it. Some
+// browsers never fire `end` (e.g. when no voices are installed), which would
+// otherwise leave the timer stuck waiting on an announcement forever.
+const speechTimeoutMs = (text: string) => 1500 + text.length * 120
+
 const speak = (text: string, voiceURI?: string) =>
   new Promise(resolve => {
+    let done = false
+    const finish = () => {
+      if (done) return
+      done = true
+      clearTimeout(timeout)
+      resolve(undefined)
+    }
+    const timeout = setTimeout(finish, speechTimeoutMs(text))
+
     const allVoices = speechSynthesis.getVoices()
     const defaultVoice = allVoices.find(v => v.default) as SpeechSynthesisVoice
 
@@ -37,7 +51,8 @@ const speak = (text: string, voiceURI?: string) =>
 
     utterance.voice = voice
 
-    utterance.onend = resolve
+    utterance.onend = finish
+    utterance.onerror = finish
     speechSynthesis.speak(utterance)
   })
 
