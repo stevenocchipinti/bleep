@@ -1,8 +1,9 @@
+import { Ref, useRef } from "react"
 import { Box, Flex } from "@chakra-ui/react"
 import { TimerBlock } from "lib/types"
 import { useTimerActor } from "lib/useTimerMachine"
 import { currentProgramFrom } from "lib/timerMachine"
-import { useProgress } from "./useProgress"
+import { useBlockAnimation, useProgress } from "./useProgress"
 
 export interface Segment {
   width: number
@@ -12,9 +13,15 @@ export interface Segment {
 interface SegmentedBarProps {
   segments: Segment[]
   isAnimating: boolean
+  /** Lets a caller animate one segment's fill directly. */
+  fillRef?: { index: number; ref: Ref<HTMLDivElement> }
 }
 
-export const SegmentedBar = ({ segments, isAnimating }: SegmentedBarProps) => (
+export const SegmentedBar = ({
+  segments,
+  isAnimating,
+  fillRef,
+}: SegmentedBarProps) => (
   <Flex justifyContent="space-between" bg="gray.700" gap={1}>
     {segments.map((segment, index) => (
       <Box
@@ -24,18 +31,17 @@ export const SegmentedBar = ({ segments, isAnimating }: SegmentedBarProps) => (
         flex={segment.width}
         overflow="hidden"
         h="2px"
-        _before={{
-          content: '""',
-          display: "block",
-          bg: "teal.300",
-          width: "full",
-          transition: isAnimating ? "1s linear" : undefined,
-          transform: `scaleX(${segment.percentDone})`,
-          transformOrigin: "left",
-          height: "100%",
-          position: "absolute",
-        }}
-      />
+      >
+        <Box
+          ref={fillRef?.index === index ? fillRef.ref : undefined}
+          position="absolute"
+          inset={0}
+          bg="teal.300"
+          transition={isAnimating ? "1s linear" : undefined}
+          transform={`scaleX(${segment.percentDone})`}
+          transformOrigin="left"
+        />
+      </Box>
     ))}
   </Flex>
 )
@@ -43,7 +49,13 @@ export const SegmentedBar = ({ segments, isAnimating }: SegmentedBarProps) => (
 const SegmentedProgressBar = () => {
   const { state } = useTimerActor()
   const { program, currentBlockIndex } = currentProgramFrom(state.context)
-  const { isAnimating, targetPercentageLeft } = useProgress()
+  const { percentageLeft } = useProgress()
+  const currentFillRef = useRef<HTMLDivElement>(null)
+
+  useBlockAnimation(
+    () => currentFillRef.current,
+    left => ({ transform: `scaleX(${1 - left})` }),
+  )
 
   if (!program) return null
 
@@ -60,7 +72,7 @@ const SegmentedProgressBar = () => {
   const progressBarData: Segment[] = blocks.map((block, index) => {
     let percentDone = 0
     if (currentBlockIndex === index) {
-      percentDone = block.type === "timer" ? 1 - targetPercentageLeft : 0
+      percentDone = block.type === "timer" ? 1 - percentageLeft : 0
     } else {
       percentDone = currentBlockIndex > index ? 1 : 0
     }
@@ -71,7 +83,13 @@ const SegmentedProgressBar = () => {
     }
   })
 
-  return <SegmentedBar segments={progressBarData} isAnimating={isAnimating} />
+  return (
+    <SegmentedBar
+      segments={progressBarData}
+      isAnimating={false}
+      fillRef={{ index: currentBlockIndex, ref: currentFillRef }}
+    />
+  )
 }
 
 export default SegmentedProgressBar
