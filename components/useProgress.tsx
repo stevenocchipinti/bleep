@@ -45,6 +45,8 @@ export const useProgress = () => {
 export const useBlockAnimation = (
   getElement: () => Element | null | undefined,
   keyframe: (percentageLeft: number, element: Element) => Keyframe,
+  /** Values of `percentageLeft` where `keyframe` stops being linear. */
+  breakpoints: number[] = [],
 ) => {
   const {
     percentageLeft,
@@ -58,6 +60,8 @@ export const useBlockAnimation = (
   getElementRef.current = getElement
   const keyframeRef = useRef(keyframe)
   keyframeRef.current = keyframe
+  const breakpointsRef = useRef(breakpoints)
+  breakpointsRef.current = breakpoints
 
   const current = useRef<{
     animation: Animation
@@ -80,7 +84,8 @@ export const useBlockAnimation = (
       !element ||
       typeof element.animate !== "function" ||
       !isCountingDown ||
-      totalSeconds <= 0
+      totalSeconds <= 0 ||
+      secondsRemaining <= 0
     )
       return stop()
 
@@ -101,12 +106,19 @@ export const useBlockAnimation = (
 
     // Anything else (new block, resume, skip, rewind): start a fresh pass
     stop()
+    const stops = [
+      percentageLeft,
+      ...breakpointsRef.current
+        .filter(b => b > 0 && b < percentageLeft)
+        .sort((a, b) => b - a),
+      0,
+    ]
     current.current = {
       animation: element.animate(
-        [
-          keyframeRef.current(percentageLeft, element),
-          keyframeRef.current(0, element),
-        ],
+        stops.map(left => ({
+          ...keyframeRef.current(left, element),
+          offset: (percentageLeft - left) / percentageLeft,
+        })),
         {
           duration: secondsRemaining * 1000,
           easing: "linear",
