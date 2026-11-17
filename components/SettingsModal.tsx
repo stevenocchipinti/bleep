@@ -268,6 +268,10 @@ const SettingsModal = ({ isOpen, onClose, ...props }: SettingsModalProps) => {
         </ModalBody>
 
         <ModalFooter>
+          <Text fontSize="xs" color="gray.500" mr="auto">
+            Build {process.env.NEXT_PUBLIC_BUILD_COMMIT} ·{" "}
+            {new Date(process.env.NEXT_PUBLIC_BUILD_TIME ?? 0).toLocaleString()}
+          </Text>
           <Button onClick={onClose}>Close</Button>
         </ModalFooter>
       </ModalContent>
