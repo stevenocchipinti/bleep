@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react"
-import { Box, Text, useToken } from "@chakra-ui/react"
+import { useEffect, useRef, useState } from "react"
+import { Box, Text, keyframes, useToken } from "@chakra-ui/react"
 
 import { BreathPhase } from "lib/breathingPatterns"
 
@@ -51,6 +51,19 @@ const PHASE_COLORS: Record<BreathPhase["kind"], string> = {
   exhale: "purple.300",
 }
 
+// Each number drifts up and fades as the next one arrives from below
+const NUMBER_SHIFT = "0.2em"
+const numberIn = keyframes`
+  from { opacity: 0; transform: translateY(${NUMBER_SHIFT}); }
+`
+const numberOut = keyframes`
+  to { opacity: 0; transform: translateY(-${NUMBER_SHIFT}); }
+`
+const numberAnimation = (name: string) => ({
+  animation: `${name} 0.35s ease-out both`,
+  "@media (prefers-reduced-motion: reduce)": { animationDuration: "0.01s" },
+})
+
 const scaleFor = (level: number) => MIN_SCALE + (MAX_SCALE - MIN_SCALE) * level
 
 const currentScale = (el: HTMLElement) => {
@@ -78,6 +91,14 @@ const BreathingCircle = ({
   const animationsRef = useRef<Animation[]>([])
   const remainingRef = useRef(secondsRemaining)
   remainingRef.current = secondsRemaining
+
+  // Remember the number being replaced, so it can fade out
+  const [numbers, setNumbers] = useState<{
+    current: number
+    previous: number | null
+  }>({ current: secondsRemaining, previous: null })
+  if (numbers.current !== secondsRemaining)
+    setNumbers({ current: secondsRemaining, previous: numbers.current })
 
   const [trail, color] = useToken("colors", ["gray.700", PHASE_COLORS[kind]])
 
@@ -209,7 +230,7 @@ const BreathingCircle = ({
         transition={`background-color ${COLOR_TRANSITION}, box-shadow ${COLOR_TRANSITION}`}
       />
 
-      <Text
+      <Box
         position="relative"
         fontSize="5xl"
         fontWeight="thin"
@@ -217,8 +238,24 @@ const BreathingCircle = ({
         opacity={running ? 1 : 0.4}
         transition="opacity 0.3s"
       >
-        {secondsRemaining}
-      </Text>
+        {numbers.previous !== null && (
+          <Text
+            key={`${numbers.previous}-${numbers.current}`}
+            aria-hidden
+            position="absolute"
+            inset={0}
+            sx={numberAnimation(numberOut)}
+          >
+            {numbers.previous}
+          </Text>
+        )}
+        <Text
+          key={numbers.current}
+          sx={numbers.previous === null ? undefined : numberAnimation(numberIn)}
+        >
+          {numbers.current}
+        </Text>
+      </Box>
     </Box>
   )
 }
