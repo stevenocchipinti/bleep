@@ -18,7 +18,31 @@ interface BreathingCircleProps {
 const MIN_SCALE = 0.4
 const MAX_SCALE = 1
 const RING_RADIUS = 49
-const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
+
+/*
+ * The ring is two half arcs, each rotating into view from behind the edge of
+ * its own half. Animating a stroke-dashoffset instead runs on the main thread,
+ * so the ring froze and then jumped whenever a tick re-rendered the app;
+ * transforms run on the compositor, which keeps moving regardless.
+ */
+const RING_HALVES = [
+  {
+    // Fills the right side, clockwise from the top
+    clipPath: "inset(0 0 0 50%)",
+    path: `M 50 ${50 + RING_RADIUS} A ${RING_RADIUS} ${RING_RADIUS} 0 0 1 50 ${50 - RING_RADIUS}`,
+    startsAt: 0,
+  },
+  {
+    // Then the left side, up from the bottom
+    clipPath: "inset(0 50% 0 0)",
+    path: `M 50 ${50 - RING_RADIUS} A ${RING_RADIUS} ${RING_RADIUS} 0 0 1 50 ${50 + RING_RADIUS}`,
+    startsAt: 0.5,
+  },
+]
+
+/** How far a half has turned into view once the ring is `filled` (0–1). */
+const halfRotation = (filled: number, startsAt: number) =>
+  `rotate(${Math.min(Math.max((filled - startsAt) * 360, 0), 180)}deg)`
 const COLOR_TRANSITION = "0.8s ease-in-out"
 
 const PHASE_COLORS: Record<BreathPhase["kind"], string> = {
@@ -50,7 +74,7 @@ const BreathingCircle = ({
 }: BreathingCircleProps) => {
   const running = status === "running"
   const circleRef = useRef<HTMLDivElement>(null)
-  const ringRef = useRef<SVGCircleElement>(null)
+  const halfRefs = useRef<(HTMLDivElement | null)[]>([])
   const animationsRef = useRef<Animation[]>([])
   const remainingRef = useRef(secondsRemaining)
   remainingRef.current = secondsRemaining
@@ -59,8 +83,7 @@ const BreathingCircle = ({
 
   useEffect(() => {
     const circle = circleRef.current
-    const ring = ringRef.current
-    if (!circle || !ring || typeof circle.animate !== "function") return
+    if (!circle || typeof circle.animate !== "function") return
 
     if (status === "idle") {
       // Back to empty lungs, ready for a fresh start
@@ -80,7 +103,9 @@ const BreathingCircle = ({
 
     const start = currentScale(circle)
     const end = endLevel === null ? start : scaleFor(endLevel)
-    const ringFrom = RING_CIRCUMFERENCE * (remaining / totalSeconds)
+    const filled = 1 - remaining / totalSeconds
+    // Each half only turns for half of the phase, so mark where that changes
+    const stops = [filled, ...(filled < 0.5 ? [0.5] : []), 1]
 
     circle.style.transform = `scale(${start})`
     animationsRef.current.forEach(animation => animation.cancel())
@@ -89,10 +114,23 @@ const BreathingCircle = ({
         [{ transform: `scale(${start})` }, { transform: `scale(${end})` }],
         { duration, easing: "ease-in-out", fill: "forwards" },
       ),
-      ring.animate([{ strokeDashoffset: ringFrom }, { strokeDashoffset: 0 }], {
-        duration,
-        easing: "linear",
-        fill: "forwards",
+      ...(filled < 1 ? RING_HALVES : []).flatMap(({ startsAt }, index) => {
+        const half = halfRefs.current[index]
+        if (!half) return []
+        return half.animate(
+          stops.flatMap(stop =>
+            // Hidden until it starts turning, as its ends would otherwise
+            // peek out from behind the edge of its half
+            (stop === startsAt ? [0, 1] : [stop > startsAt ? 1 : 0]).map(
+              opacity => ({
+                transform: halfRotation(stop, startsAt),
+                opacity,
+                offset: (stop - filled) / (1 - filled),
+              }),
+            ),
+          ),
+          { duration, easing: "linear", fill: "forwards" },
+        )
       }),
     ]
   }, [phaseKey, endLevel, totalSeconds, status])
@@ -132,21 +170,32 @@ const BreathingCircle = ({
           stroke={trail}
           strokeWidth="1"
         />
-        <circle
-          ref={ringRef}
-          cx="50"
-          cy="50"
-          r={RING_RADIUS}
-          fill="none"
-          stroke={color}
-          strokeWidth="1"
-          strokeLinecap="round"
-          strokeDasharray={RING_CIRCUMFERENCE}
-          strokeDashoffset={RING_CIRCUMFERENCE}
-          transform="rotate(-90 50 50)"
-          style={{ transition: `stroke ${COLOR_TRANSITION}` }}
-        />
       </Box>
+
+      {RING_HALVES.map(({ clipPath, path }, index) => (
+        <Box key={clipPath} position="absolute" inset={0} clipPath={clipPath}>
+          <Box
+            ref={(el: HTMLDivElement | null) => {
+              halfRefs.current[index] = el
+            }}
+            position="absolute"
+            inset={0}
+            transform="rotate(0deg)"
+            opacity={0}
+            willChange="transform, opacity"
+          >
+            <svg viewBox="0 0 100 100">
+              <path
+                d={path}
+                fill="none"
+                stroke={color}
+                strokeWidth="1"
+                style={{ transition: `stroke ${COLOR_TRANSITION}` }}
+              />
+            </svg>
+          </Box>
+        </Box>
+      ))}
 
       <Box
         ref={circleRef}
